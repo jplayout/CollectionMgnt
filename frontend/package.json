@@ -1,7 +1,16 @@
-
 {
- "name":"collection-manager-frontend",
- "scripts":{"dev":"vite"},
- "dependencies":{"vue":"^3","vue-router":"^4","pinia":"^3","vue-i18n":"^11"},
- "devDependencies":{"vite":"^7"}
+ "name": "collection-manager-frontend",
+ "scripts": {
+  "dev": "vite"
+ },
+ "dependencies": {
+  "pinia": "^3",
+  "vue": "^3",
+  "vue-i18n": "^11",
+  "vue-router": "^4"
+ },
+ "devDependencies": {
+  "@vitejs/plugin-vue": "^6.0.7",
+  "vite": "^7"
+ }
 }
