@@ -4,6 +4,10 @@ import { initializeDatabase }
 from './database/init.js';
 
 import {
+    createInitialAdmin
+} from './bootstrap/admin-user.js';
+
+import {
     bootstrapPlugins
 } from './bootstrap/plugins.js';
 
@@ -15,10 +19,24 @@ import {
     registerRoutes
 } from './routes/index.js';
 
+import {
+    registerJwt
+} from './auth/jwt.js';
+
 try {
 
     const db =
         await initializeDatabase();
+
+    const app = buildApp();
+
+    await registerJwt(
+        app
+    );
+
+    await createInitialAdmin(
+        db
+    );
 
     const pluginService =
         await bootstrapPlugins();
@@ -41,8 +59,6 @@ try {
             );
 
         });
-
-    const app = buildApp();
 
     app.decorate(
         'db',

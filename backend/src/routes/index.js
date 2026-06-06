@@ -1,3 +1,6 @@
+import authRoutes
+from '../auth/routes.js';
+
 import pluginsRoutes
 from './plugins.js';
 
@@ -9,11 +12,26 @@ export async function registerRoutes(
 ) {
 
     await app.register(
-        pluginsRoutes
+        authRoutes
     );
 
     await app.register(
-        itemsRoutes
+        async protectedRoutes => {
+
+            protectedRoutes.addHook(
+                'preHandler',
+                protectedRoutes.authenticate
+            );
+
+            await protectedRoutes.register(
+                pluginsRoutes
+            );
+
+            await protectedRoutes.register(
+                itemsRoutes
+            );
+
+        }
     );
 
 }

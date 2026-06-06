@@ -1,37 +1,97 @@
-# État actuel
+# CollectionMgnt
 
-Version : v0.5-lot3.6
+Version : v0.6-lot4.0
 
-## Fonctionnel
+## Backend
 
-- Chargement dynamique des plugins
-- Synchronisation plugins -> BDD
-- CRUD items
-- Recherche dynamique
-- Schema API
-- Validation dynamique des champs basée sur fields.json
-- Correctif GET /api/items
+### Plugins
 
-## Lot 3.6 livré
+* Chargement dynamique
+* Validation des manifests
+* Validation des fields.json
+* Synchronisation SQLite
 
-Validation dynamique :
+### Collections
 
-- title obligatoire
-- metadata optionnel, objet simple si fourni
-- required
-- text
-- textarea
-- select
-- checkbox
-- date
-- rating
-- number
-- pattern
-- min/max pour number et rating
+* Création
+* Suppression
+* Recherche
+* Filtrage
 
-Correctif :
+### Authentification
 
-- GET /api/items utilise les repositories définis dans le bon scope
+* JWT via Authorization: Bearer
+* Création automatique du premier admin
+* Login
+* Utilisateur courant
+* Logout stateless
+* Protection des routes plugins et items
+
+### Validation dynamique
+
+Types :
+
+* text
+* textarea
+* select
+* checkbox
+* date
+* number
+* rating
+
+Contraintes :
+
+* required
+* min
+* max
+* pattern
+* options
+
+## Frontend
+
+### Disponible
+
+* Vue 3
+* Router
+* i18n
+* Dashboard
+* Login
+
+### Manquant
+
+* Interface collections
+* Upload images
+
+## API exposée
+
+### Auth
+
+* POST /api/auth/login
+* GET /api/auth/me
+* POST /api/auth/logout
+
+### Plugins
+
+* GET /api/plugins
+* GET /api/plugins/:id
+* GET /api/plugins/:pluginId/fields
+* PATCH /api/plugins/:id
+
+### Items
+
+* GET /api/items
+* POST /api/items
+* DELETE /api/items/:id
+
+## Décisions d'architecture
+
+* SQLite
+* Fastify
+* JWT
+* Plugins dynamiques
+* Métadonnées JSON
+* Déploiement cible Synology
+* Pas d'inscription publique
 
 ## Prochaine étape
 
