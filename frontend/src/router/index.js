@@ -13,6 +13,12 @@ from '../pages/Dashboard.vue';
 import Login
 from '../pages/Login.vue';
 
+import CollectionsView
+from '../pages/CollectionsView.vue';
+
+import ItemsListView
+from '../pages/ItemsListView.vue';
+
 import ItemDetails
 from '../pages/ItemDetails.vue';
 
@@ -46,6 +52,30 @@ const router =
                     'dashboard',
                 component:
                     Dashboard,
+                meta: {
+                    requiresAuth:
+                        true
+                }
+            },
+            {
+                path:
+                    '/collections',
+                name:
+                    'collections',
+                component:
+                    CollectionsView,
+                meta: {
+                    requiresAuth:
+                        true
+                }
+            },
+            {
+                path:
+                    '/collections/:pluginId/items',
+                name:
+                    'collection-items',
+                component:
+                    ItemsListView,
                 meta: {
                     requiresAuth:
                         true

@@ -6,6 +6,8 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
+Étape suivante : Lot 5.6 - Création item frontend dynamique.
+
 ---
 
 # v0.1 - Fondation

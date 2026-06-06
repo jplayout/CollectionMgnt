@@ -2,7 +2,7 @@
 
 ## État actuel
 
-Lot livré : 5.4 - Galerie frontend minimale.
+Lot livré : 5.5 - Navigation collections/items minimale.
 
 Fonctionnalités disponibles :
 
@@ -33,6 +33,8 @@ Fonctionnalités disponibles :
 - Support `FormData` et réponses `Blob` dans le service API frontend
 - Sélection de l'image principale depuis le frontend
 - Suppression d'image depuis le frontend
+- Affichage de l'image principale dans les cartes items
+- Chargement des thumbnails des cartes items via `Blob` authentifié
 
 ## Stockage disque
 
@@ -111,15 +113,15 @@ Routes disponibles :
 ## Non encore implémenté
 
 - Galerie avancée
-- Liste items / navigation collections
+- Optimisation du chargement N+1 des médias/thumbnails dans les listes
 - Nettoyage automatique des fichiers lors de la suppression d'un item
 
 ## Prochaine étape
 
-Lot 5.5 - Liste items / navigation collections.
+Lot 5.6 - Création item frontend dynamique.
 
 Objectifs :
 
-- Liste des items
-- Navigation Dashboard vers les items
-- Affichage de l'image principale dans les listes
+- Formulaire de création item basé sur `fields.json`
+- Contrôles frontend cohérents avec la validation backend
+- Création d'un item depuis une collection

@@ -29,10 +29,10 @@
             </dl>
 
             <RouterLink
-                class="test-link"
-                :to="{ name: 'item-details', params: { id: 1 } }"
+                class="primary-link"
+                :to="{ name: 'collections' }"
             >
-                Tester la galerie de l'item #1
+                Ouvrir les collections
             </RouterLink>
         </section>
     </main>
@@ -133,7 +133,7 @@ dd {
     margin: 0;
 }
 
-.test-link {
+.primary-link {
     color: #1f6feb;
     display: inline-block;
     font-weight: 600;
@@ -141,7 +141,7 @@ dd {
     text-decoration: none;
 }
 
-.test-link:hover {
+.primary-link:hover {
     text-decoration: underline;
 }
 </style>

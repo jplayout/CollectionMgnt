@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.7-lot5.4
+Version : v0.8-lot5.5
 
 ## État du projet
 
@@ -10,7 +10,7 @@ Frontend :
 
 - Authentification : opérationnelle
 - Dashboard : minimal
-- Collections : à implémenter
+- Collections : navigation minimale disponible
 - Médias : backend disponible, galerie frontend minimale disponible
 
 ---
@@ -98,7 +98,16 @@ Frontend :
 - Support `FormData` dans le service API frontend
 - Support des réponses `Blob` dans le service API frontend
 - Page détail item minimale
+- Navigation collections/items minimale
 - Galerie médias frontend minimale
+- Routes frontend protégées :
+  - `/dashboard`
+  - `/collections`
+  - `/collections/:pluginId/items`
+  - `/items/:id`
+- Composants collections/items frontend :
+  - `CollectionCard.vue`
+  - `ItemCard.vue`
 - Composants média frontend :
   - `MediaGallery.vue`
   - `MediaThumbnail.vue`
@@ -119,11 +128,19 @@ Frontend :
 
 ### Manquant
 
-- Interface collections
+- Interface collections avancée
 - Gestion des plugins
+- Création / édition item frontend
 - Interface complète d'upload images
 - Galerie médias avancée
 - Recherche avancée
+
+### Limitations connues
+
+- Chargement N+1 des médias/thumbnails dans les listes items
+- Pas de pagination
+- Pas encore de formulaire création / édition item
+- Page `/items/:id` encore minimale pour les métadonnées item
 
 ---
 
@@ -248,11 +265,27 @@ Variables disponibles :
 
 ### Lot 5.5 - Liste items / navigation collections
 
+#### Livré
+
+- Route protégée `/collections`
+- Route protégée `/collections/:pluginId/items`
+- Liste des collections basée sur les plugins activés
+- Navigation Dashboard vers collections
+- Navigation collection vers liste items
+- Navigation item vers fiche item
+- Recherche simple par titre dans une collection
+- Cartes items avec métadonnées simples
+- Affichage de l'image principale dans les cartes items
+- Chargement des thumbnails via appels média existants
+- Limitation connue : chargement N+1 des médias/thumbnails dans les listes
+
+### Lot 5.6 - Création item frontend dynamique
+
 #### Objectifs
 
-- Liste des items
-- Navigation Dashboard vers les items
-- Affichage de l'image principale dans les listes
+- Formulaire de création item basé sur `fields.json`
+- Contrôles frontend cohérents avec la validation backend
+- Création d'un item depuis une collection
 
 ### Lots suivants
 
