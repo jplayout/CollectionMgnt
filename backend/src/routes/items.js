@@ -3,6 +3,10 @@ import {
 } from '../repositories/item-repository.js';
 
 import {
+    PluginRepository
+} from '../repositories/plugin-repository.js';
+
+import {
     validateItem
 } from '../services/item-validator.js';
 
@@ -12,6 +16,11 @@ export default async function (
 
     const repository =
         new ItemRepository(
+            fastify.db
+        );
+
+    const pluginRepository =
+        new PluginRepository(
             fastify.db
         );
 
@@ -173,7 +182,7 @@ export default async function (
 
             }
 
-            return itemRepository
+            return repository
                 .findAll(
                     filters
                 );
