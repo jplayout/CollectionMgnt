@@ -13,6 +13,9 @@ from '../pages/Dashboard.vue';
 import Login
 from '../pages/Login.vue';
 
+import ItemDetails
+from '../pages/ItemDetails.vue';
+
 const router =
     createRouter({
         history:
@@ -43,6 +46,18 @@ const router =
                     'dashboard',
                 component:
                     Dashboard,
+                meta: {
+                    requiresAuth:
+                        true
+                }
+            },
+            {
+                path:
+                    '/items/:id',
+                name:
+                    'item-details',
+                component:
+                    ItemDetails,
                 meta: {
                     requiresAuth:
                         true

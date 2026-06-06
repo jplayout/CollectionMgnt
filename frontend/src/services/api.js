@@ -46,7 +46,8 @@ export async function apiFetch(
 
     if (
         options.body !== undefined &&
-        !headers.has('Content-Type')
+        !headers.has('Content-Type') &&
+        !(options.body instanceof FormData)
     ) {
 
         headers.set(
@@ -60,7 +61,9 @@ export async function apiFetch(
         await fetch(
             `${API_BASE_URL}${path}`,
             {
-                ...options,
+                ...getFetchOptions(
+                    options
+                ),
                 headers,
                 body:
                     stringifyBody(
@@ -71,7 +74,8 @@ export async function apiFetch(
 
     const payload =
         await parseResponse(
-            response
+            response,
+            options.responseType
         );
 
     if (
@@ -90,6 +94,19 @@ export async function apiFetch(
     }
 
     return payload;
+
+}
+
+function getFetchOptions(
+    options
+) {
+
+    const {
+        responseType,
+        ...fetchOptions
+    } = options;
+
+    return fetchOptions;
 
 }
 
@@ -114,7 +131,8 @@ function stringifyBody(
 }
 
 async function parseResponse(
-    response
+    response,
+    responseType
 ) {
 
     if (
@@ -126,7 +144,19 @@ async function parseResponse(
     }
 
     const text =
-        await response.text();
+        response.ok &&
+        responseType === 'blob'
+            ? null
+            : await response.text();
+
+    if (
+        response.ok &&
+        responseType === 'blob'
+    ) {
+
+        return response.blob();
+
+    }
 
     if (
         !text

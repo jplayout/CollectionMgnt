@@ -27,6 +27,13 @@
                     <dd>{{ auth.user?.preferred_language }}</dd>
                 </div>
             </dl>
+
+            <RouterLink
+                class="test-link"
+                :to="{ name: 'item-details', params: { id: 1 } }"
+            >
+                Tester la galerie de l'item #1
+            </RouterLink>
         </section>
     </main>
 </template>
@@ -124,5 +131,17 @@ dt {
 
 dd {
     margin: 0;
+}
+
+.test-link {
+    color: #1f6feb;
+    display: inline-block;
+    font-weight: 600;
+    margin-top: 22px;
+    text-decoration: none;
+}
+
+.test-link:hover {
+    text-decoration: underline;
 }
 </style>

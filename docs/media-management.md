@@ -2,7 +2,7 @@
 
 ## État actuel
 
-Lot livré : 5.3 - Image principale.
+Lot livré : 5.4 - Galerie frontend minimale.
 
 Fonctionnalités disponibles :
 
@@ -24,6 +24,15 @@ Fonctionnalités disponibles :
 - Sélection de l'image principale via API
 - Garantie d'une seule image principale par item
 - Promotion automatique de la plus ancienne image restante si l'image principale est supprimée
+- Page détail item minimale côté frontend
+- Galerie médias frontend par item
+- Composants frontend `MediaGallery.vue`, `MediaThumbnail.vue` et `ImageUploader.vue`
+- Upload image depuis le frontend
+- Chargement des thumbnails via `fetch` authentifié et `Blob`
+- Nettoyage des `objectURL`
+- Support `FormData` et réponses `Blob` dans le service API frontend
+- Sélection de l'image principale depuis le frontend
+- Suppression d'image depuis le frontend
 
 ## Stockage disque
 
@@ -101,15 +110,16 @@ Routes disponibles :
 
 ## Non encore implémenté
 
-- Galerie frontend
+- Galerie avancée
+- Liste items / navigation collections
 - Nettoyage automatique des fichiers lors de la suppression d'un item
 
 ## Prochaine étape
 
-Lot 5.4 - Galerie frontend.
+Lot 5.5 - Liste items / navigation collections.
 
 Objectifs :
 
-- Galerie d'images
-- Upload depuis l'interface collection
-- Affichage et sélection de l'image principale
+- Liste des items
+- Navigation Dashboard vers les items
+- Affichage de l'image principale dans les listes

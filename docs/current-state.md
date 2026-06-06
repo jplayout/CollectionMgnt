@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.7-lot5.3
+Version : v0.7-lot5.4
 
 ## État du projet
 
@@ -11,7 +11,7 @@ Frontend :
 - Authentification : opérationnelle
 - Dashboard : minimal
 - Collections : à implémenter
-- Médias : backend disponible, interface frontend à implémenter
+- Médias : backend disponible, galerie frontend minimale disponible
 
 ---
 
@@ -95,6 +95,14 @@ Frontend :
 - Restauration de session
 - Logout
 - Service API centralisé
+- Support `FormData` dans le service API frontend
+- Support des réponses `Blob` dans le service API frontend
+- Page détail item minimale
+- Galerie médias frontend minimale
+- Composants média frontend :
+  - `MediaGallery.vue`
+  - `MediaThumbnail.vue`
+  - `ImageUploader.vue`
 
 ### Authentification frontend
 
@@ -113,8 +121,8 @@ Frontend :
 
 - Interface collections
 - Gestion des plugins
-- Upload images
-- Galerie médias
+- Interface complète d'upload images
+- Galerie médias avancée
 - Recherche avancée
 
 ---
@@ -225,11 +233,26 @@ Variables disponibles :
 
 ### Lot 5.4 - Galerie frontend
 
+#### Livré
+
+- Route protégée `/items/:id`
+- Page détail item minimale
+- Lien de test Dashboard vers `/items/1`
+- Galerie d'images pour un item
+- Upload image depuis le frontend
+- Chargement des thumbnails via `fetch` authentifié et `Blob`
+- Nettoyage des `objectURL`
+- Affichage de l'image principale
+- Sélection de l'image principale
+- Suppression d'image
+
+### Lot 5.5 - Liste items / navigation collections
+
 #### Objectifs
 
-- Galerie d'images
-- Upload depuis l'interface collection
-- Affichage et sélection de l'image principale
+- Liste des items
+- Navigation Dashboard vers les items
+- Affichage de l'image principale dans les listes
 
 ### Lots suivants
 
