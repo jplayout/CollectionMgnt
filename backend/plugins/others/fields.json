@@ -1,0 +1,8 @@
+[
+  {
+    "name": "category",
+    "label": "Catégorie",
+    "type": "text",
+    "searchable": true
+  }
+]

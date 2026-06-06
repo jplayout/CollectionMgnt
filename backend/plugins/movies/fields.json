@@ -1,0 +1,8 @@
+[
+  {
+    "name": "director",
+    "label": "Réalisateur",
+    "type": "text",
+    "searchable": true
+  }
+]

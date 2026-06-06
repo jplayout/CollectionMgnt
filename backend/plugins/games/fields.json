@@ -1,0 +1,51 @@
+[
+  {
+    "name": "platform",
+    "label": "Plateforme",
+    "type": "select",
+    "required": true,
+    "searchable": true,
+    "filterable": true,
+    "faceted": true
+  },
+  {
+    "name": "genre",
+    "label": "Genre",
+    "type": "text",
+    "searchable": true,
+    "filterable": true
+  },
+  {
+    "name": "publisher",
+    "label": "Éditeur",
+    "type": "text",
+    "searchable": true
+  },
+  {
+    "name": "developer",
+    "label": "Développeur",
+    "type": "text",
+    "searchable": true
+  },
+  {
+    "name": "release_date",
+    "label": "Date de sortie",
+    "type": "date",
+    "searchable": false,
+    "filterable": true
+  },
+  {
+    "name": "completed",
+    "label": "Terminé",
+    "type": "checkbox",
+    "searchable": false,
+    "filterable": true
+  },
+  {
+    "name": "rating",
+    "label": "Note",
+    "type": "rating",
+    "searchable": false,
+    "filterable": true
+  }
+]

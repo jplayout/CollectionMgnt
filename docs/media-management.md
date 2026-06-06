@@ -1,0 +1,2 @@
+# Images
+Upload, WebP, thumbnails.

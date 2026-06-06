@@ -1,0 +1,15 @@
+
+{
+ "name":"collection-manager-backend",
+ "type":"module",
+ "scripts":{"dev":"node src/server.js"},
+ "dependencies":{
+   "fastify":"^5",
+   "@fastify/cors":"^10",
+   "@fastify/jwt":"^9",
+   "better-sqlite3":"^11",
+   "bcrypt":"^5",
+   "sharp":"^0.34",
+   "archiver":"^7"
+ }
+}

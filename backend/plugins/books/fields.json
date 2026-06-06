@@ -1,0 +1,8 @@
+[
+  {
+    "name": "author",
+    "label": "Auteur",
+    "type": "text",
+    "searchable": true
+  }
+]

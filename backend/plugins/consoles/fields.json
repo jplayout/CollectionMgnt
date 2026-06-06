@@ -1,0 +1,8 @@
+[
+  {
+    "name": "manufacturer",
+    "label": "Fabricant",
+    "type": "text",
+    "searchable": true
+  }
+]

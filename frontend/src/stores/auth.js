@@ -1,0 +1,1 @@
+// pinia auth store

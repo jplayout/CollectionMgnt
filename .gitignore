@@ -1,0 +1,16 @@
+node_modules/
+dist/
+backend/data/
+.env
+.env.local
+.vscode/
+.idea/
+.DS_Store
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+*.log
+Thumbs.db
+TODO.md
