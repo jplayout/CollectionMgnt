@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.7-lot5.1
+Version : v0.7-lot5.2
 
 ## État du projet
 
@@ -37,10 +37,14 @@ Frontend :
 - Upload d'images originales
 - Association d'images aux items
 - Stockage disque dans `backend/data/uploads`
+- Validation réelle du contenu image avec Sharp
+- Génération d'une image optimisée WebP
+- Génération d'une miniature WebP
 - Liste des médias d'un item
 - Consultation des métadonnées média
 - Service du fichier original
-- Suppression média + fichier original
+- Service de la miniature
+- Suppression média + fichiers associés
 - Définition simple de `is_primary` à l'upload
 
 ### Authentification
@@ -140,6 +144,7 @@ Frontend :
 - `GET /api/items/:id/media`
 - `GET /api/media/:id`
 - `GET /api/media/:id/file`
+- `GET /api/media/:id/thumb`
 - `DELETE /api/media/:id`
 
 ---
@@ -196,10 +201,14 @@ Variables disponibles :
 
 ### Lot 5.2 - Miniatures et WebP
 
-#### Objectifs
+#### Livré
 
+- Validation du contenu image avec `sharp.metadata()`
 - Génération de miniatures
 - Conversion WebP
+- Route `GET /api/media/:id/thumb`
+- Suppression des originaux, images optimisées et miniatures
+- Limite de dimensions : 12000 x 12000
 
 ### Lot 5.3 - Galerie frontend
 

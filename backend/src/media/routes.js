@@ -157,6 +157,44 @@ export default async function (
         }
     );
 
+    fastify.get(
+        '/api/media/:id/thumb',
+        async (
+            request,
+            reply
+        ) => {
+
+            try {
+
+                const {
+                    stream
+                } =
+                    service.getThumbnailStream(
+                        Number(
+                            request.params.id
+                        )
+                    );
+
+                return reply
+                    .type(
+                        'image/webp'
+                    )
+                    .send(
+                        stream
+                    );
+
+            } catch (error) {
+
+                return sendMediaError(
+                    reply,
+                    error
+                );
+
+            }
+
+        }
+    );
+
     fastify.delete(
         '/api/media/:id',
         async (
