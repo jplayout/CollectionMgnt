@@ -1,15 +1,17 @@
-
 {
- "name":"collection-manager-backend",
- "type":"module",
- "scripts":{"dev":"node src/server.js"},
- "dependencies":{
-   "fastify":"^5",
-   "@fastify/cors":"^10",
-   "@fastify/jwt":"^9",
-   "better-sqlite3":"^11",
-   "bcrypt":"^5",
-   "sharp":"^0.34",
-   "archiver":"^7"
+ "name": "collection-manager-backend",
+ "type": "module",
+ "scripts": {
+  "dev": "node src/server.js"
+ },
+ "dependencies": {
+  "@fastify/cors": "^10",
+  "@fastify/jwt": "^9",
+  "@fastify/multipart": "^10.0.0",
+  "archiver": "^7",
+  "bcrypt": "^5",
+  "better-sqlite3": "^11",
+  "fastify": "^5",
+  "sharp": "^0.34"
  }
 }

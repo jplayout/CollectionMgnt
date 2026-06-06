@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.6-lot4.1
+Version : v0.7-lot5.1
 
 ## État du projet
 
@@ -11,7 +11,7 @@ Frontend :
 - Authentification : opérationnelle
 - Dashboard : minimal
 - Collections : à implémenter
-- Médias : à implémenter
+- Médias : backend disponible, interface frontend à implémenter
 
 ---
 
@@ -32,6 +32,17 @@ Frontend :
 - Filtrage par plugin
 - Filtrage dynamique sur les champs déclarés `filterable`
 
+### Médias
+
+- Upload d'images originales
+- Association d'images aux items
+- Stockage disque dans `backend/data/uploads`
+- Liste des médias d'un item
+- Consultation des métadonnées média
+- Service du fichier original
+- Suppression média + fichier original
+- Définition simple de `is_primary` à l'upload
+
 ### Authentification
 
 - JWT via `Authorization: Bearer`
@@ -39,7 +50,7 @@ Frontend :
 - Login
 - Utilisateur courant (`/me`)
 - Logout stateless
-- Protection des routes plugins et items
+- Protection des routes plugins, items et médias
 
 ### Validation dynamique
 
@@ -96,7 +107,7 @@ Frontend :
 - Interface collections
 - Gestion des plugins
 - Upload images
-- Gestion des médias
+- Galerie médias
 - Recherche avancée
 
 ---
@@ -122,6 +133,14 @@ Frontend :
 - `GET /api/items`
 - `POST /api/items`
 - `DELETE /api/items/:id`
+
+### Médias
+
+- `POST /api/media`
+- `GET /api/items/:id/media`
+- `GET /api/media/:id`
+- `GET /api/media/:id/file`
+- `DELETE /api/media/:id`
 
 ---
 
@@ -161,16 +180,34 @@ Variables disponibles :
 
 ## Fonctionnalités prévues
 
-### Lot 5.0 - Gestion des images
+### Lot 5.1 - Backend upload minimal
+
+#### Livré
+
+- Upload multipart d'images originales
+- Association d'images aux items existants
+- MIME autorisés : JPEG, PNG, WebP
+- Taille maximale : 10 MB
+- Stockage par item sous `data/uploads/items/{itemId}/originals`
+- API média protégée par JWT
+- Lecture du fichier original via API
+- Suppression du fichier original avec la ligne `media`
+- Support simple de `is_primary` à l'upload
+
+### Lot 5.2 - Miniatures et WebP
 
 #### Objectifs
 
-- Upload d'images
-- Association d'images aux items
-- Définition d'une image principale
 - Génération de miniatures
-- Suppression d'images
-- API média
+- Conversion WebP
+
+### Lot 5.3 - Galerie frontend
+
+#### Objectifs
+
+- Galerie d'images
+- Choix avancé de l'image principale
+- Upload depuis l'interface collection
 
 ### Lots suivants
 
