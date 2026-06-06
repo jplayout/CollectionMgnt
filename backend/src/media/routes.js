@@ -195,6 +195,33 @@ export default async function (
         }
     );
 
+    fastify.patch(
+        '/api/media/:id/primary',
+        async (
+            request,
+            reply
+        ) => {
+
+            try {
+
+                return service.setPrimary(
+                    Number(
+                        request.params.id
+                    )
+                );
+
+            } catch (error) {
+
+                return sendMediaError(
+                    reply,
+                    error
+                );
+
+            }
+
+        }
+    );
+
     fastify.delete(
         '/api/media/:id',
         async (

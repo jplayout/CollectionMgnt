@@ -322,6 +322,28 @@ export class MediaService {
 
     }
 
+    setPrimary(id) {
+
+        const media =
+            this.repository.setPrimary(
+                id
+            );
+
+        if (
+            !media
+        ) {
+
+            throw new MediaError(
+                404,
+                'Media not found'
+            );
+
+        }
+
+        return media;
+
+    }
+
     async delete(id) {
 
         const media =
@@ -347,6 +369,14 @@ export class MediaService {
                 media.id
             );
 
+        const replacement =
+            media.is_primary
+                ? this.repository.findFirstByItemId(
+                    media.item_id,
+                    media.id
+                )
+                : null;
+
         await removeFileIfExists(
             filePath
         );
@@ -362,6 +392,16 @@ export class MediaService {
         this.repository.delete(
             media.id
         );
+
+        if (
+            replacement
+        ) {
+
+            this.repository.setPrimary(
+                replacement.id
+            );
+
+        }
 
         return true;
 

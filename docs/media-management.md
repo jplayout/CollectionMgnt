@@ -2,7 +2,7 @@
 
 ## État actuel
 
-Lot livré : 5.2 - Thumbnails et WebP.
+Lot livré : 5.3 - Image principale.
 
 Fonctionnalités disponibles :
 
@@ -13,13 +13,17 @@ Fonctionnalités disponibles :
 - Validation réelle du contenu image avec Sharp
 - Génération d'une image optimisée WebP
 - Génération d'une miniature WebP
+- Vérification du type WebP généré (`image/webp`, RIFF/WEBP)
 - Liste des médias d'un item
 - Consultation des métadonnées d'un média
 - Service du fichier original via API
 - Service de la miniature via API
 - Suppression de la ligne `media` et des fichiers associés
 - Protection JWT des routes média
-- Support simple de `is_primary` à l'upload
+- Support de `is_primary` à l'upload
+- Sélection de l'image principale via API
+- Garantie d'une seule image principale par item
+- Promotion automatique de la plus ancienne image restante si l'image principale est supprimée
 
 ## Stockage disque
 
@@ -92,14 +96,20 @@ Routes disponibles :
 - `GET /api/media/:id`
 - `GET /api/media/:id/file`
 - `GET /api/media/:id/thumb`
+- `PATCH /api/media/:id/primary`
 - `DELETE /api/media/:id`
 
 ## Non encore implémenté
 
 - Galerie frontend
-- Choix avancé de l'image principale après upload
 - Nettoyage automatique des fichiers lors de la suppression d'un item
 
 ## Prochaine étape
 
-Lot 5.3 - Galerie frontend.
+Lot 5.4 - Galerie frontend.
+
+Objectifs :
+
+- Galerie d'images
+- Upload depuis l'interface collection
+- Affichage et sélection de l'image principale

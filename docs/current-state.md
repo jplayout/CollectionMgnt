@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.7-lot5.2
+Version : v0.7-lot5.3
 
 ## État du projet
 
@@ -36,16 +36,19 @@ Frontend :
 
 - Upload d'images originales
 - Association d'images aux items
-- Stockage disque dans `backend/data/uploads`
+- Stockage disque dans `backend/data/uploads/items/{itemId}`
 - Validation réelle du contenu image avec Sharp
 - Génération d'une image optimisée WebP
 - Génération d'une miniature WebP
+- Vérification du type WebP généré (`image/webp`, RIFF/WEBP)
 - Liste des médias d'un item
 - Consultation des métadonnées média
 - Service du fichier original
 - Service de la miniature
 - Suppression média + fichiers associés
-- Définition simple de `is_primary` à l'upload
+- Définition de l'image principale
+- Garantie d'une seule image principale par item
+- Promotion automatique de la plus ancienne image restante si l'image principale est supprimée
 
 ### Authentification
 
@@ -145,6 +148,7 @@ Frontend :
 - `GET /api/media/:id`
 - `GET /api/media/:id/file`
 - `GET /api/media/:id/thumb`
+- `PATCH /api/media/:id/primary`
 - `DELETE /api/media/:id`
 
 ---
@@ -206,17 +210,26 @@ Variables disponibles :
 - Validation du contenu image avec `sharp.metadata()`
 - Génération de miniatures
 - Conversion WebP
+- Organisation disque : `originals`, `images`, `thumbs`
 - Route `GET /api/media/:id/thumb`
 - Suppression des originaux, images optimisées et miniatures
 - Limite de dimensions : 12000 x 12000
 
-### Lot 5.3 - Galerie frontend
+### Lot 5.3 - Image principale
+
+#### Livré
+
+- `PATCH /api/media/:id/primary`
+- Une seule image principale par item
+- Gestion cohérente lors de la suppression d'une image principale
+
+### Lot 5.4 - Galerie frontend
 
 #### Objectifs
 
 - Galerie d'images
-- Choix avancé de l'image principale
 - Upload depuis l'interface collection
+- Affichage et sélection de l'image principale
 
 ### Lots suivants
 

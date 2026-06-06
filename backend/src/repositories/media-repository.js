@@ -108,6 +108,90 @@ export class MediaRepository {
 
     }
 
+    findFirstByItemId(
+        itemId,
+        excludedId = null
+    ) {
+
+        let sql = `
+            SELECT *
+            FROM media
+            WHERE item_id = ?
+        `;
+
+        const params = [
+            itemId
+        ];
+
+        if (
+            excludedId !== null
+        ) {
+
+            sql += `
+                AND id != ?
+            `;
+
+            params.push(
+                excludedId
+            );
+
+        }
+
+        sql += `
+            ORDER BY created_at ASC, id ASC
+            LIMIT 1
+        `;
+
+        return this.db
+            .prepare(sql)
+            .get(...params);
+
+    }
+
+    setPrimary(id) {
+
+        const setPrimary =
+            this.db.transaction(
+                mediaId => {
+
+                    const media =
+                        this.findById(
+                            mediaId
+                        );
+
+                    if (
+                        !media
+                    ) {
+
+                        return null;
+
+                    }
+
+                    this.clearPrimary(
+                        media.item_id
+                    );
+
+                    this.db
+                        .prepare(`
+                            UPDATE media
+                            SET is_primary = 1
+                            WHERE id = ?
+                        `)
+                        .run(media.id);
+
+                    return this.findById(
+                        media.id
+                    );
+
+                }
+            );
+
+        return setPrimary(
+            id
+        );
+
+    }
+
     delete(id) {
 
         return this.db
