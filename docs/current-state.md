@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.6
+Version : v0.8-lot5.7
 
 ## État du projet
 
@@ -28,6 +28,8 @@ Frontend :
 ### Collections
 
 - Création d'items
+- Consultation d'un item par id
+- Édition d'items côté backend
 - Suppression d'items
 - Recherche par titre
 - Filtrage par plugin
@@ -183,7 +185,9 @@ Frontend :
 ### Items
 
 - `GET /api/items`
+- `GET /api/items/:id`
 - `POST /api/items`
+- `PATCH /api/items/:id`
 - `DELETE /api/items/:id`
 
 ### Médias
@@ -260,7 +264,7 @@ Variables disponibles :
 
 #### Prochaine étape
 
-- Lot 5.7 - Édition item
+- Lot 5.8 - Frontend édition item
 
 ### Lot 5.1 - Backend upload minimal
 
@@ -327,13 +331,28 @@ Variables disponibles :
 - Chargement des thumbnails via appels média existants
 - Limitation connue : chargement N+1 des médias/thumbnails dans les listes
 
-### Lot 5.7 - Édition item
+### Lot 5.7 - Backend édition item
+
+#### Livré
+
+- `GET /api/items/:id`
+- `PATCH /api/items/:id`
+- Chargement de l'item existant avant édition
+- Retour 404 si l'item est absent
+- Refus du changement de plugin d'un item
+- Réutilisation de la validation dynamique backend
+- Mise à jour de `title`, `description`, `metadata` et `updated_at`
+- Conservation des métadonnées inconnues existantes
+- Retour de l'item mis à jour avec `metadata` parsé
+- Retour du code plugin et du nom d'affichage plugin sur le détail item
+
+### Lot 5.8 - Frontend édition item
 
 #### Objectifs
 
 - Charger un item existant
 - Préremplir le formulaire dynamique depuis les métadonnées item
-- Envoyer les modifications à l'API backend dédiée
+- Envoyer les modifications à `PATCH /api/items/:id`
 - Rediriger vers `/items/:id` après modification
 
 ### Lots suivants

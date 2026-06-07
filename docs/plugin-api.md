@@ -124,3 +124,7 @@ Valeur maximale.
 ## pattern
 
 Expression régulière.
+
+## options
+
+Valeurs autorisées pour un champ `select`.

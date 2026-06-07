@@ -190,6 +190,161 @@ export default async function (
         }
     );
 
+    fastify.get(
+        '/api/items/:id',
+        async (
+            request,
+            reply
+        ) => {
+
+            const item =
+                repository.findById(
+                    request.params.id
+                );
+
+            if (
+                !item
+            ) {
+
+                return reply
+                    .code(404)
+                    .send({
+                        error:
+                            'Item not found'
+                    });
+
+            }
+
+            return item;
+
+        }
+    );
+
+    fastify.patch(
+        '/api/items/:id',
+        async (
+            request,
+            reply
+        ) => {
+
+            const existingItem =
+                repository.findById(
+                    request.params.id
+                );
+
+            if (
+                !existingItem
+            ) {
+
+                return reply
+                    .code(404)
+                    .send({
+                        error:
+                            'Item not found'
+                    });
+
+            }
+
+            const payload =
+                request.body ?? {};
+
+            if (
+                payload.plugin !== undefined &&
+                payload.plugin !== existingItem.plugin
+            ) {
+
+                return reply
+                    .code(400)
+                    .send({
+                        error:
+                            'Item plugin cannot be changed'
+                    });
+
+            }
+
+            if (
+                payload.metadata === undefined
+            ) {
+
+                return reply
+                    .code(400)
+                    .send({
+                        errors: [
+                            'metadata must be an object'
+                        ]
+                    });
+
+            }
+
+            const pluginDefinition =
+                fastify
+                    .pluginService
+                    .getById(
+                        existingItem.plugin
+                    );
+
+            if (
+                !pluginDefinition
+            ) {
+
+                return reply
+                    .code(400)
+                    .send({
+                        error:
+                            'Unknown plugin'
+                    });
+
+            }
+
+            const validationPayload = {
+                ...payload,
+                plugin:
+                    existingItem.plugin
+            };
+
+            const errors =
+                validateItem(
+                    pluginDefinition,
+                    validationPayload
+                );
+
+            if (
+                errors.length > 0
+            ) {
+
+                return reply
+                    .code(400)
+                    .send({
+                        errors
+                    });
+
+            }
+
+            const metadata =
+                mergeMetadata(
+                    existingItem.metadata,
+                    payload.metadata,
+                    pluginDefinition.fields
+                );
+
+            repository.update(
+                existingItem.id,
+                {
+                    title:
+                        payload.title,
+                    description:
+                        payload.description,
+                    metadata
+                }
+            );
+
+            return repository.findById(
+                existingItem.id
+            );
+
+        }
+    );
+
     fastify.delete(
         '/api/items/:id',
         async request => {
@@ -204,5 +359,45 @@ export default async function (
 
         }
     );
+
+}
+
+function mergeMetadata(
+    existingMetadata,
+    payloadMetadata,
+    fields
+) {
+
+    const fieldNames =
+        new Set(
+            fields.map(
+                field => field.name
+            )
+        );
+
+    const metadata = {};
+
+    for (
+        const [key, value]
+        of Object.entries(
+            existingMetadata ?? {}
+        )
+    ) {
+
+        if (
+            !fieldNames.has(key)
+        ) {
+
+            metadata[key] =
+                value;
+
+        }
+
+    }
+
+    return {
+        ...metadata,
+        ...payloadMetadata
+    };
 
 }

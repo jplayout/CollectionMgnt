@@ -33,9 +33,14 @@ export class ItemRepository {
         const item =
             this.db
                 .prepare(`
-                    SELECT *
+                    SELECT
+                        items.*,
+                        plugins.code AS plugin,
+                        plugins.display_name AS plugin_display_name
                     FROM items
-                    WHERE id = ?
+                    JOIN plugins
+                        ON plugins.id = items.plugin_id
+                    WHERE items.id = ?
                 `)
                 .get(id);
 
@@ -49,6 +54,29 @@ export class ItemRepository {
             );
 
         return item;
+    }
+
+    update(id, data) {
+
+        return this.db
+            .prepare(`
+                UPDATE items
+                SET
+                    title = ?,
+                    description = ?,
+                    metadata = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `)
+            .run(
+                data.title,
+                data.description ?? null,
+                JSON.stringify(
+                    data.metadata ?? {}
+                ),
+                id
+            );
+
     }
 
     findAll(filters = {}) {
