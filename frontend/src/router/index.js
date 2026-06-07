@@ -19,6 +19,9 @@ from '../pages/CollectionsView.vue';
 import ItemsListView
 from '../pages/ItemsListView.vue';
 
+import ItemCreateView
+from '../pages/ItemCreateView.vue';
+
 import ItemDetails
 from '../pages/ItemDetails.vue';
 
@@ -76,6 +79,18 @@ const router =
                     'collection-items',
                 component:
                     ItemsListView,
+                meta: {
+                    requiresAuth:
+                        true
+                }
+            },
+            {
+                path:
+                    '/collections/:pluginId/items/new',
+                name:
+                    'item-create',
+                component:
+                    ItemCreateView,
                 meta: {
                     requiresAuth:
                         true

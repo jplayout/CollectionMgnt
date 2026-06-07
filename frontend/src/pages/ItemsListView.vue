@@ -12,6 +12,13 @@
                 <p class="eyebrow">{{ pluginId }}</p>
                 <h1>{{ pluginTitle }}</h1>
             </div>
+
+            <RouterLink
+                class="create-link"
+                :to="{ name: 'item-create', params: { pluginId } }"
+            >
+                Nouvel item
+            </RouterLink>
         </header>
 
         <section class="toolbar">
@@ -214,8 +221,10 @@ async function loadItems() {
 }
 
 .page-header {
-    display: grid;
+    align-items: end;
+    display: flex;
     gap: 14px;
+    justify-content: space-between;
     margin-bottom: 24px;
 }
 
@@ -227,6 +236,19 @@ async function loadItems() {
 
 .back-link:hover {
     text-decoration: underline;
+}
+
+.create-link {
+    background: #172033;
+    border-radius: 6px;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 10px 14px;
+    text-decoration: none;
+}
+
+.create-link:hover {
+    background: #26324a;
 }
 
 .eyebrow {
@@ -303,6 +325,11 @@ button {
 }
 
 @media (max-width: 640px) {
+    .page-header {
+        align-items: start;
+        display: grid;
+    }
+
     .search-form {
         grid-template-columns: 1fr;
     }

@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.5
+Version : v0.8-lot5.6
 
 ## État du projet
 
@@ -11,6 +11,7 @@ Frontend :
 - Authentification : opérationnelle
 - Dashboard : minimal
 - Collections : navigation minimale disponible
+- Création item : formulaire dynamique frontend disponible
 - Médias : backend disponible, galerie frontend minimale disponible
 
 ---
@@ -99,12 +100,28 @@ Frontend :
 - Support des réponses `Blob` dans le service API frontend
 - Page détail item minimale
 - Navigation collections/items minimale
+- Création d'item frontend dynamique via `GET /api/plugins/:pluginId/schema`
+- Moteur de formulaires dynamiques frontend :
+  - champs fixes `title` obligatoire et `description` optionnel
+  - champs dynamiques depuis `schema.fields`
+  - types supportés : text, textarea, select, checkbox, date, number, rating
+  - validation légère : required, min, max, pattern, options
+  - fallback texte pour les select sans options
+  - conversion number/rating avant création
+  - conservation des checkbox à `false`
+  - affichage des erreurs frontend et backend
+  - création via `POST /api/items`
+  - redirection vers `/items/:id` après création
 - Galerie médias frontend minimale
 - Routes frontend protégées :
   - `/dashboard`
   - `/collections`
   - `/collections/:pluginId/items`
+  - `/collections/:pluginId/items/new`
   - `/items/:id`
+- Composants formulaire frontend :
+  - `DynamicForm.vue`
+  - `DynamicField.vue`
 - Composants collections/items frontend :
   - `CollectionCard.vue`
   - `ItemCard.vue`
@@ -130,7 +147,8 @@ Frontend :
 
 - Interface collections avancée
 - Gestion des plugins
-- Création / édition item frontend
+- Édition item frontend
+- Suppression item depuis le frontend
 - Interface complète d'upload images
 - Galerie médias avancée
 - Recherche avancée
@@ -139,8 +157,10 @@ Frontend :
 
 - Chargement N+1 des médias/thumbnails dans les listes items
 - Pas de pagination
-- Pas encore de formulaire création / édition item
+- Pas encore de formulaire édition item
+- Pas encore de suppression item depuis le frontend
 - Page `/items/:id` encore minimale pour les métadonnées item
+- Certains types déclarés dans `docs/plugin-api.md` ne sont pas encore validés par le backend
 
 ---
 
@@ -214,6 +234,34 @@ Variables disponibles :
 
 ## Fonctionnalités prévues
 
+### Lot 5.6 - Création item frontend dynamique
+
+#### Livré
+
+- Route protégée `/collections/:pluginId/items/new`
+- Bouton `Nouvel item` depuis la liste d'une collection
+- Chargement du schéma plugin via `GET /api/plugins/:pluginId/schema`
+- Formulaire dynamique frontend pour les types validés par le backend :
+  - text
+  - textarea
+  - select
+  - checkbox
+  - date
+  - number
+  - rating
+- Validation frontend légère :
+  - required
+  - min/max
+  - pattern
+  - options select
+- Conversion des champs number/rating en nombres avant `POST /api/items`
+- Conservation des checkboxes `false` dans `metadata`
+- Redirection vers `/items/:id` après création
+
+#### Prochaine étape
+
+- Lot 5.7 - Édition item
+
 ### Lot 5.1 - Backend upload minimal
 
 #### Livré
@@ -279,19 +327,21 @@ Variables disponibles :
 - Chargement des thumbnails via appels média existants
 - Limitation connue : chargement N+1 des médias/thumbnails dans les listes
 
-### Lot 5.6 - Création item frontend dynamique
+### Lot 5.7 - Édition item
 
 #### Objectifs
 
-- Formulaire de création item basé sur `fields.json`
-- Contrôles frontend cohérents avec la validation backend
-- Création d'un item depuis une collection
+- Charger un item existant
+- Préremplir le formulaire dynamique depuis les métadonnées item
+- Envoyer les modifications à l'API backend dédiée
+- Rediriger vers `/items/:id` après modification
 
 ### Lots suivants
 
 - Interface de gestion des collections
 - Recherche avancée
-- Gestion complète des médias
+- Galerie médias avancée
+- Suppression item depuis le frontend
 - Sauvegarde / restauration
 - Internationalisation complète
 - Interface d'administration

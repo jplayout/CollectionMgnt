@@ -6,7 +6,47 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 5.6 - Création item frontend dynamique.
+Étape suivante : Lot 5.7 - Édition item.
+
+---
+
+## État courant
+
+Version actuelle : v0.8-lot5.6.
+
+### Lot 5.6 - Livré
+
+- Route protégée `/collections/:pluginId/items/new`
+- Création d'item frontend dynamique pilotée par `GET /api/plugins/:pluginId/schema`
+- Formulaire dynamique pour les types validés par le backend :
+  - text
+  - textarea
+  - select
+  - checkbox
+  - date
+  - number
+  - rating
+- Validation frontend légère alignée sur la validation backend :
+  - required
+  - min
+  - max
+  - pattern
+  - options
+- Conversion des champs number/rating avant `POST /api/items`
+- Conservation des checkbox à `false`
+- Gestion des erreurs frontend et backend
+- Redirection vers `/items/:id` après création
+
+### Prochaine étape
+
+- Lot 5.7 - Édition item
+
+### Non livré à ce stade
+
+- Édition item frontend
+- Suppression item depuis le frontend
+- Affichage complet des métadonnées dans `ItemDetails`
+- Support backend des types plugin avancés : multiselect, url, email, barcode, isbn
 
 ---
 

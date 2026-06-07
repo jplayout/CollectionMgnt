@@ -61,7 +61,9 @@ Exemple :
 
 ---
 
-# Types supportés
+# Types réellement validés actuellement
+
+Le backend et le formulaire frontend dynamique valident actuellement les types suivants :
 
 - text
 - textarea
@@ -69,10 +71,17 @@ Exemple :
 - date
 - checkbox
 - select
+- rating
+
+---
+
+# Types documentés mais non encore supportés
+
+Ces types restent prévus dans le modèle de plugins, mais ne doivent pas être considérés comme disponibles tant que la validation backend n'est pas implémentée :
+
 - multiselect
 - url
 - email
-- rating
 - barcode
 - isbn
 

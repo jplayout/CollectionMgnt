@@ -39,3 +39,19 @@ export function getItems(
     );
 
 }
+
+export function createItem(
+    payload
+) {
+
+    return apiFetch(
+        '/api/items',
+        {
+            method:
+                'POST',
+            body:
+                payload
+        }
+    );
+
+}
