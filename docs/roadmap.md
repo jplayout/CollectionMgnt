@@ -12,7 +12,7 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État courant
 
-Version actuelle : v0.8-lot5.8.
+Version actuelle : v0.8-lot5.8.1.
 
 ### Lot 5.6 - Livré
 
@@ -57,6 +57,14 @@ Version actuelle : v0.8-lot5.8.
 - Page détail item enrichie avec titre, description, plugin, métadonnées et dates
 - Bouton `Modifier` depuis la page détail
 - Galerie média conservée sur la page détail
+
+### Lot 5.8.1 - Correctif livré
+
+- Bornage par défaut des champs `rating` à 0..20 côté backend
+- Attributs frontend par défaut `min=0`, `max=20` et `step=1` pour les champs `rating`
+- Surcharge possible des bornes via `min`, `max` et `step` dans le schéma plugin
+- Conservation du comportement actuel des champs `number`, sans bornes par défaut
+- `step` reste une contrainte UI uniquement pour ce lot
 
 ### Prochaine étape
 
@@ -317,3 +325,7 @@ Support multilingue.
 
 - Installation plugins ZIP
 - Catalogue de plugins
+
+## Lot futur 
+
+- Configuration des champs et préférences d’affichage

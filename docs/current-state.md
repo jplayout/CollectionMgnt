@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.8
+Version : v0.8-lot5.8.1
 
 ## État du projet
 
@@ -82,6 +82,7 @@ Frontend :
 - max
 - pattern
 - options
+- rating borné par défaut à 0..20 côté backend si `min`/`max` sont absents
 
 ---
 
@@ -112,6 +113,7 @@ Frontend :
   - libellés de soumission configurables
   - types supportés : text, textarea, select, checkbox, date, number, rating
   - validation légère : required, min, max, pattern, options
+  - rating borné par défaut à 0..20 avec step UI à 1
   - fallback texte pour les select sans options
   - conversion number/rating avant création ou édition
   - conservation des checkbox à `false`
@@ -368,8 +370,19 @@ Variables disponibles :
   - bouton `Modifier`
 - Galerie média conservée sur la page détail
 
+### Lot 5.8.1 - Bornage des champs rating
+
+#### Livré
+
+- Type `rating` borné par défaut à 0..20 côté backend
+- Attributs frontend par défaut `min=0`, `max=20` et `step=1` pour les champs `rating`
+- Surcharge possible via `min`, `max` et `step` dans le schéma plugin
+- Aucun bornage par défaut ajouté aux champs `number`
+- `step` reste une contrainte UI uniquement pour ce lot
+
 ### Lots suivants
 
+- Lot 5.9 - Suppression item frontend
 - Interface de gestion des collections
 - Recherche avancée
 - Galerie médias avancée

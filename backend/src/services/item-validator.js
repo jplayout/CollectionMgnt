@@ -68,6 +68,12 @@ export function validateItem(
     return errors;
 }
 
+const DEFAULT_RATING_MIN =
+    0;
+
+const DEFAULT_RATING_MAX =
+    20;
+
 function validateField(
     field,
     value,
@@ -110,8 +116,15 @@ function validateField(
             break;
 
         case 'number':
-        case 'rating':
             validateNumber(
+                field,
+                value,
+                errors
+            );
+            break;
+
+        case 'rating':
+            validateRating(
                 field,
                 value,
                 errors
@@ -272,6 +285,52 @@ function validateNumber(
 
         errors.push(
             `${field.name} must be less than or equal to ${field.max}`
+        );
+
+    }
+
+}
+
+function validateRating(
+    field,
+    value,
+    errors
+) {
+
+    if (
+        !isRealNumber(value)
+    ) {
+
+        errors.push(
+            `${field.name} must be a number`
+        );
+
+        return;
+
+    }
+
+    const min =
+        field.min ?? DEFAULT_RATING_MIN;
+
+    const max =
+        field.max ?? DEFAULT_RATING_MAX;
+
+    if (
+        value < min
+    ) {
+
+        errors.push(
+            `${field.name} must be greater than or equal to ${min}`
+        );
+
+    }
+
+    if (
+        value > max
+    ) {
+
+        errors.push(
+            `${field.name} must be less than or equal to ${max}`
         );
 
     }

@@ -121,6 +121,22 @@ Valeur minimale.
 
 Valeur maximale.
 
+## rating
+
+Un champ `rating` est une note numérique bornée.
+
+Par défaut :
+
+- `min` = 0
+- `max` = 20
+- `step` = 1 côté frontend
+
+Les propriétés `min`, `max` et `step` peuvent être déclarées dans `fields.json` pour surcharger ces valeurs.
+
+Le backend valide actuellement `min` et `max`. `step` est utilisé uniquement par l'interface frontend pour le champ HTML.
+
+Les affichages avancés de type étoiles, pourcentage, note sur 5 ou note sur 100 sont prévus comme évolution future et ne sont pas disponibles actuellement.
+
 ## pattern
 
 Expression régulière.

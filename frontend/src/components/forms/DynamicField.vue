@@ -109,6 +109,15 @@ const emit =
         'update:modelValue'
     ]);
 
+const DEFAULT_RATING_MIN =
+    0;
+
+const DEFAULT_RATING_MAX =
+    20;
+
+const DEFAULT_RATING_STEP =
+    1;
+
 const fieldId =
     computed(
         () => `field-${props.field.name}`
@@ -192,23 +201,59 @@ const inputType =
 
 const numberMin =
     computed(
-        () => isNumberField.value
-            ? props.field.min
-            : undefined
+        () => {
+
+            if (
+                isRatingField.value
+            ) {
+
+                return props.field.min ?? DEFAULT_RATING_MIN;
+
+            }
+
+            return isNumberField.value
+                ? props.field.min
+                : undefined;
+
+        }
     );
 
 const numberMax =
     computed(
-        () => isNumberField.value
-            ? props.field.max
-            : undefined
+        () => {
+
+            if (
+                isRatingField.value
+            ) {
+
+                return props.field.max ?? DEFAULT_RATING_MAX;
+
+            }
+
+            return isNumberField.value
+                ? props.field.max
+                : undefined;
+
+        }
     );
 
 const numberStep =
     computed(
-        () => isNumberField.value
-            ? props.field.step ?? 'any'
-            : undefined
+        () => {
+
+            if (
+                isRatingField.value
+            ) {
+
+                return props.field.step ?? DEFAULT_RATING_STEP;
+
+            }
+
+            return isNumberField.value
+                ? props.field.step ?? 'any'
+                : undefined;
+
+        }
     );
 
 const textPattern =
@@ -222,8 +267,12 @@ const textPattern =
 
 const isNumberField =
     computed(
-        () => props.field.type === 'number' ||
-            props.field.type === 'rating'
+        () => props.field.type === 'number'
+    );
+
+const isRatingField =
+    computed(
+        () => props.field.type === 'rating'
     );
 
 function updateValue(

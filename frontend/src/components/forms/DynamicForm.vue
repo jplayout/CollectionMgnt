@@ -87,6 +87,12 @@ const SUPPORTED_TYPES =
         'rating'
     ]);
 
+const DEFAULT_RATING_MIN =
+    0;
+
+const DEFAULT_RATING_MAX =
+    20;
+
 const props =
     defineProps({
         pluginId: {
@@ -506,25 +512,35 @@ function validateFieldValue(
 
         }
 
+        const min =
+            getNumberMin(
+                field
+            );
+
+        const max =
+            getNumberMax(
+                field
+            );
+
         if (
-            field.min !== undefined &&
-            value < field.min
+            min !== undefined &&
+            value < min
         ) {
 
             errors[field.name] =
-                `La valeur minimale est ${field.min}`;
+                `La valeur minimale est ${min}`;
 
             return;
 
         }
 
         if (
-            field.max !== undefined &&
-            value > field.max
+            max !== undefined &&
+            value > max
         ) {
 
             errors[field.name] =
-                `La valeur maximale est ${field.max}`;
+                `La valeur maximale est ${max}`;
 
             return;
 
@@ -572,6 +588,26 @@ function validateFieldValue(
         );
 
     }
+
+}
+
+function getNumberMin(
+    field
+) {
+
+    return field.type === 'rating'
+        ? field.min ?? DEFAULT_RATING_MIN
+        : field.min;
+
+}
+
+function getNumberMax(
+    field
+) {
+
+    return field.type === 'rating'
+        ? field.max ?? DEFAULT_RATING_MAX
+        : field.max;
 
 }
 
