@@ -22,6 +22,9 @@ from '../pages/ItemsListView.vue';
 import ItemCreateView
 from '../pages/ItemCreateView.vue';
 
+import ItemEditView
+from '../pages/ItemEditView.vue';
+
 import ItemDetails
 from '../pages/ItemDetails.vue';
 
@@ -103,6 +106,18 @@ const router =
                     'item-details',
                 component:
                     ItemDetails,
+                meta: {
+                    requiresAuth:
+                        true
+                }
+            },
+            {
+                path:
+                    '/items/:id/edit',
+                name:
+                    'item-edit',
+                component:
+                    ItemEditView,
                 meta: {
                     requiresAuth:
                         true

@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 5.8 - Frontend édition item.
+Étape suivante : Lot 5.9 - Suppression item frontend.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.8-lot5.7.
+Version actuelle : v0.8-lot5.8.
 
 ### Lot 5.6 - Livré
 
@@ -47,15 +47,24 @@ Version actuelle : v0.8-lot5.7.
 - Conservation des métadonnées inconnues existantes
 - Retour de l'item avec `metadata` parsé, code plugin et nom d'affichage plugin
 
+### Lot 5.8 - Livré
+
+- Route protégée `/items/:id/edit`
+- Chargement d'un item via `GET /api/items/:id`
+- Préremplissage du formulaire dynamique existant
+- Sauvegarde via `PATCH /api/items/:id`
+- Redirection vers `/items/:id` après modification
+- Page détail item enrichie avec titre, description, plugin, métadonnées et dates
+- Bouton `Modifier` depuis la page détail
+- Galerie média conservée sur la page détail
+
 ### Prochaine étape
 
-- Lot 5.8 - Frontend édition item
+- Lot 5.9 - Suppression item frontend
 
 ### Non livré à ce stade
 
-- Édition item frontend
 - Suppression item depuis le frontend
-- Affichage complet des métadonnées dans `ItemDetails`
 - Support backend des types plugin avancés : multiselect, url, email, barcode, isbn
 
 ---

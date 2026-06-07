@@ -59,7 +59,7 @@
                 :disabled="submitting"
                 type="submit"
             >
-                {{ submitting ? 'Création...' : 'Créer l’item' }}
+                {{ submitting ? submittingLabel : submitLabel }}
             </button>
         </div>
     </form>
@@ -106,6 +106,30 @@ const props =
                 false,
             type:
                 Boolean
+        },
+        initialValue: {
+            default:
+                null,
+            type:
+                Object
+        },
+        submitLabel: {
+            default:
+                'Créer l’item',
+            type:
+                String
+        },
+        submittingLabel: {
+            default:
+                'Création...',
+            type:
+                String
+        },
+        fallbackErrorMessage: {
+            default:
+                'Impossible d’enregistrer l’item',
+            type:
+                String
         },
         backendError: {
             default:
@@ -210,33 +234,48 @@ const backendMessages =
             }
 
             return [
-                'Impossible de créer l’item'
+                props.fallbackErrorMessage
             ];
 
         }
     );
 
 watch(
-    supportedFields,
-    initializeMetadata,
+    [
+        supportedFields,
+        () => props.initialValue
+    ],
+    resetForm,
     {
         immediate:
             true
     }
 );
 
-function initializeMetadata(
-    fields
-) {
+function resetForm() {
+
+    title.value =
+        props.initialValue?.title ?? '';
+
+    description.value =
+        props.initialValue?.description ?? '';
+
+    clearMetadata();
+
+    const initialMetadata =
+        props.initialValue?.metadata ?? {};
 
     for (
         const field
-        of fields
+        of supportedFields.value
     ) {
 
         if (
-            metadata[field.name] !== undefined
+            initialMetadata[field.name] !== undefined
         ) {
+
+            metadata[field.name] =
+                initialMetadata[field.name];
 
             continue;
 
@@ -246,6 +285,23 @@ function initializeMetadata(
             field.type === 'checkbox'
                 ? false
                 : '';
+
+    }
+
+    clearFrontendErrors();
+
+}
+
+function clearMetadata() {
+
+    for (
+        const key
+        of Object.keys(
+            metadata
+        )
+    ) {
+
+        delete metadata[key];
 
     }
 

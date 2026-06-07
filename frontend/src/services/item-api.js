@@ -40,6 +40,16 @@ export function getItems(
 
 }
 
+export function getItem(
+    id
+) {
+
+    return apiFetch(
+        `/api/items/${id}`
+    );
+
+}
+
 export function createItem(
     payload
 ) {
@@ -49,6 +59,23 @@ export function createItem(
         {
             method:
                 'POST',
+            body:
+                payload
+        }
+    );
+
+}
+
+export function updateItem(
+    id,
+    payload
+) {
+
+    return apiFetch(
+        `/api/items/${id}`,
+        {
+            method:
+                'PATCH',
             body:
                 payload
         }

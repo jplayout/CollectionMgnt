@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.7
+Version : v0.8-lot5.8
 
 ## État du projet
 
@@ -12,6 +12,7 @@ Frontend :
 - Dashboard : minimal
 - Collections : navigation minimale disponible
 - Création item : formulaire dynamique frontend disponible
+- Édition item : formulaire dynamique frontend disponible
 - Médias : backend disponible, galerie frontend minimale disponible
 
 ---
@@ -100,20 +101,24 @@ Frontend :
 - Service API centralisé
 - Support `FormData` dans le service API frontend
 - Support des réponses `Blob` dans le service API frontend
-- Page détail item minimale
+- Page détail item enrichie
 - Navigation collections/items minimale
 - Création d'item frontend dynamique via `GET /api/plugins/:pluginId/schema`
+- Édition d'item frontend dynamique via `GET /api/items/:id`, `GET /api/plugins/:pluginId/schema` et `PATCH /api/items/:id`
 - Moteur de formulaires dynamiques frontend :
   - champs fixes `title` obligatoire et `description` optionnel
   - champs dynamiques depuis `schema.fields`
+  - préremplissage via `initialValue`
+  - libellés de soumission configurables
   - types supportés : text, textarea, select, checkbox, date, number, rating
   - validation légère : required, min, max, pattern, options
   - fallback texte pour les select sans options
-  - conversion number/rating avant création
+  - conversion number/rating avant création ou édition
   - conservation des checkbox à `false`
   - affichage des erreurs frontend et backend
   - création via `POST /api/items`
-  - redirection vers `/items/:id` après création
+  - édition via `PATCH /api/items/:id`
+  - redirection vers `/items/:id` après création ou édition
 - Galerie médias frontend minimale
 - Routes frontend protégées :
   - `/dashboard`
@@ -121,6 +126,7 @@ Frontend :
   - `/collections/:pluginId/items`
   - `/collections/:pluginId/items/new`
   - `/items/:id`
+  - `/items/:id/edit`
 - Composants formulaire frontend :
   - `DynamicForm.vue`
   - `DynamicField.vue`
@@ -149,7 +155,6 @@ Frontend :
 
 - Interface collections avancée
 - Gestion des plugins
-- Édition item frontend
 - Suppression item depuis le frontend
 - Interface complète d'upload images
 - Galerie médias avancée
@@ -159,9 +164,9 @@ Frontend :
 
 - Chargement N+1 des médias/thumbnails dans les listes items
 - Pas de pagination
-- Pas encore de formulaire édition item
 - Pas encore de suppression item depuis le frontend
-- Page `/items/:id` encore minimale pour les métadonnées item
+- Pas encore d'édition des métadonnées de types non supportés
+- Pas encore de mise en page avancée de la fiche item
 - Certains types déclarés dans `docs/plugin-api.md` ne sont pas encore validés par le backend
 
 ---
@@ -262,10 +267,6 @@ Variables disponibles :
 - Conservation des checkboxes `false` dans `metadata`
 - Redirection vers `/items/:id` après création
 
-#### Prochaine étape
-
-- Lot 5.8 - Frontend édition item
-
 ### Lot 5.1 - Backend upload minimal
 
 #### Livré
@@ -348,12 +349,24 @@ Variables disponibles :
 
 ### Lot 5.8 - Frontend édition item
 
-#### Objectifs
+#### Livré
 
-- Charger un item existant
-- Préremplir le formulaire dynamique depuis les métadonnées item
-- Envoyer les modifications à `PATCH /api/items/:id`
-- Rediriger vers `/items/:id` après modification
+- Route protégée `/items/:id/edit`
+- Service frontend `getItem(id)`
+- Service frontend `updateItem(id, payload)`
+- Préremplissage de `DynamicForm.vue` via `initialValue`
+- Libellés configurables pour création et édition
+- Chargement du schéma plugin de l'item avant édition
+- Sauvegarde via `PATCH /api/items/:id`
+- Redirection vers `/items/:id` après modification
+- Page détail item enrichie :
+  - titre
+  - description
+  - plugin
+  - métadonnées dynamiques
+  - dates de création et modification
+  - bouton `Modifier`
+- Galerie média conservée sur la page détail
 
 ### Lots suivants
 
