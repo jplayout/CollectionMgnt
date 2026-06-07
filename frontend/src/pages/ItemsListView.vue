@@ -41,6 +41,13 @@
             </form>
         </section>
 
+        <p
+            v-if="showDeletedMessage"
+            class="success-message"
+        >
+            Item supprimé.
+        </p>
+
         <section class="content-panel">
             <div
                 v-if="loading"
@@ -132,6 +139,11 @@ const pluginTitle =
         () => pluginSchema.value?.plugin?.name ??
             pluginSchema.value?.plugin?.id ??
             pluginId.value
+    );
+
+const showDeletedMessage =
+    computed(
+        () => route.query.deleted !== undefined
     );
 
 onMounted(
@@ -267,6 +279,17 @@ h1 {
     border-radius: 8px;
     margin-bottom: 18px;
     padding: 18px;
+}
+
+.success-message {
+    background: #effaf2;
+    border: 1px solid #a7d7b4;
+    border-radius: 6px;
+    color: #246b37;
+    font-weight: 600;
+    margin: 0 auto 18px;
+    max-width: 1080px;
+    padding: 12px 14px;
 }
 
 .search-form {

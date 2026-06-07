@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.8.1
+Version : v0.8-lot5.9
 
 ## État du projet
 
@@ -13,6 +13,7 @@ Frontend :
 - Collections : navigation minimale disponible
 - Création item : formulaire dynamique frontend disponible
 - Édition item : formulaire dynamique frontend disponible
+- Suppression item : disponible depuis la fiche item
 - Médias : backend disponible, galerie frontend minimale disponible
 
 ---
@@ -106,6 +107,7 @@ Frontend :
 - Navigation collections/items minimale
 - Création d'item frontend dynamique via `GET /api/plugins/:pluginId/schema`
 - Édition d'item frontend dynamique via `GET /api/items/:id`, `GET /api/plugins/:pluginId/schema` et `PATCH /api/items/:id`
+- Suppression d'item depuis la fiche item via `DELETE /api/items/:id`
 - Moteur de formulaires dynamiques frontend :
   - champs fixes `title` obligatoire et `description` optionnel
   - champs dynamiques depuis `schema.fields`
@@ -157,7 +159,6 @@ Frontend :
 
 - Interface collections avancée
 - Gestion des plugins
-- Suppression item depuis le frontend
 - Interface complète d'upload images
 - Galerie médias avancée
 - Recherche avancée
@@ -166,7 +167,7 @@ Frontend :
 
 - Chargement N+1 des médias/thumbnails dans les listes items
 - Pas de pagination
-- Pas encore de suppression item depuis le frontend
+- La suppression d'un item ne nettoie pas encore les fichiers média sur disque
 - Pas encore d'édition des métadonnées de types non supportés
 - Pas encore de mise en page avancée de la fiche item
 - Certains types déclarés dans `docs/plugin-api.md` ne sont pas encore validés par le backend
@@ -380,13 +381,25 @@ Variables disponibles :
 - Aucun bornage par défaut ajouté aux champs `number`
 - `step` reste une contrainte UI uniquement pour ce lot
 
+### Lot 5.9 - Suppression item frontend
+
+#### Livré
+
+- Bouton `Supprimer` depuis la fiche item
+- Confirmation explicite avant suppression avec le titre réel de l'item
+- Suppression via `DELETE /api/items/:id`
+- État de suppression et affichage des erreurs inline
+- Redirection vers `/collections/:pluginId/items?deleted=1` après suppression
+- Message `Item supprimé.` dans la liste de collection après redirection
+- Suppression depuis la liste volontairement non intégrée dans ce lot
+- Limitation connue : les fichiers média associés ne sont pas encore nettoyés sur disque lors de la suppression d'un item
+
 ### Lots suivants
 
-- Lot 5.9 - Suppression item frontend
+- Lot 5.10 - Nettoyage des fichiers média lors de la suppression d'un item
 - Interface de gestion des collections
 - Recherche avancée
 - Galerie médias avancée
-- Suppression item depuis le frontend
 - Sauvegarde / restauration
 - Internationalisation complète
 - Interface d'administration

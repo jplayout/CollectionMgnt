@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 5.9 - Suppression item frontend.
+Étape suivante : Lot 5.10 - Nettoyage des fichiers média lors de la suppression d'un item.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.8-lot5.8.1.
+Version actuelle : v0.8-lot5.9.
 
 ### Lot 5.6 - Livré
 
@@ -66,13 +66,24 @@ Version actuelle : v0.8-lot5.8.1.
 - Conservation du comportement actuel des champs `number`, sans bornes par défaut
 - `step` reste une contrainte UI uniquement pour ce lot
 
+### Lot 5.9 - Livré
+
+- Suppression d'un item depuis sa fiche détail
+- Confirmation explicite avant suppression avec le titre réel de l'item
+- Appel frontend à `DELETE /api/items/:id`
+- État `Suppression...` et gestion des erreurs inline
+- Redirection vers la liste de collection après suppression
+- Message `Item supprimé.` dans la liste après redirection
+- Suppression depuis la liste non intégrée dans ce lot
+- Limitation restante : les fichiers média associés à l'item ne sont pas encore nettoyés sur disque
+
 ### Prochaine étape
 
-- Lot 5.9 - Suppression item frontend
+- Lot 5.10 - Nettoyage des fichiers média lors de la suppression d'un item
 
 ### Non livré à ce stade
 
-- Suppression item depuis le frontend
+- Nettoyage disque automatique des médias lors de la suppression d'un item
 - Support backend des types plugin avancés : multiselect, url, email, barcode, isbn
 
 ---

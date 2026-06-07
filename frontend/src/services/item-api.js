@@ -82,3 +82,17 @@ export function updateItem(
     );
 
 }
+
+export function deleteItem(
+    id
+) {
+
+    return apiFetch(
+        `/api/items/${id}`,
+        {
+            method:
+                'DELETE'
+        }
+    );
+
+}

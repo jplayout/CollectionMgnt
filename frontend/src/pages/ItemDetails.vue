@@ -14,13 +14,26 @@
                     <h1>{{ itemTitle }}</h1>
                 </div>
 
-                <RouterLink
+                <div
                     v-if="item"
-                    class="edit-link"
-                    :to="{ name: 'item-edit', params: { id: itemId } }"
+                    class="header-actions"
                 >
-                    Modifier
-                </RouterLink>
+                    <RouterLink
+                        class="edit-link"
+                        :to="{ name: 'item-edit', params: { id: itemId } }"
+                    >
+                        Modifier
+                    </RouterLink>
+
+                    <button
+                        class="delete-button"
+                        :disabled="deleting"
+                        type="button"
+                        @click="deleteCurrentItem"
+                    >
+                        {{ deleting ? 'Suppression...' : 'Supprimer' }}
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -43,6 +56,13 @@
                 v-else-if="item"
                 class="item-summary"
             >
+                <p
+                    v-if="deleteError"
+                    class="delete-error"
+                >
+                    {{ deleteError }}
+                </p>
+
                 <p
                     v-if="item.description"
                     class="description"
@@ -102,7 +122,8 @@ import {
 } from 'vue';
 
 import {
-    useRoute
+    useRoute,
+    useRouter
 } from 'vue-router';
 
 import MediaGallery
@@ -113,11 +134,15 @@ import {
 } from '../services/api.js';
 
 import {
+    deleteItem,
     getItem
 } from '../services/item-api.js';
 
 const route =
     useRoute();
+
+const router =
+    useRouter();
 
 const item =
     ref(null);
@@ -126,6 +151,12 @@ const loading =
     ref(false);
 
 const error =
+    ref('');
+
+const deleting =
+    ref(false);
+
+const deleteError =
     ref('');
 
 const itemId =
@@ -208,6 +239,9 @@ async function loadItem() {
     error.value =
         '';
 
+    deleteError.value =
+        '';
+
     try {
 
         item.value =
@@ -228,6 +262,87 @@ async function loadItem() {
     } finally {
 
         loading.value =
+            false;
+
+    }
+
+}
+
+async function deleteCurrentItem() {
+
+    if (
+        !item.value ||
+        deleting.value
+    ) {
+
+        return;
+
+    }
+
+    const shouldDelete =
+        window.confirm(
+            `Supprimer définitivement "${item.value.title}" ? Cette action est irréversible.`
+        );
+
+    if (
+        !shouldDelete
+    ) {
+
+        return;
+
+    }
+
+    deleting.value =
+        true;
+
+    deleteError.value =
+        '';
+
+    const plugin =
+        item.value.plugin;
+
+    try {
+
+        await deleteItem(
+            itemId.value
+        );
+
+        if (
+            plugin
+        ) {
+
+            await router.push({
+                name:
+                    'collection-items',
+                params: {
+                    pluginId:
+                        plugin
+                },
+                query: {
+                    deleted:
+                        '1'
+                }
+            });
+
+            return;
+
+        }
+
+        await router.push({
+            name:
+                'collections'
+        });
+
+    } catch (deleteRequestError) {
+
+        deleteError.value =
+            deleteRequestError instanceof ApiError
+                ? deleteRequestError.message
+                : 'Impossible de supprimer l’item';
+
+    } finally {
+
+        deleting.value =
             false;
 
     }
@@ -315,6 +430,12 @@ function formatDate(
     justify-content: space-between;
 }
 
+.header-actions {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+}
+
 .back-link {
     color: #1f6feb;
     font-weight: 600;
@@ -325,10 +446,14 @@ function formatDate(
     text-decoration: underline;
 }
 
-.edit-link {
+.edit-link,
+.delete-button {
     background: #172033;
+    border: 0;
     border-radius: 6px;
     color: #ffffff;
+    cursor: pointer;
+    font: inherit;
     font-weight: 600;
     padding: 10px 14px;
     text-decoration: none;
@@ -336,6 +461,19 @@ function formatDate(
 
 .edit-link:hover {
     background: #26324a;
+}
+
+.delete-button {
+    background: #b42318;
+}
+
+.delete-button:hover:not(:disabled) {
+    background: #8f1d14;
+}
+
+.delete-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
 }
 
 .eyebrow {
@@ -372,6 +510,15 @@ h2 {
 
 .state-panel.error {
     color: #b42318;
+}
+
+.delete-error {
+    background: #fff4f2;
+    border: 1px solid #f3b4ac;
+    border-radius: 6px;
+    color: #b42318;
+    margin: 0 0 18px;
+    padding: 10px 12px;
 }
 
 .description {
@@ -423,6 +570,11 @@ dd {
 @media (max-width: 720px) {
     .header-row {
         align-items: start;
+        display: grid;
+    }
+
+    .header-actions {
+        align-items: stretch;
         display: grid;
     }
 
