@@ -2,7 +2,7 @@
 
 ## État actuel
 
-Lot livré : 5.5 - Navigation collections/items minimale.
+Lot livré : 5.10 - Nettoyage des fichiers média lors de la suppression d'un item.
 
 Fonctionnalités disponibles :
 
@@ -35,6 +35,7 @@ Fonctionnalités disponibles :
 - Suppression d'image depuis le frontend
 - Affichage de l'image principale dans les cartes items
 - Chargement des thumbnails des cartes items via `Blob` authentifié
+- Nettoyage automatique du dossier média d'un item lors de sa suppression
 
 ## Stockage disque
 
@@ -109,19 +110,30 @@ Routes disponibles :
 - `GET /api/media/:id/thumb`
 - `PATCH /api/media/:id/primary`
 - `DELETE /api/media/:id`
+- `DELETE /api/items/:id`
+
+## Suppression d'un item
+
+Lorsqu'un item est supprimé via `DELETE /api/items/:id` :
+
+- l'item est supprimé en base en premier
+- SQLite supprime les lignes `media` associées via `ON DELETE CASCADE`
+- le backend tente ensuite de supprimer le dossier `backend/data/uploads/items/{itemId}`
+- les sous-dossiers `originals`, `images` et `thumbs` sont donc nettoyés avec le dossier item
+- le nettoyage disque est best-effort : les fichiers ou dossiers déjà absents sont acceptés
+- une erreur de nettoyage disque est logguée sans annuler la suppression DB déjà effectuée
 
 ## Non encore implémenté
 
 - Galerie avancée
 - Optimisation du chargement N+1 des médias/thumbnails dans les listes
-- Nettoyage automatique des fichiers lors de la suppression d'un item
 
 ## Prochaine étape
 
-Lot 5.6 - Création item frontend dynamique.
+Lot 5.11 - Recherche avancée.
 
 Objectifs :
 
-- Formulaire de création item basé sur `fields.json`
-- Contrôles frontend cohérents avec la validation backend
-- Création d'un item depuis une collection
+- Recherche multi-collections
+- Filtres dynamiques plus complets
+- Exploitation des champs `searchable` et `filterable`

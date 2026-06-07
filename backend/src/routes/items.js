@@ -10,6 +10,10 @@ import {
     validateItem
 } from '../services/item-validator.js';
 
+import {
+    MediaService
+} from '../services/media-service.js';
+
 export default async function (
     fastify
 ) {
@@ -21,6 +25,11 @@ export default async function (
 
     const pluginRepository =
         new PluginRepository(
+            fastify.db
+        );
+
+    const mediaService =
+        new MediaService(
             fastify.db
         );
 
@@ -347,11 +356,52 @@ export default async function (
 
     fastify.delete(
         '/api/items/:id',
-        async request => {
+        async (
+            request,
+            reply
+        ) => {
+
+            const item =
+                repository.findById(
+                    request.params.id
+                );
+
+            if (
+                !item
+            ) {
+
+                return reply
+                    .code(404)
+                    .send({
+                        error:
+                            'Item not found'
+                    });
+
+            }
 
             repository.delete(
-                request.params.id
+                item.id
             );
+
+            try {
+
+                await mediaService.cleanupItemMediaFiles(
+                    item.id
+                );
+
+            } catch (cleanupError) {
+
+                request.log.error(
+                    {
+                        error:
+                            cleanupError,
+                        itemId:
+                            item.id
+                    },
+                    'Failed to cleanup item media files'
+                );
+
+            }
 
             return {
                 success: true

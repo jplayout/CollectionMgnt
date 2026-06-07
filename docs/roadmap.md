@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 5.10 - Nettoyage des fichiers média lors de la suppression d'un item.
+Étape suivante : Lot 5.11 - Recherche avancée.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.8-lot5.9.
+Version actuelle : v0.8-lot5.10.
 
 ### Lot 5.6 - Livré
 
@@ -75,15 +75,23 @@ Version actuelle : v0.8-lot5.9.
 - Redirection vers la liste de collection après suppression
 - Message `Item supprimé.` dans la liste après redirection
 - Suppression depuis la liste non intégrée dans ce lot
-- Limitation restante : les fichiers média associés à l'item ne sont pas encore nettoyés sur disque
+- Limitation restante à ce stade du Lot 5.9 : les fichiers média associés à l'item n'étaient pas encore nettoyés sur disque
+
+### Lot 5.10 - Livré
+
+- `DELETE /api/items/:id` retourne 404 si l'item est absent
+- Suppression DB de l'item avant nettoyage disque
+- Conservation de la cascade SQLite pour supprimer les lignes `media`
+- Nettoyage best-effort du dossier `backend/data/uploads/items/{itemId}`
+- Suppression physique des sous-dossiers `originals`, `images` et `thumbs`
+- Erreurs de nettoyage disque logguées sans rollback de la suppression DB
 
 ### Prochaine étape
 
-- Lot 5.10 - Nettoyage des fichiers média lors de la suppression d'un item
+- Lot 5.11 - Recherche avancée
 
 ### Non livré à ce stade
 
-- Nettoyage disque automatique des médias lors de la suppression d'un item
 - Support backend des types plugin avancés : multiselect, url, email, barcode, isbn
 
 ---
@@ -112,7 +120,9 @@ Poser les bases techniques du projet.
 
 - Docker
 - Docker Compose
-- Synology compatible
+- Déploiement Docker auto-hébergé
+- Plateforme prioritaire : Synology NAS
+- Compatible avec tout environnement Docker disposant d'un volume persistant
 
 ### Livrables
 
@@ -291,8 +301,9 @@ Support multilingue.
 
 ### Compatible
 
-- Synology NAS
-- Docker Compose
+- Déploiement Docker auto-hébergé
+- Plateforme prioritaire/testée/documentée : Synology NAS
+- Tout environnement Docker disposant d'un volume persistant
 
 ---
 
@@ -340,3 +351,4 @@ Support multilingue.
 ## Lot futur 
 
 - Configuration des champs et préférences d’affichage
+- outil d’audit média permettant de détecter les fichiers orphelins et les entrées DB invalides, avec nettoyage manuel depuis l’administration.

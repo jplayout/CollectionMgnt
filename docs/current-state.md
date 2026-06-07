@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.9
+Version : v0.8-lot5.10
 
 ## État du projet
 
@@ -51,6 +51,7 @@ Frontend :
 - Service du fichier original
 - Service de la miniature
 - Suppression média + fichiers associés
+- Nettoyage des fichiers média physiques lors de la suppression d'un item
 - Définition de l'image principale
 - Garantie d'une seule image principale par item
 - Promotion automatique de la plus ancienne image restante si l'image principale est supprimée
@@ -167,7 +168,6 @@ Frontend :
 
 - Chargement N+1 des médias/thumbnails dans les listes items
 - Pas de pagination
-- La suppression d'un item ne nettoie pas encore les fichiers média sur disque
 - Pas encore d'édition des métadonnées de types non supportés
 - Pas encore de mise en page avancée de la fiche item
 - Certains types déclarés dans `docs/plugin-api.md` ne sont pas encore validés par le backend
@@ -239,7 +239,9 @@ Variables disponibles :
 - JWT pour l'authentification
 - Plugins dynamiques comme unité fonctionnelle
 - Métadonnées stockées en JSON
-- Déploiement cible : Synology NAS
+- Déploiement Docker auto-hébergé
+- Plateforme prioritaire/testée/documentée : Synology NAS
+- Compatible avec tout environnement Docker disposant d'un volume persistant
 - Pas d'inscription publique
 
 ---
@@ -392,13 +394,24 @@ Variables disponibles :
 - Redirection vers `/collections/:pluginId/items?deleted=1` après suppression
 - Message `Item supprimé.` dans la liste de collection après redirection
 - Suppression depuis la liste volontairement non intégrée dans ce lot
-- Limitation connue : les fichiers média associés ne sont pas encore nettoyés sur disque lors de la suppression d'un item
+- Limitation connue à ce stade du Lot 5.9 : les fichiers média associés n'étaient pas encore nettoyés sur disque lors de la suppression d'un item
+
+### Lot 5.10 - Nettoyage des fichiers média lors de la suppression d'un item
+
+#### Livré
+
+- `DELETE /api/items/:id` retourne 404 si l'item est absent
+- Suppression DB de l'item avant nettoyage disque
+- Suppression des lignes `media` par cascade SQLite `ON DELETE CASCADE`
+- Nettoyage best-effort du dossier `backend/data/uploads/items/{itemId}`
+- Suppression physique des sous-dossiers `originals`, `images` et `thumbs`
+- Les dossiers ou fichiers déjà absents sont acceptés
+- Les erreurs de nettoyage disque sont logguées sans annuler la suppression DB
 
 ### Lots suivants
 
-- Lot 5.10 - Nettoyage des fichiers média lors de la suppression d'un item
+- Lot 5.11 - Recherche avancée
 - Interface de gestion des collections
-- Recherche avancée
 - Galerie médias avancée
 - Sauvegarde / restauration
 - Internationalisation complète
@@ -406,7 +419,9 @@ Variables disponibles :
 
 ## Principes du projet
 
-- Auto-hébergement Synology
+- Déploiement Docker auto-hébergé
+- Plateforme prioritaire : Synology NAS
+- Compatible avec tout environnement Docker disposant d'un volume persistant
 - SQLite privilégié
 - Pas d'inscription publique
 - Plugins comme unité fonctionnelle

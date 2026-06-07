@@ -407,6 +407,22 @@ export class MediaService {
 
     }
 
+    async cleanupItemMediaFiles(itemId) {
+
+        await fsp.rm(
+            getItemMediaDirectory(
+                itemId
+            ),
+            {
+                force:
+                    true,
+                recursive:
+                    true
+            }
+        );
+
+    }
+
 }
 
 async function validateImageContent(buffer) {
@@ -593,6 +609,20 @@ function getMediaFilePath(
         String(itemId),
         'originals',
         filename
+    );
+
+}
+
+function getItemMediaDirectory(
+    itemId
+) {
+
+    return path.join(
+        process.cwd(),
+        'data',
+        'uploads',
+        'items',
+        String(itemId)
     );
 
 }
