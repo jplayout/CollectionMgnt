@@ -29,3 +29,34 @@ export function getDisplayPreferences(
     );
 
 }
+
+export function updateDisplayPreferences(
+    pluginId,
+    payload
+) {
+
+    return apiFetch(
+        `/api/plugins/${pluginId}/display-preferences`,
+        {
+            method:
+                'PUT',
+            body:
+                payload
+        }
+    );
+
+}
+
+export function resetDisplayPreferences(
+    pluginId
+) {
+
+    return apiFetch(
+        `/api/plugins/${pluginId}/display-preferences`,
+        {
+            method:
+                'DELETE'
+        }
+    );
+
+}

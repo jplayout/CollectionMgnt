@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.10-lot7.0.2
+Version : v0.10-lot7.0.3
 
 ## État du projet
 
@@ -123,6 +123,8 @@ Frontend :
 - Filtres dynamiques frontend par collection depuis les champs `filterable`
 - Cartes items pilotées par les préférences d'affichage backend pour les champs mis en avant et la densité
 - Cartes items avec labels issus du schéma plugin quand les préférences sont disponibles
+- Panneau d'édition des préférences d'affichage depuis la liste d'une collection
+- Édition frontend des champs mis en avant, de leur ordre, de la densité des cartes, de l'ordre détail et des champs masqués
 - Moteur de formulaires dynamiques frontend :
   - champs fixes `title` obligatoire et `description` optionnel
   - champs dynamiques depuis `schema.fields`
@@ -625,9 +627,22 @@ Variables disponibles :
 - Formatage metadata partagé côté frontend
 - Aucun panneau d'édition, de sauvegarde ou de reset des préférences dans ce lot
 
+### Lot 7.0.3 - Panneau d'édition des préférences d'affichage
+
+- Bouton `Affichage` disponible dans la liste d'une collection
+- Panneau inline d'édition des préférences d'affichage
+- Édition des champs affichés sur les cartes via `list.highlightedFields`
+- Réordonnancement des champs affichés avec boutons `Monter` et `Descendre`
+- Édition de la densité des cartes : `comfortable` ou `compact`
+- Édition de l'ordre des champs de fiche détail via `details.fieldOrder`
+- Masquage des champs de fiche détail via `details.hiddenFields`
+- Sauvegarde via `PUT /api/plugins/:pluginId/display-preferences`
+- Réinitialisation via `DELETE /api/plugins/:pluginId/display-preferences`
+- Fermeture du panneau après sauvegarde ou réinitialisation réussie
+- Aucun drag & drop, format rating/date avancé, champ principal alternatif ou vue tableau dans ce lot
+
 ### Lots suivants
 
-- Lot 7.0.3 - Panneau d'édition des préférences d'affichage
 - Lot 5.14 - Pagination des listes items
 - Interface de gestion des collections
 - Galerie médias avancée

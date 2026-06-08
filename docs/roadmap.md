@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 7.0.3 - Panneau d’édition des préférences d’affichage.
+Étape suivante : Lot 5.14 - Pagination des listes items.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.10-lot7.0.2.
+Version actuelle : v0.10-lot7.0.3.
 
 ### Lot 5.6 - Livré
 
@@ -231,9 +231,22 @@ Version actuelle : v0.10-lot7.0.2.
 - Formatage des métadonnées partagé côté frontend
 - Aucun panneau d'édition, de sauvegarde ou de reset des préférences dans ce lot
 
+### Lot 7.0.3 - Livré
+
+- Bouton `Affichage` dans la liste d'une collection
+- Panneau inline d'édition des préférences d'affichage
+- Édition des champs mis en avant sur les cartes via `list.highlightedFields`
+- Réordonnancement par boutons `Monter` et `Descendre`
+- Édition de la densité des cartes via `list.density`
+- Édition de l'ordre de fiche détail via `details.fieldOrder`
+- Masquage de champs en fiche détail via `details.hiddenFields`
+- Sauvegarde via `PUT /api/plugins/:pluginId/display-preferences`
+- Réinitialisation via `DELETE /api/plugins/:pluginId/display-preferences`
+- Aucun drag & drop, format rating/date avancé, champ principal alternatif ou vue tableau dans ce lot
+
 ### Prochaine étape
 
-- Lot 7.0.3 - Panneau d’édition des préférences d’affichage
+- Lot 5.14 - Pagination des listes items
 
 ### Non livré à ce stade
 

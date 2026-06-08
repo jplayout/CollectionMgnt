@@ -329,18 +329,23 @@ function revokeThumbUrl() {
     border: 1px solid #d8dee8;
     border-radius: 8px;
     display: grid;
-    overflow: hidden;
+    grid-template-rows: auto 1fr;
+    min-height: 0;
+    overflow: visible;
 }
 
 .thumb-frame {
     aspect-ratio: 4 / 3;
     background: #eef2f7;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
 }
 
 img {
     display: block;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center center;
     width: 100%;
 }
 
@@ -357,6 +362,8 @@ img {
 .item-body {
     display: grid;
     gap: 14px;
+    grid-template-rows: auto auto auto;
+    min-height: 0;
     padding: 16px;
 }
 
@@ -378,6 +385,7 @@ h2 {
     display: grid;
     gap: 8px;
     margin: 0;
+    min-height: 0;
 }
 
 .item-card.compact .metadata-list {
@@ -405,6 +413,7 @@ dd {
     color: #ffffff;
     font-weight: 700;
     justify-self: start;
+    margin-top: 2px;
     padding: 9px 12px;
     text-decoration: none;
 }

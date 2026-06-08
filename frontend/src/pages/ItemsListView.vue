@@ -47,6 +47,14 @@
                     >
                         Réinitialiser
                     </button>
+
+                    <button
+                        class="secondary-button"
+                        type="button"
+                        @click="toggleDisplayPanel"
+                    >
+                        Affichage
+                    </button>
                 </div>
 
                 <section
@@ -140,6 +148,17 @@
                     </div>
                 </section>
             </form>
+
+            <DisplayPreferencesPanel
+                v-if="isDisplayPanelOpen"
+                :error="displayPreferencesError"
+                :fields="schemaFields"
+                :preferences="displayPreferences"
+                :saving="savingDisplayPreferences"
+                @cancel="closeDisplayPanel"
+                @reset="resetPreferences"
+                @save="savePreferences"
+            />
         </section>
 
         <p
@@ -210,8 +229,13 @@ import {
 
 import {
     getDisplayPreferences,
-    getPluginSchema
+    getPluginSchema,
+    resetDisplayPreferences,
+    updateDisplayPreferences
 } from '../services/plugin-api.js';
+
+import DisplayPreferencesPanel
+from '../components/display/DisplayPreferencesPanel.vue';
 
 import ItemCard
 from '../components/items/ItemCard.vue';
@@ -229,6 +253,15 @@ const pluginSchema =
 
 const displayPreferences =
     ref(null);
+
+const isDisplayPanelOpen =
+    ref(false);
+
+const savingDisplayPreferences =
+    ref(false);
+
+const displayPreferencesError =
+    ref('');
 
 const items =
     ref([]);
@@ -301,6 +334,12 @@ watch(
 
 async function loadPage() {
 
+    isDisplayPanelOpen.value =
+        false;
+
+    displayPreferencesError.value =
+        '';
+
     await Promise.all([
         loadSchema(),
         loadDisplayPreferences()
@@ -343,6 +382,110 @@ async function loadDisplayPreferences() {
 
         displayPreferences.value =
             null;
+
+    }
+
+}
+
+function toggleDisplayPanel() {
+
+    displayPreferencesError.value =
+        '';
+
+    isDisplayPanelOpen.value =
+        !isDisplayPanelOpen.value;
+
+}
+
+function closeDisplayPanel() {
+
+    displayPreferencesError.value =
+        '';
+
+    isDisplayPanelOpen.value =
+        false;
+
+}
+
+async function savePreferences(
+    preferences
+) {
+
+    savingDisplayPreferences.value =
+        true;
+
+    displayPreferencesError.value =
+        '';
+
+    try {
+
+        displayPreferences.value =
+            await updateDisplayPreferences(
+                pluginId.value,
+                preferences
+            );
+
+        isDisplayPanelOpen.value =
+            false;
+
+    } catch (saveError) {
+
+        displayPreferencesError.value =
+            saveError instanceof ApiError
+                ? saveError.message
+                : 'Impossible d’enregistrer les préférences d’affichage';
+
+    } finally {
+
+        savingDisplayPreferences.value =
+            false;
+
+    }
+
+}
+
+async function resetPreferences() {
+
+    const shouldReset =
+        window.confirm(
+            'Réinitialiser les préférences d’affichage de cette collection ?'
+        );
+
+    if (
+        !shouldReset
+    ) {
+
+        return;
+
+    }
+
+    savingDisplayPreferences.value =
+        true;
+
+    displayPreferencesError.value =
+        '';
+
+    try {
+
+        displayPreferences.value =
+            await resetDisplayPreferences(
+                pluginId.value
+            );
+
+        isDisplayPanelOpen.value =
+            false;
+
+    } catch (resetError) {
+
+        displayPreferencesError.value =
+            resetError instanceof ApiError
+                ? resetError.message
+                : 'Impossible de réinitialiser les préférences d’affichage';
+
+    } finally {
+
+        savingDisplayPreferences.value =
+            false;
 
     }
 
@@ -738,7 +881,7 @@ h1 {
     align-items: end;
     display: grid;
     gap: 12px;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
 }
 
 label {
@@ -830,6 +973,7 @@ h2 {
 }
 
 .items-grid {
+    align-items: start;
     display: grid;
     gap: 16px;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
