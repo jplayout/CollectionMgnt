@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 5.12 - Recherche backend sur champs searchable ou clarification backend des filtres typés.
+Étape suivante : Lot 5.13 - Clarification du contrat backend des filtres typés.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.8-lot5.11.
+Version actuelle : v0.8-lot5.12.
 
 ### Lot 5.6 - Livré
 
@@ -105,9 +105,20 @@ Version actuelle : v0.8-lot5.11.
 - Limitation restante : pas de tri
 - Limitation restante : certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
 
+### Lot 5.12 - Livré
+
+- Paramètre `search` sur `GET /api/items`
+- Recherche large dans `items.title` et `items.description`
+- Recherche dans les metadata déclarées `searchable` quand un plugin courant est fourni
+- Combinaison possible avec `plugin` et les filtres `filterable`
+- Compatibilité conservée avec `title`
+- Combinaison de `title` et `search` en `AND`
+- Liste collection frontend basculée de la recherche titre vers la recherche large `search`
+- Pas de FTS, pas de pagination, pas de tri configurable et pas de recherche metadata globale multi-plugins dans ce lot
+
 ### Prochaine étape
 
-- Lot 5.12 - Recherche backend sur champs searchable ou clarification backend des filtres typés
+- Lot 5.13 - Clarification du contrat backend des filtres typés
 
 ### Non livré à ce stade
 

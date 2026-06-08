@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.11
+Version : v0.8-lot5.12
 
 ## État du projet
 
@@ -33,7 +33,8 @@ Frontend :
 - Consultation d'un item par id
 - Édition d'items côté backend
 - Suppression d'items
-- Recherche par titre
+- Recherche large via `search` sur titre, description et champs metadata `searchable` du plugin courant
+- Recherche legacy par titre via `title`
 - Filtrage par plugin
 - Filtrage dynamique sur les champs déclarés `filterable`
 
@@ -109,6 +110,7 @@ Frontend :
 - Création d'item frontend dynamique via `GET /api/plugins/:pluginId/schema`
 - Édition d'item frontend dynamique via `GET /api/items/:id`, `GET /api/plugins/:pluginId/schema` et `PATCH /api/items/:id`
 - Suppression d'item depuis la fiche item via `DELETE /api/items/:id`
+- Recherche large frontend par collection via le paramètre backend `search`
 - Filtres dynamiques frontend par collection depuis les champs `filterable`
 - Moteur de formulaires dynamiques frontend :
   - champs fixes `title` obligatoire et `description` optionnel
@@ -170,7 +172,7 @@ Frontend :
 - Pas de pagination
 - Pas encore de tri configurable
 - Pas encore de recherche globale multi-collections
-- Les champs `searchable` ne sont pas encore exploités par la recherche backend
+- Pas de recherche globale multi-plugins sur les metadata `searchable`
 - Certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
 - Pas encore d'édition des métadonnées de types non supportés
 - Pas encore de mise en page avancée de la fiche item
@@ -428,9 +430,23 @@ Variables disponibles :
 - Certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
 - Les champs `searchable` ne sont pas encore utilisés pour une recherche multi-champs
 
+### Lot 5.12 - Recherche backend sur champs searchable
+
+#### Livré
+
+- Paramètre `search` sur `GET /api/items`
+- Recherche `search` dans `items.title` et `items.description`
+- Recherche `search` dans les metadata déclarées `searchable` quand un plugin courant est fourni
+- Champs `searchable` transmis au repository depuis le schéma plugin uniquement
+- Combinaison de `search` avec `plugin` et les filtres `filterable` existants
+- Compatibilité conservée avec le paramètre legacy `title`
+- Combinaison de `title` et `search` en `AND` si les deux paramètres sont présents
+- Frontend liste collection basculé sur `search`
+- Pas de FTS, pas de pagination, pas de tri configurable et pas de recherche metadata globale multi-plugins dans ce lot
+
 ### Lots suivants
 
-- Lot 5.12 - Recherche backend sur champs `searchable` ou clarification backend des filtres typés
+- Lot 5.13 - Clarification du contrat backend des filtres typés
 - Interface de gestion des collections
 - Galerie médias avancée
 - Sauvegarde / restauration

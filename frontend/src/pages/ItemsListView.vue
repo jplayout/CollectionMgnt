@@ -30,8 +30,8 @@
                     <label>
                         Recherche
                         <input
-                            v-model="searchTitle"
-                            placeholder="Titre"
+                            v-model="searchQuery"
+                            placeholder="Titre, description ou champs recherchables"
                             type="search"
                         >
                     </label>
@@ -227,7 +227,7 @@ const pluginSchema =
 const items =
     ref([]);
 
-const searchTitle =
+const searchQuery =
     ref('');
 
 const filterValues =
@@ -330,8 +330,8 @@ async function loadItems() {
             await getItems({
                 plugin:
                     pluginId.value,
-                title:
-                    searchTitle.value.trim(),
+                search:
+                    searchQuery.value.trim(),
                 ...buildBackendFilterParams()
             });
 
@@ -360,7 +360,7 @@ async function loadItems() {
 
 function resetFilters() {
 
-    searchTitle.value =
+    searchQuery.value =
         '';
 
     resetFilterValues();

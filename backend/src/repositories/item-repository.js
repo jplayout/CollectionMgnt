@@ -113,6 +113,58 @@ export class ItemRepository {
 
         }
 
+        if (filters.search) {
+
+            const searchClauses = [
+                'title LIKE ?',
+                'description LIKE ?'
+            ];
+
+            const searchParams = [
+                `%${filters.search}%`,
+                `%${filters.search}%`
+            ];
+
+            for (
+                const field
+                of filters.searchableFields ?? []
+            ) {
+
+                if (
+                    !isSafeMetadataFieldName(
+                        field
+                    )
+                ) {
+
+                    continue;
+
+                }
+
+                searchClauses.push(`
+                    CAST(json_extract(
+                        metadata,
+                        '$.${field}'
+                    ) AS TEXT) LIKE ?
+                `);
+
+                searchParams.push(
+                    `%${filters.search}%`
+                );
+
+            }
+
+            sql += `
+                AND (
+                    ${searchClauses.join(' OR ')}
+                )
+            `;
+
+            params.push(
+                ...searchParams
+            );
+
+        }
+
         if (
             filters.metadataFilters
         ) {
@@ -170,5 +222,15 @@ export class ItemRepository {
             .run(id);
 
     }
+
+}
+
+function isSafeMetadataFieldName(
+    fieldName
+) {
+
+    return /^[A-Za-z0-9_]+$/.test(
+        fieldName
+    );
 
 }

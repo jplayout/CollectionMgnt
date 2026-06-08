@@ -91,7 +91,13 @@ Ces types restent prévus dans le modèle de plugins, mais ne doivent pas être 
 
 ## searchable
 
-Participe à la recherche avancée.
+Participe actuellement à la recherche large `search` de `GET /api/items`.
+
+Quand un plugin courant est fourni avec `plugin=...`, les champs metadata déclarés `searchable: true` sont recherchés avec `LIKE` en plus de `items.title` et `items.description`.
+
+Les champs `searchable` utilisés par le backend viennent du schéma plugin chargé côté serveur. La query utilisateur ne peut pas fournir sa propre liste de champs recherchables.
+
+Sans paramètre `plugin`, `search` cherche actuellement dans `items.title` et `items.description`, mais pas dans les metadata de tous les plugins.
 
 ## globalSearch
 

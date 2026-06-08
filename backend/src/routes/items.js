@@ -162,8 +162,26 @@ export default async function (
             }
 
             if (
+                query.search
+            ) {
+
+                filters.search =
+                    query.search;
+
+            }
+
+            if (
                 pluginDefinition
             ) {
+
+                filters.searchableFields =
+                    pluginDefinition.fields
+                        .filter(
+                            field => field.searchable
+                        )
+                        .map(
+                            field => field.name
+                        );
 
                 for (
                     const field
