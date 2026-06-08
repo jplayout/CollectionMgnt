@@ -108,6 +108,22 @@ jobs:
             echo "EOF"
           } >> "${GITHUB_ENV}"
 
+      - name: Pull base images with retry
+        run: |
+          for image in node:22 nginx:1.27-alpine; do
+            for attempt in 1 2 3 4 5; do
+              if docker pull "${image}"; then
+                break
+              fi
+
+              if [ "${attempt}" = "5" ]; then
+                exit 1
+              fi
+
+              sleep $((attempt * 10))
+            done
+          done
+
       - name: Build backend image
         run: docker build -t "${BACKEND_IMAGE}:ci" ./backend
 
