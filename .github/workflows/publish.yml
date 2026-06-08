@@ -87,24 +87,34 @@ jobs:
       - name: Prepare image tags
         run: |
           SHORT_SHA="${GITHUB_SHA::7}"
+          BACKEND_TAGS="${BACKEND_IMAGE}:sha-${SHORT_SHA}"
+          FRONTEND_TAGS="${FRONTEND_IMAGE}:sha-${SHORT_SHA}"
+
+          echo "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}"
+          echo "GITHUB_REF=${GITHUB_REF}"
+          echo "GITHUB_REF_NAME=${GITHUB_REF_NAME}"
+
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            BACKEND_TAGS="${BACKEND_TAGS}"$'\n'"${BACKEND_IMAGE}:latest"
+            FRONTEND_TAGS="${FRONTEND_TAGS}"$'\n'"${FRONTEND_IMAGE}:latest"
+          fi
+
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            BACKEND_TAGS="${BACKEND_TAGS}"$'\n'"${BACKEND_IMAGE}:${GITHUB_REF_NAME}"
+            FRONTEND_TAGS="${FRONTEND_TAGS}"$'\n'"${FRONTEND_IMAGE}:${GITHUB_REF_NAME}"
+          fi
+
+          echo "Generated backend tags:"
+          printf '%s\n' "${BACKEND_TAGS}" | sed 's/^/  /'
+          echo "Generated frontend tags:"
+          printf '%s\n' "${FRONTEND_TAGS}" | sed 's/^/  /'
+
           {
             echo "BACKEND_TAGS<<EOF"
-            echo "${BACKEND_IMAGE}:sha-${SHORT_SHA}"
-            if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
-              echo "${BACKEND_IMAGE}:latest"
-            fi
-            if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-              echo "${BACKEND_IMAGE}:${GITHUB_REF_NAME}"
-            fi
+            printf '%s\n' "${BACKEND_TAGS}"
             echo "EOF"
             echo "FRONTEND_TAGS<<EOF"
-            echo "${FRONTEND_IMAGE}:sha-${SHORT_SHA}"
-            if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
-              echo "${FRONTEND_IMAGE}:latest"
-            fi
-            if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-              echo "${FRONTEND_IMAGE}:${GITHUB_REF_NAME}"
-            fi
+            printf '%s\n' "${FRONTEND_TAGS}"
             echo "EOF"
           } >> "${GITHUB_ENV}"
 
