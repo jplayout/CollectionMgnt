@@ -112,7 +112,10 @@ export default async function (
 
     fastify.get(
         '/api/items',
-        async request => {
+        async (
+            request,
+            reply
+        ) => {
 
             const query =
                 request.query;
@@ -195,6 +198,28 @@ export default async function (
                         ] !== undefined
                     ) {
 
+                        const parsedFilter =
+                            parseMetadataFilter(
+                                field,
+                                query[
+                                    field.name
+                                ]
+                            );
+
+                        if (
+                            parsedFilter.error
+                        ) {
+
+                            return reply
+                                .code(400)
+                                .send({
+                                    errors: [
+                                        parsedFilter.error
+                                    ]
+                                });
+
+                        }
+
                         filters
                             .metadataFilters
                             .push({
@@ -203,9 +228,7 @@ export default async function (
                                 type:
                                     field.type,
                                 value:
-                                    query[
-                                        field.name
-                                    ]
+                                    parsedFilter.value
                             });
 
                     }
@@ -472,5 +495,289 @@ function mergeMetadata(
         ...metadata,
         ...payloadMetadata
     };
+
+}
+
+function parseMetadataFilter(
+    field,
+    value
+) {
+
+    switch (field.type) {
+
+        case 'checkbox':
+            return parseCheckboxFilter(
+                field,
+                value
+            );
+
+        case 'number':
+            return parseNumberFilter(
+                field,
+                value
+            );
+
+        case 'rating':
+            return parseRatingFilter(
+                field,
+                value
+            );
+
+        case 'date':
+            return parseDateFilter(
+                field,
+                value
+            );
+
+        case 'select':
+            return parseSelectFilter(
+                field,
+                value
+            );
+
+        default:
+            return {
+                value
+            };
+
+    }
+
+}
+
+function parseCheckboxFilter(
+    field,
+    value
+) {
+
+    if (
+        value === 'true'
+    ) {
+
+        return {
+            value: 1
+        };
+
+    }
+
+    if (
+        value === 'false'
+    ) {
+
+        return {
+            value: 0
+        };
+
+    }
+
+    return {
+        error:
+            `${field.name} filter must be true or false`
+    };
+
+}
+
+function parseNumberFilter(
+    field,
+    value
+) {
+
+    if (
+        typeof value !== 'string' ||
+        value.trim() === ''
+    ) {
+
+        return {
+            error:
+                `${field.name} filter must be a finite number`
+        };
+
+    }
+
+    const numberValue =
+        Number(
+            value
+        );
+
+    if (
+        !Number.isFinite(
+            numberValue
+        )
+    ) {
+
+        return {
+            error:
+                `${field.name} filter must be a finite number`
+        };
+
+    }
+
+    return {
+        value:
+            numberValue
+    };
+
+}
+
+function parseRatingFilter(
+    field,
+    value
+) {
+
+    const parsed =
+        parseNumberFilter(
+            field,
+            value
+        );
+
+    if (
+        parsed.error
+    ) {
+
+        return parsed;
+
+    }
+
+    const min =
+        field.min ?? 0;
+
+    const max =
+        field.max ?? 20;
+
+    if (
+        parsed.value < min ||
+        parsed.value > max
+    ) {
+
+        return {
+            error:
+                `${field.name} filter must be between ${min} and ${max}`
+        };
+
+    }
+
+    return parsed;
+
+}
+
+function parseDateFilter(
+    field,
+    value
+) {
+
+    if (
+        typeof value !== 'string' ||
+        !isValidIsoDate(
+            value
+        )
+    ) {
+
+        return {
+            error:
+                `${field.name} filter must be a valid date in YYYY-MM-DD format`
+        };
+
+    }
+
+    return {
+        value
+    };
+
+}
+
+function parseSelectFilter(
+    field,
+    value
+) {
+
+    if (
+        !Array.isArray(field.options)
+    ) {
+
+        return {
+            value
+        };
+
+    }
+
+    const allowedValues =
+        field.options.map(
+            option => getOptionValue(
+                option
+            )
+        );
+
+    if (
+        !allowedValues.some(
+            allowedValue => String(allowedValue).toLocaleLowerCase() ===
+                String(value).toLocaleLowerCase()
+        )
+    ) {
+
+        return {
+            error:
+                `${field.name} filter must be one of allowed values`
+        };
+
+    }
+
+    return {
+        value
+    };
+
+}
+
+function getOptionValue(
+    option
+) {
+
+    if (
+        option !== null &&
+        typeof option === 'object' &&
+        option.value !== undefined
+    ) {
+
+        return option.value;
+
+    }
+
+    return option;
+
+}
+
+function isValidIsoDate(
+    value
+) {
+
+    if (
+        !/^\d{4}-\d{2}-\d{2}$/.test(
+            value
+        )
+    ) {
+
+        return false;
+
+    }
+
+    const [
+        year,
+        month,
+        day
+    ] =
+        value
+            .split('-')
+            .map(Number);
+
+    const date =
+        new Date(
+            Date.UTC(
+                year,
+                month - 1,
+                day
+            )
+        );
+
+    return date.getUTCFullYear() === year &&
+        date.getUTCMonth() === month - 1 &&
+        date.getUTCDate() === day;
 
 }

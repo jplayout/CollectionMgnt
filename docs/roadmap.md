@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 5.13 - Clarification du contrat backend des filtres typés.
+Étape suivante : Lot 5.14 - Pagination des listes items.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.8-lot5.12.2.
+Version actuelle : v0.8-lot5.13.
 
 ### Lot 5.6 - Livré
 
@@ -135,9 +135,22 @@ Version actuelle : v0.8-lot5.12.2.
 - Métadonnées inconnues conservées dans une section `Autres informations`
 - Galerie média conservée sous la fiche item
 
+### Lot 5.13 - Livré
+
+- Parsing backend des filtres metadata selon le type du schéma plugin
+- Rejet des filtres invalides avec réponse 400
+- Filtres text, textarea et select insensibles à la casse simple
+- Validation des options déclarées pour les filtres select
+- Filtres checkbox limités à `true` et `false`, convertis en `1` ou `0` côté backend
+- Filtres number et rating comparés numériquement
+- Filtres rating bornés par `min`/`max`, avec défaut 0..20
+- Filtres date validés au format `YYYY-MM-DD`
+- Suppression du post-filtrage frontend pour les types gérés par le backend
+- Pas de filtres range dans ce lot
+
 ### Prochaine étape
 
-- Lot 5.13 - Clarification du contrat backend des filtres typés
+- Lot 5.14 - Pagination des listes items
 
 ### Non livré à ce stade
 

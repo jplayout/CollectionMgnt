@@ -105,7 +105,21 @@ Participe à la recherche globale.
 
 ## filterable
 
-Ajoute automatiquement un filtre.
+Ajoute automatiquement un filtre sur `GET /api/items` quand le plugin courant est fourni.
+
+Les filtres utilisent le type déclaré dans `fields.json` :
+
+- text, textarea et select : égalité insensible à la casse simple
+- checkbox : valeurs query acceptées `true` ou `false`, converties en `1` ou `0` côté backend
+- number : nombre fini obligatoire
+- rating : nombre fini obligatoire, borné par `min`/`max` avec défaut 0..20
+- date : date réelle au format `YYYY-MM-DD`
+
+Si `options` est déclaré pour un champ `select`, la valeur du filtre doit correspondre à une option valide.
+
+Les filtres invalides sont rejetés par l'API avec une réponse 400.
+
+Les filtres range (`rating_min`, `rating_max`, `date_from`, `date_to`) ne sont pas disponibles actuellement.
 
 ## faceted
 

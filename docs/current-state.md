@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.12.2
+Version : v0.8-lot5.13
 
 ## État du projet
 
@@ -38,6 +38,7 @@ Frontend :
 - Recherche et filtres textuels/select insensibles à la casse simple
 - Filtrage par plugin
 - Filtrage dynamique sur les champs déclarés `filterable`
+- Filtres metadata typés côté backend pour text, textarea, select, checkbox, date, number et rating
 
 ### Médias
 
@@ -176,7 +177,7 @@ Frontend :
 - Pas encore de recherche globale multi-collections
 - Pas de recherche globale multi-plugins sur les metadata `searchable`
 - Pas de normalisation complète des accents ou de l'Unicode pour la recherche
-- Certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
+- Pas encore de filtres range (`rating_min`, `rating_max`, `date_from`, `date_to`)
 - Pas encore d'édition des métadonnées de types non supportés
 - Certains types déclarés dans `docs/plugin-api.md` ne sont pas encore validés par le backend
 
@@ -469,9 +470,24 @@ Variables disponibles :
 - Section `Autres informations` pour les métadonnées inconnues du schéma
 - Galerie média conservée sous la fiche item
 
+### Lot 5.13 - Clarification des filtres typés backend
+
+#### Livré
+
+- Parsing backend des filtres metadata selon le type déclaré dans le schéma plugin
+- Rejet des filtres invalides avec réponse 400
+- Filtres text, textarea et select conservés insensibles à la casse simple
+- Validation des options déclarées pour les filtres select
+- Filtres checkbox acceptant uniquement `true` ou `false`, convertis en `1` ou `0` côté backend
+- Filtres number et rating comparés numériquement
+- Filtres rating bornés par `min`/`max`, avec défaut 0..20
+- Filtres date limités aux dates réelles au format `YYYY-MM-DD`
+- Post-filtrage frontend supprimé pour les types maintenant gérés côté backend
+- Pas de filtres range dans ce lot
+
 ### Lots suivants
 
-- Lot 5.13 - Clarification du contrat backend des filtres typés
+- Lot 5.14 - Pagination des listes items
 - Interface de gestion des collections
 - Galerie médias avancée
 - Sauvegarde / restauration

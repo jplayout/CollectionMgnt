@@ -336,11 +336,7 @@ async function loadItems() {
             });
 
         items.value =
-            loadedItems.filter(
-                item => itemMatchesFilters(
-                    item
-                )
-            );
+            loadedItems;
 
     } catch (loadError) {
 
@@ -430,101 +426,19 @@ function buildBackendFilterParams() {
 
 }
 
-function itemMatchesFilters(
-    item
-) {
-
-    return filterableFields.value.every(
-        field => {
-
-            const expectedValue =
-                normalizeFilterValue(
-                    field,
-                    filterValues[field.name]
-                );
-
-            if (
-                expectedValue === undefined
-            ) {
-
-                return true;
-
-            }
-
-            const actualValue =
-                item.metadata?.[field.name];
-
-            if (
-                field.type === 'number' ||
-                field.type === 'rating'
-            ) {
-
-                return Number(actualValue) === expectedValue;
-
-            }
-
-            if (
-                field.type === 'checkbox'
-            ) {
-
-                return actualValue === expectedValue;
-
-            }
-
-            if (
-                isCaseInsensitiveFilterType(
-                    field.type
-                )
-            ) {
-
-                return String(actualValue ?? '').toLocaleLowerCase() ===
-                    String(expectedValue).toLocaleLowerCase();
-
-            }
-
-            return String(actualValue ?? '') === String(expectedValue);
-
-        }
-    );
-
-}
-
 function canFilterOnBackend(
-    field,
-    value
-) {
-
-    if (
-        field.type === 'checkbox' ||
-        field.type === 'number' ||
-        field.type === 'rating'
-    ) {
-
-        return false;
-
-    }
-
-    if (
-        field.type === 'select'
-    ) {
-
-        return typeof value === 'string';
-
-    }
-
-    return true;
-
-}
-
-function isCaseInsensitiveFilterType(
-    type
+    field
 ) {
 
     return [
         'text',
         'textarea',
-        'select'
-    ].includes(type);
+        'select',
+        'checkbox',
+        'date',
+        'number',
+        'rating'
+    ].includes(field.type);
 
 }
 
@@ -566,7 +480,7 @@ function normalizeFilterValue(
             numberValue
         )
             ? numberValue
-            : undefined;
+            : value;
 
     }
 

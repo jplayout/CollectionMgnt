@@ -1,6 +1,6 @@
 # Recherche
 
-État courant : v0.8-lot5.12.1.
+État courant : v0.8-lot5.13.
 
 ## Disponible
 
@@ -13,6 +13,7 @@ Capacités backend actuellement utilisées par `GET /api/items` :
 - recherche simple par titre via `title`, conservée pour compatibilité
 - filtres metadata sur les champs déclarés `filterable`
 - filtres metadata via `json_extract`, insensibles à la casse simple pour text, textarea et select, stricts pour checkbox, number, rating et date
+- validation backend des valeurs de filtres selon le type déclaré dans le schéma plugin
 
 ## Recherche `search`
 
@@ -47,6 +48,18 @@ Si `title` et `search` sont présents, les deux contraintes sont combinées en `
 - Les filtres `filterable` de type checkbox, number, rating et date restent stricts.
 - Les types et noms de champs utilisés par les filtres viennent uniquement du schéma plugin.
 
+## Filtres Typés
+
+- `text` : égalité insensible à la casse simple.
+- `textarea` : égalité insensible à la casse simple.
+- `select` : égalité insensible à la casse simple ; si `options` est déclaré, la valeur demandée doit correspondre à une option valide.
+- `checkbox` : accepte uniquement `true` ou `false`, convertit en `1` ou `0`, puis compare la valeur booléenne JSON.
+- `number` : accepte uniquement un nombre fini, puis compare numériquement.
+- `rating` : accepte uniquement un nombre fini, applique `min`/`max` avec défaut 0..20, puis compare numériquement.
+- `date` : accepte uniquement une date réelle au format `YYYY-MM-DD`, puis compare strictement la chaîne stockée.
+- Les valeurs de filtres invalides retournent une réponse 400.
+- Les filtres range comme `rating_min`, `rating_max`, `date_from` et `date_to` ne sont pas disponibles dans ce lot.
+
 Capacités frontend disponibles :
 
 - champ de recherche large
@@ -73,17 +86,17 @@ Capacités frontend disponibles :
 - pas de recherche globale multi-plugins sur les metadata `searchable`
 - pas de FTS
 - pas de ranking des résultats
+- pas de filtres range
 - pas encore d'exploitation de `faceted`
 - les filtres backend metadata text, textarea et select sont insensibles à la casse simple ; checkbox, number, rating et date restent stricts
 - la recherche et les filtres textuels/select ne gèrent pas finement les accents ni la normalisation Unicode
-- certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
 
 ## Étape Suivante
 
-Lot 5.13 - Clarification du contrat backend des filtres typés.
+Lot 5.14 - Pagination des listes items.
 
 Objectifs probables :
 
-- clarifier le contrat backend pour les types number, rating et checkbox
-- réduire les filtres finalisés côté frontend
-- préparer la pagination et le tri configurable
+- ajouter une pagination backend sur `GET /api/items`
+- exposer les contrôles de pagination dans les listes frontend
+- préparer ensuite le tri configurable
