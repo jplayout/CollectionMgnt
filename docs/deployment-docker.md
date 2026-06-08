@@ -1,6 +1,6 @@
 # Déploiement Docker local
 
-État : v0.9-lot6.0.2.
+État : v0.9-lot6.0.3.
 
 Ce lot permet une exécution locale avec Docker Compose sur Linux, NAS ou serveur personnel. Synology reste une plateforme prioritaire/testée/documentée, mais la cible principale est le Docker auto-hébergé générique.
 
@@ -104,9 +104,59 @@ mkdir -p backend/data
 - Login fonctionnel via le frontend
 - Base SQLite accessible dans `/app/data`
 
+## Images GHCR prébuildées
+
+Le Lot 6.0.3 publie automatiquement les images sur GitHub Container Registry :
+
+```text
+ghcr.io/<owner>/collectionmgnt-backend
+ghcr.io/<owner>/collectionmgnt-frontend
+```
+
+Les tags publiés sont :
+
+- `latest` depuis la branche `main`
+- tags Git `v*`, par exemple `v0.9-lot6.0.3`
+- tags `sha-*` pour tracer un commit précis
+
+Exemple :
+
+```bash
+docker pull ghcr.io/<owner>/collectionmgnt-backend:latest
+docker pull ghcr.io/<owner>/collectionmgnt-frontend:latest
+```
+
+Les packages GHCR peuvent être privés selon les paramètres GitHub du dépôt ou de l'organisation.
+
+Pour utiliser des images prébuildées au lieu de builder localement, remplacer `build:` par `image:` dans un fichier Compose dédié :
+
+```yaml
+services:
+  backend:
+    image: ghcr.io/<owner>/collectionmgnt-backend:latest
+    environment:
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
+      DATA_DIR: ${DATA_DIR:-/app/data}
+      PLUGINS_DIR: ${PLUGINS_DIR:-/app/plugins}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    volumes:
+      - ./backend/data:${DATA_DIR:-/app/data}:Z
+      - ./backend/plugins:${PLUGINS_DIR:-/app/plugins}:ro,Z
+
+  frontend:
+    image: ghcr.io/<owner>/collectionmgnt-frontend:latest
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+```
+
 ## Limites du lot
 
-- Pas de publication GHCR.
 - Pas de HTTPS.
 - Pas de Traefik, Caddy ou reverse proxy externe.
 - Pas de stratégie avancée UID/GID pour NAS.
@@ -117,3 +167,5 @@ mkdir -p backend/data
 Le Lot 6.0.2 ajoute une CI GitHub Actions minimale qui vérifie le backend, le frontend et le build des images Docker. Elle ne publie aucune image.
 
 Aucun test applicatif n'est lancé actuellement, faute de script `test` existant.
+
+Le Lot 6.0.3 ajoute un workflow de publication GHCR. Il ne publie pas sur Docker Hub et ne crée pas de release GitHub.

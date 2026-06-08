@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.9-lot6.0.2
+Version : v0.9-lot6.0.3
 
 ## État du projet
 
@@ -292,8 +292,15 @@ Variables disponibles :
 - Backend : `npm ci` puis vérification syntaxique des fichiers JavaScript avec `node --check`
 - Frontend : `npm ci` puis `npm exec vite build`
 - Docker : build des images backend et frontend après succès des jobs Node
-- Aucune publication d'image dans ce lot
+- Aucune publication d'image par le workflow CI
 - Aucun test applicatif n'est lancé actuellement, faute de script `test` existant
+- Workflow GitHub Actions `.github/workflows/publish.yml`
+- Publication GHCR automatique sur push `main`, tags `v*` et déclenchement manuel
+- Images publiées :
+  - `ghcr.io/<owner>/collectionmgnt-backend`
+  - `ghcr.io/<owner>/collectionmgnt-frontend`
+- Tags publiés : `latest` sur `main`, tag Git `v*` sur tag, et `sha-*`
+- Aucune publication Docker Hub et aucune release GitHub
 
 ---
 
@@ -562,9 +569,34 @@ Variables disponibles :
 - Pas de publication GHCR, Docker Hub ou release GitHub dans ce lot
 - Aucun test applicatif n'est lancé actuellement, faute de script `test` existant
 
+### Lot 6.0.3 - Publication automatique GHCR
+
+#### Livré
+
+- Workflow GitHub Actions `Publish Container Images` dans `.github/workflows/publish.yml`
+- Déclenchement sur push `main`, tags `v*` et `workflow_dispatch`
+- Permissions GitHub Actions `contents: read` et `packages: write`
+- Vérification backend avant publication :
+  - Node 22
+  - `npm ci`
+  - `node --check` sur les fichiers JavaScript de `backend/src`
+- Vérification frontend avant publication :
+  - Node 22
+  - `npm ci`
+  - `npm exec vite build`
+- Login GHCR via `docker/login-action` et `GITHUB_TOKEN`
+- Normalisation du propriétaire GitHub en minuscules pour les noms d'images
+- Publication de `ghcr.io/<owner>/collectionmgnt-backend`
+- Publication de `ghcr.io/<owner>/collectionmgnt-frontend`
+- Tags publiés :
+  - `sha-*` à chaque publication
+  - `latest` uniquement depuis `main`
+  - tag Git exact uniquement depuis les tags `v*`
+- Pas de Docker Hub, pas de GitHub Release, pas de multi-arch, pas de cosign, pas de SBOM et pas de scan sécurité dans ce lot
+
 ### Lots suivants
 
-- Lot 6.0.3 - Publication automatique GHCR
+- Lot 6.0.4 - Documentation déploiement images prébuildées / durcissement CI
 - Lot 5.14 - Pagination des listes items
 - Interface de gestion des collections
 - Galerie médias avancée
