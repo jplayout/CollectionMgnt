@@ -12,7 +12,7 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État courant
 
-Version actuelle : v0.8-lot5.12.
+Version actuelle : v0.8-lot5.12.1.
 
 ### Lot 5.6 - Livré
 
@@ -115,6 +115,15 @@ Version actuelle : v0.8-lot5.12.
 - Combinaison de `title` et `search` en `AND`
 - Liste collection frontend basculée de la recherche titre vers la recherche large `search`
 - Pas de FTS, pas de pagination, pas de tri configurable et pas de recherche metadata globale multi-plugins dans ce lot
+
+### Lot 5.12.1 - Correctif livré
+
+- Recherche `search` explicitement insensible à la casse simple
+- Recherche legacy `title` explicitement insensible à la casse simple
+- Filtres `filterable` text, textarea et select insensibles à la casse simple
+- Filtres checkbox, number, rating et date conservés stricts
+- Post-filtrage frontend aligné sur les mêmes règles
+- Limitation restante : pas de normalisation complète des accents ou de l'Unicode
 
 ### Prochaine étape
 

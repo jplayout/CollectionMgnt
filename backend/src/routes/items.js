@@ -118,7 +118,7 @@ export default async function (
                 request.query;
 
             const filters = {
-                metadataFilters: {}
+                metadataFilters: []
             };
 
             let pluginDefinition =
@@ -196,12 +196,17 @@ export default async function (
                     ) {
 
                         filters
-                            .metadataFilters[
-                                field.name
-                            ] =
-                            query[
-                                field.name
-                            ];
+                            .metadataFilters
+                            .push({
+                                name:
+                                    field.name,
+                                type:
+                                    field.type,
+                                value:
+                                    query[
+                                        field.name
+                                    ]
+                            });
 
                     }
 

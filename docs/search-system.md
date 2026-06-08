@@ -1,6 +1,6 @@
 # Recherche
 
-État courant : v0.8-lot5.12.
+État courant : v0.8-lot5.12.1.
 
 ## Disponible
 
@@ -12,7 +12,7 @@ Capacités backend actuellement utilisées par `GET /api/items` :
 - recherche large via `search`
 - recherche simple par titre via `title`, conservée pour compatibilité
 - filtres metadata sur les champs déclarés `filterable`
-- égalité stricte sur les valeurs metadata via `json_extract`
+- filtres metadata via `json_extract`, insensibles à la casse simple pour text, textarea et select, stricts pour checkbox, number, rating et date
 
 ## Recherche `search`
 
@@ -21,6 +21,8 @@ Le paramètre `search` cherche dans :
 - `items.title`
 - `items.description`
 - les champs metadata déclarés `searchable` dans le plugin courant
+
+La recherche `search` est explicitement insensible à la casse simple sur ces champs.
 
 Exemples :
 
@@ -33,9 +35,17 @@ Si `title` et `search` sont présents, les deux contraintes sont combinées en `
 ## `searchable` Et `filterable`
 
 - `searchable` ajoute un champ metadata à la recherche large `search` du plugin courant.
-- `filterable` expose un filtre dédié et applique une égalité stricte sur le champ metadata.
+- `filterable` expose un filtre dédié sur le champ metadata.
 - Un champ peut être à la fois `searchable` et `filterable`.
 - Les champs `searchable` utilisés par le backend viennent uniquement du schéma plugin, jamais de la query utilisateur.
+
+## Casse Des Filtres
+
+- `search` est insensible à la casse simple sur titre, description et metadata `searchable`.
+- `title` reste disponible pour compatibilité et est insensible à la casse simple.
+- Les filtres `filterable` de type text, textarea et select sont insensibles à la casse simple.
+- Les filtres `filterable` de type checkbox, number, rating et date restent stricts.
+- Les types et noms de champs utilisés par les filtres viennent uniquement du schéma plugin.
 
 Capacités frontend disponibles :
 
@@ -64,8 +74,8 @@ Capacités frontend disponibles :
 - pas de FTS
 - pas de ranking des résultats
 - pas encore d'exploitation de `faceted`
-- les filtres backend metadata utilisent une égalité stricte
-- la recherche utilise `LIKE` et ne gère pas finement les accents ni la normalisation Unicode
+- les filtres backend metadata text, textarea et select sont insensibles à la casse simple ; checkbox, number, rating et date restent stricts
+- la recherche et les filtres textuels/select ne gèrent pas finement les accents ni la normalisation Unicode
 - certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
 
 ## Étape Suivante

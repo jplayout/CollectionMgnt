@@ -471,6 +471,17 @@ function itemMatchesFilters(
 
             }
 
+            if (
+                isCaseInsensitiveFilterType(
+                    field.type
+                )
+            ) {
+
+                return String(actualValue ?? '').toLocaleLowerCase() ===
+                    String(expectedValue).toLocaleLowerCase();
+
+            }
+
             return String(actualValue ?? '') === String(expectedValue);
 
         }
@@ -502,6 +513,18 @@ function canFilterOnBackend(
     }
 
     return true;
+
+}
+
+function isCaseInsensitiveFilterType(
+    type
+) {
+
+    return [
+        'text',
+        'textarea',
+        'select'
+    ].includes(type);
 
 }
 

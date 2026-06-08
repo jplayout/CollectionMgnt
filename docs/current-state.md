@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.12
+Version : v0.8-lot5.12.1
 
 ## État du projet
 
@@ -35,6 +35,7 @@ Frontend :
 - Suppression d'items
 - Recherche large via `search` sur titre, description et champs metadata `searchable` du plugin courant
 - Recherche legacy par titre via `title`
+- Recherche et filtres textuels/select insensibles à la casse simple
 - Filtrage par plugin
 - Filtrage dynamique sur les champs déclarés `filterable`
 
@@ -173,6 +174,7 @@ Frontend :
 - Pas encore de tri configurable
 - Pas encore de recherche globale multi-collections
 - Pas de recherche globale multi-plugins sur les metadata `searchable`
+- Pas de normalisation complète des accents ou de l'Unicode pour la recherche
 - Certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
 - Pas encore d'édition des métadonnées de types non supportés
 - Pas encore de mise en page avancée de la fiche item
@@ -443,6 +445,17 @@ Variables disponibles :
 - Combinaison de `title` et `search` en `AND` si les deux paramètres sont présents
 - Frontend liste collection basculé sur `search`
 - Pas de FTS, pas de pagination, pas de tri configurable et pas de recherche metadata globale multi-plugins dans ce lot
+
+### Lot 5.12.1 - Filtres et recherche insensibles à la casse
+
+#### Livré
+
+- Recherche `search` explicitement insensible à la casse simple sur `title`, `description` et metadata `searchable`
+- Recherche legacy `title` explicitement insensible à la casse simple
+- Filtres metadata `filterable` text, textarea et select insensibles à la casse simple
+- Filtres checkbox, number, rating et date conservés stricts
+- Post-filtrage frontend aligné sur les mêmes règles
+- Pas de normalisation complète des accents ou de l'Unicode
 
 ### Lots suivants
 

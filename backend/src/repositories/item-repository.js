@@ -104,7 +104,7 @@ export class ItemRepository {
         if (filters.title) {
 
             sql += `
-                AND title LIKE ?
+                AND LOWER(title) LIKE LOWER(?)
             `;
 
             params.push(
@@ -116,8 +116,8 @@ export class ItemRepository {
         if (filters.search) {
 
             const searchClauses = [
-                'title LIKE ?',
-                'description LIKE ?'
+                'LOWER(title) LIKE LOWER(?)',
+                'LOWER(description) LIKE LOWER(?)'
             ];
 
             const searchParams = [
@@ -141,10 +141,10 @@ export class ItemRepository {
                 }
 
                 searchClauses.push(`
-                    CAST(json_extract(
+                    LOWER(CAST(json_extract(
                         metadata,
                         '$.${field}'
-                    ) AS TEXT) LIKE ?
+                    ) AS TEXT)) LIKE LOWER(?)
                 `);
 
                 searchParams.push(
@@ -170,21 +170,50 @@ export class ItemRepository {
         ) {
 
             for (
-                const [key, value]
-                of Object.entries(
-                    filters.metadataFilters
-                )
+                const filter
+                of filters.metadataFilters
             ) {
+
+                if (
+                    !isSafeMetadataFieldName(
+                        filter.name
+                    )
+                ) {
+
+                    continue;
+
+                }
+
+                if (
+                    isCaseInsensitiveFilterType(
+                        filter.type
+                    )
+                ) {
+
+                    sql += `
+                        AND LOWER(CAST(json_extract(
+                            metadata,
+                            '$.${filter.name}'
+                        ) AS TEXT)) = LOWER(?)
+                    `;
+
+                    params.push(
+                        filter.value
+                    );
+
+                    continue;
+
+                }
 
                 sql += `
                     AND json_extract(
                         metadata,
-                        '$.${key}'
+                        '$.${filter.name}'
                     ) = ?
                 `;
 
                 params.push(
-                    value
+                    filter.value
                 );
 
             }
@@ -222,6 +251,18 @@ export class ItemRepository {
             .run(id);
 
     }
+
+}
+
+function isCaseInsensitiveFilterType(
+    type
+) {
+
+    return [
+        'text',
+        'textarea',
+        'select'
+    ].includes(type);
 
 }
 
