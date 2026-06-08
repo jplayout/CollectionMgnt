@@ -120,6 +120,24 @@ export default async function (
             const query =
                 request.query;
 
+            const parsedPagination =
+                parsePagination(
+                    query
+                );
+
+            if (
+                parsedPagination.error
+            ) {
+
+                return reply
+                    .code(400)
+                    .send({
+                        error:
+                            parsedPagination.error
+                    });
+
+            }
+
             const filters = {
                 metadataFilters: []
             };
@@ -237,10 +255,28 @@ export default async function (
 
             }
 
-            return repository
-                .findAll(
-                    filters
-                );
+            const {
+                items,
+                total
+            } =
+                repository
+                    .findAll(
+                        filters,
+                        parsedPagination.value
+                    );
+
+            return {
+                items,
+                total,
+                page:
+                    parsedPagination.value.page,
+                pageSize:
+                    parsedPagination.value.pageSize,
+                totalPages:
+                    Math.ceil(
+                        total / parsedPagination.value.pageSize
+                    )
+            };
 
         }
     );
@@ -454,6 +490,86 @@ export default async function (
             };
 
         }
+    );
+
+}
+
+function parsePagination(
+    query
+) {
+
+    const page =
+        parseIntegerQueryParam(
+            query.page,
+            1
+        );
+
+    if (
+        !Number.isInteger(page) ||
+        page < 1
+    ) {
+
+        return {
+            error:
+                'page must be an integer greater than or equal to 1'
+        };
+
+    }
+
+    const pageSize =
+        parseIntegerQueryParam(
+            query.pageSize,
+            24
+        );
+
+    if (
+        !Number.isInteger(pageSize) ||
+        pageSize < 1 ||
+        pageSize > 100
+    ) {
+
+        return {
+            error:
+                'pageSize must be an integer between 1 and 100'
+        };
+
+    }
+
+    return {
+        value: {
+            page,
+            pageSize
+        }
+    };
+
+}
+
+function parseIntegerQueryParam(
+    value,
+    fallback
+) {
+
+    if (
+        value === undefined
+    ) {
+
+        return fallback;
+
+    }
+
+    if (
+        typeof value !== 'string' ||
+        !/^\d+$/.test(
+            value
+        )
+    ) {
+
+        return NaN;
+
+    }
+
+    return Number(
+        value
     );
 
 }

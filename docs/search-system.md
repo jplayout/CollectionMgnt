@@ -1,6 +1,6 @@
 # Recherche
 
-État courant : v0.8-lot5.13.
+État courant : v0.10-lot5.14.
 
 ## Disponible
 
@@ -14,6 +14,7 @@ Capacités backend actuellement utilisées par `GET /api/items` :
 - filtres metadata sur les champs déclarés `filterable`
 - filtres metadata via `json_extract`, insensibles à la casse simple pour text, textarea et select, stricts pour checkbox, number, rating et date
 - validation backend des valeurs de filtres selon le type déclaré dans le schéma plugin
+- pagination via `page` et `pageSize`
 
 ## Recherche `search`
 
@@ -30,8 +31,32 @@ Exemples :
 - `GET /api/items?search=zelda` cherche dans les titres et descriptions
 - `GET /api/items?plugin=games&search=nintendo` cherche aussi dans les metadata `searchable` du plugin `games`
 - `GET /api/items?plugin=games&search=nintendo&platform=Switch` combine la recherche large et les filtres `filterable`
+- `GET /api/items?plugin=games&search=nintendo&page=2&pageSize=24` combine recherche, filtres éventuels et pagination
 
 Si `title` et `search` sont présents, les deux contraintes sont combinées en `AND`.
+
+## Pagination
+
+`GET /api/items` retourne une réponse enveloppée :
+
+```json
+{
+  "items": [],
+  "total": 153,
+  "page": 2,
+  "pageSize": 24,
+  "totalPages": 7
+}
+```
+
+Paramètres disponibles :
+
+- `page` : entier supérieur ou égal à 1, défaut 1.
+- `pageSize` : entier entre 1 et 100, défaut 24.
+
+La pagination est combinable avec `plugin`, `title`, `search` et les filtres metadata `filterable`.
+Le total est calculé avec les mêmes contraintes que la liste retournée.
+Les valeurs invalides de `page` ou `pageSize` retournent une réponse 400.
 
 ## `searchable` Et `filterable`
 
@@ -68,6 +93,8 @@ Capacités frontend disponibles :
 - contrôles adaptés aux types supportés par le frontend
 - affichage des filtres actifs
 - réinitialisation de la recherche et des filtres
+- affichage du total d'items
+- navigation paginée précédente/suivante
 
 ## Types De Filtres Frontend
 
@@ -80,7 +107,6 @@ Capacités frontend disponibles :
 
 ## Limites Actuelles
 
-- pas de pagination
 - pas de tri configurable
 - pas de recherche globale multi-collections
 - pas de recherche globale multi-plugins sur les metadata `searchable`
@@ -93,10 +119,4 @@ Capacités frontend disponibles :
 
 ## Étape Suivante
 
-Lot 5.14 - Pagination des listes items.
-
-Objectifs probables :
-
-- ajouter une pagination backend sur `GET /api/items`
-- exposer les contrôles de pagination dans les listes frontend
-- préparer ensuite le tri configurable
+Lot 5.15 - Tri configurable des listes items.

@@ -79,164 +79,68 @@ export class ItemRepository {
 
     }
 
-    findAll(filters = {}) {
+    findAll(
+        filters = {},
+        pagination = {}
+    ) {
 
-        let sql = `
-            SELECT *
-            FROM items
-            WHERE 1 = 1
-        `;
+        const page =
+            pagination.page ?? 1;
 
-        const params = [];
+        const pageSize =
+            pagination.pageSize ?? 24;
 
-        if (filters.pluginId) {
+        const offset =
+            (
+                page - 1
+            ) * pageSize;
 
-            sql += `
-                AND plugin_id = ?
-            `;
-
-            params.push(
-                filters.pluginId
+        const {
+            whereSql,
+            params
+        } =
+            buildItemFilterQuery(
+                filters
             );
 
-        }
-
-        if (filters.title) {
-
-            sql += `
-                AND LOWER(title) LIKE LOWER(?)
-            `;
-
-            params.push(
-                `%${filters.title}%`
-            );
-
-        }
-
-        if (filters.search) {
-
-            const searchClauses = [
-                'LOWER(title) LIKE LOWER(?)',
-                'LOWER(description) LIKE LOWER(?)'
-            ];
-
-            const searchParams = [
-                `%${filters.search}%`,
-                `%${filters.search}%`
-            ];
-
-            for (
-                const field
-                of filters.searchableFields ?? []
-            ) {
-
-                if (
-                    !isSafeMetadataFieldName(
-                        field
-                    )
-                ) {
-
-                    continue;
-
-                }
-
-                searchClauses.push(`
-                    LOWER(CAST(json_extract(
-                        metadata,
-                        '$.${field}'
-                    ) AS TEXT)) LIKE LOWER(?)
-                `);
-
-                searchParams.push(
-                    `%${filters.search}%`
-                );
-
-            }
-
-            sql += `
-                AND (
-                    ${searchClauses.join(' OR ')}
-                )
-            `;
-
-            params.push(
-                ...searchParams
-            );
-
-        }
-
-        if (
-            filters.metadataFilters
-        ) {
-
-            for (
-                const filter
-                of filters.metadataFilters
-            ) {
-
-                if (
-                    !isSafeMetadataFieldName(
-                        filter.name
-                    )
-                ) {
-
-                    continue;
-
-                }
-
-                if (
-                    isCaseInsensitiveFilterType(
-                        filter.type
-                    )
-                ) {
-
-                    sql += `
-                        AND LOWER(CAST(json_extract(
-                            metadata,
-                            '$.${filter.name}'
-                        ) AS TEXT)) = LOWER(?)
-                    `;
-
-                    params.push(
-                        filter.value
-                    );
-
-                    continue;
-
-                }
-
-                sql += `
-                    AND json_extract(
-                        metadata,
-                        '$.${filter.name}'
-                    ) = ?
-                `;
-
-                params.push(
-                    filter.value
-                );
-
-            }
-
-        }
-
-        sql += `
-            ORDER BY created_at DESC
-        `;
+        const totalRow =
+            this.db
+                .prepare(`
+                    SELECT COUNT(*) AS total
+                    FROM items
+                    ${whereSql}
+                `)
+                .get(...params);
 
         const rows =
             this.db
-                .prepare(sql)
-                .all(...params);
+                .prepare(`
+                    SELECT *
+                    FROM items
+                    ${whereSql}
+                    ORDER BY created_at DESC
+                    LIMIT ?
+                    OFFSET ?
+                `)
+                .all(
+                    ...params,
+                    pageSize,
+                    offset
+                );
 
-        return rows.map(
-            row => ({
-                ...row,
-                metadata: JSON.parse(
-                    row.metadata
-                )
-            })
-        );
+        return {
+            items:
+                rows.map(
+                    row => ({
+                        ...row,
+                        metadata: JSON.parse(
+                            row.metadata
+                        )
+                    })
+                ),
+            total:
+                totalRow.total
+        };
 
     }
 
@@ -251,6 +155,154 @@ export class ItemRepository {
             .run(id);
 
     }
+
+}
+
+function buildItemFilterQuery(
+    filters
+) {
+
+    let whereSql = `
+        WHERE 1 = 1
+    `;
+
+    const params = [];
+
+    if (filters.pluginId) {
+
+        whereSql += `
+            AND plugin_id = ?
+        `;
+
+        params.push(
+            filters.pluginId
+        );
+
+    }
+
+    if (filters.title) {
+
+        whereSql += `
+            AND LOWER(title) LIKE LOWER(?)
+        `;
+
+        params.push(
+            `%${filters.title}%`
+        );
+
+    }
+
+    if (filters.search) {
+
+        const searchClauses = [
+            'LOWER(title) LIKE LOWER(?)',
+            'LOWER(description) LIKE LOWER(?)'
+        ];
+
+        const searchParams = [
+            `%${filters.search}%`,
+            `%${filters.search}%`
+        ];
+
+        for (
+            const field
+            of filters.searchableFields ?? []
+        ) {
+
+            if (
+                !isSafeMetadataFieldName(
+                    field
+                )
+            ) {
+
+                continue;
+
+            }
+
+            searchClauses.push(`
+                LOWER(CAST(json_extract(
+                    metadata,
+                    '$.${field}'
+                ) AS TEXT)) LIKE LOWER(?)
+            `);
+
+            searchParams.push(
+                `%${filters.search}%`
+            );
+
+        }
+
+        whereSql += `
+            AND (
+                ${searchClauses.join(' OR ')}
+            )
+        `;
+
+        params.push(
+            ...searchParams
+        );
+
+    }
+
+    if (
+        filters.metadataFilters
+    ) {
+
+        for (
+            const filter
+            of filters.metadataFilters
+        ) {
+
+            if (
+                !isSafeMetadataFieldName(
+                    filter.name
+                )
+            ) {
+
+                continue;
+
+            }
+
+            if (
+                isCaseInsensitiveFilterType(
+                    filter.type
+                )
+            ) {
+
+                whereSql += `
+                    AND LOWER(CAST(json_extract(
+                        metadata,
+                        '$.${filter.name}'
+                    ) AS TEXT)) = LOWER(?)
+                `;
+
+                params.push(
+                    filter.value
+                );
+
+                continue;
+
+            }
+
+            whereSql += `
+                AND json_extract(
+                    metadata,
+                    '$.${filter.name}'
+                ) = ?
+            `;
+
+            params.push(
+                filter.value
+            );
+
+        }
+
+    }
+
+    return {
+        whereSql,
+        params
+    };
 
 }
 

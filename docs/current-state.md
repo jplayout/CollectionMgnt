@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.10-lot7.0.3
+Version : v0.10-lot5.14
 
 ## État du projet
 
@@ -42,6 +42,8 @@ Frontend :
 - Filtrage par plugin
 - Filtrage dynamique sur les champs déclarés `filterable`
 - Filtres metadata typés côté backend pour text, textarea, select, checkbox, date, number et rating
+- Pagination de `GET /api/items` via `page` et `pageSize`
+- Réponse paginée avec `items`, `total`, `page`, `pageSize` et `totalPages`
 
 ### Médias
 
@@ -121,6 +123,7 @@ Frontend :
 - Suppression d'item depuis la fiche item via `DELETE /api/items/:id`
 - Recherche large frontend par collection via le paramètre backend `search`
 - Filtres dynamiques frontend par collection depuis les champs `filterable`
+- Pagination frontend des listes items avec total, page courante et navigation précédent/suivant
 - Cartes items pilotées par les préférences d'affichage backend pour les champs mis en avant et la densité
 - Cartes items avec labels issus du schéma plugin quand les préférences sont disponibles
 - Panneau d'édition des préférences d'affichage depuis la liste d'une collection
@@ -182,7 +185,6 @@ Frontend :
 ### Limitations connues
 
 - Chargement N+1 des médias/thumbnails dans les listes items
-- Pas de pagination
 - Pas encore de tri configurable
 - Pas encore de recherche globale multi-collections
 - Pas de recherche globale multi-plugins sur les metadata `searchable`
@@ -505,7 +507,7 @@ Variables disponibles :
 - Compatibilité conservée avec le paramètre legacy `title`
 - Combinaison de `title` et `search` en `AND` si les deux paramètres sont présents
 - Frontend liste collection basculé sur `search`
-- Pas de FTS, pas de pagination, pas de tri configurable et pas de recherche metadata globale multi-plugins dans ce lot
+- Pas de FTS, pas de tri configurable et pas de recherche metadata globale multi-plugins dans ce lot
 
 ### Lot 5.12.1 - Filtres et recherche insensibles à la casse
 
@@ -641,9 +643,22 @@ Variables disponibles :
 - Fermeture du panneau après sauvegarde ou réinitialisation réussie
 - Aucun drag & drop, format rating/date avancé, champ principal alternatif ou vue tableau dans ce lot
 
+### Lot 5.14 - Pagination des listes items
+
+- `GET /api/items` paginé avec `page` et `pageSize`
+- Valeurs par défaut : `page=1`, `pageSize=24`
+- `pageSize` borné de 1 à 100
+- Paramètres `page` ou `pageSize` invalides rejetés avec une réponse 400
+- Réponse enveloppée : `items`, `total`, `page`, `pageSize`, `totalPages`
+- Recherche `search`, recherche legacy `title`, filtres `filterable` et filtrage plugin combinables avec la pagination
+- Liste frontend avec total d'items, page courante et boutons `Précédent` / `Suivant`
+- Retour automatique à la première page lors d'une recherche, d'un changement de filtre ou d'une réinitialisation
+- Retour automatique à une page valide si la page courante devient vide après suppression ou changement externe
+- Aucun changement de schéma SQLite, aucun tri configurable, aucune recherche FTS et aucun infinite scroll dans ce lot
+
 ### Lots suivants
 
-- Lot 5.14 - Pagination des listes items
+- Lot 5.15 - Tri configurable des listes items
 - Interface de gestion des collections
 - Galerie médias avancée
 - Sauvegarde / restauration

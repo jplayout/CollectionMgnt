@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 5.14 - Pagination des listes items.
+Étape suivante : Lot 5.15 - Tri configurable des listes items.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.10-lot7.0.3.
+Version actuelle : v0.10-lot5.14.
 
 ### Lot 5.6 - Livré
 
@@ -101,7 +101,6 @@ Version actuelle : v0.10-lot7.0.3.
 - Rating borné côté UI à 0..20 par défaut, avec `step=1`
 - Réinitialisation de la recherche et des filtres
 - Limitation restante : les champs `searchable` ne sont pas encore exploités
-- Limitation restante : pas de pagination
 - Limitation restante : pas de tri
 - Limitation restante : certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
 
@@ -114,7 +113,7 @@ Version actuelle : v0.10-lot7.0.3.
 - Compatibilité conservée avec `title`
 - Combinaison de `title` et `search` en `AND`
 - Liste collection frontend basculée de la recherche titre vers la recherche large `search`
-- Pas de FTS, pas de pagination, pas de tri configurable et pas de recherche metadata globale multi-plugins dans ce lot
+- Pas de FTS, pas de tri configurable et pas de recherche metadata globale multi-plugins dans ce lot
 
 ### Lot 5.12.1 - Correctif livré
 
@@ -244,9 +243,22 @@ Version actuelle : v0.10-lot7.0.3.
 - Réinitialisation via `DELETE /api/plugins/:pluginId/display-preferences`
 - Aucun drag & drop, format rating/date avancé, champ principal alternatif ou vue tableau dans ce lot
 
+### Lot 5.14 - Livré
+
+- Pagination backend de `GET /api/items` via `page` et `pageSize`
+- Valeurs par défaut : `page=1`, `pageSize=24`
+- Validation de `page >= 1` et `pageSize` entre 1 et 100, avec réponse 400 en cas de valeur invalide
+- Réponse enveloppée avec `items`, `total`, `page`, `pageSize` et `totalPages`
+- Requête `COUNT(*)` alignée sur les filtres, la recherche et le plugin courant
+- Recherche `search`, recherche legacy `title` et filtres metadata `filterable` combinables avec la pagination
+- Pagination frontend dans les listes items avec total, page courante et navigation `Précédent` / `Suivant`
+- Retour à la première page lors des recherches, changements de filtres et réinitialisations
+- Retour automatique à une page valide si la page courante devient vide après suppression ou changement externe
+- Aucun changement de schéma SQLite, tri configurable, FTS ou infinite scroll dans ce lot
+
 ### Prochaine étape
 
-- Lot 5.14 - Pagination des listes items
+- Lot 5.15 - Tri configurable des listes items
 
 ### Non livré à ce stade
 

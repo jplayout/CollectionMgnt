@@ -24,7 +24,7 @@
         <section class="toolbar">
             <form
                 class="search-panel"
-                @submit.prevent="loadItems"
+                @submit.prevent="searchItems"
             >
                 <div class="search-form">
                     <label>
@@ -60,6 +60,7 @@
                 <section
                     v-if="filterableFields.length"
                     class="filters-section"
+                    @change="resetCurrentPage"
                 >
                     <div class="filters-header">
                         <h2>Filtres</h2>
@@ -170,6 +171,13 @@
 
         <section class="content-panel">
             <div
+                v-if="!loading && !error && totalItems > 0"
+                class="pagination-summary"
+            >
+                {{ totalItems }} item{{ totalItems > 1 ? 's' : '' }}
+            </div>
+
+            <div
                 v-if="loading"
                 class="state-panel"
             >
@@ -190,17 +198,44 @@
                 Aucun item dans cette collection.
             </div>
 
-            <div
-                v-else
-                class="items-grid"
-            >
-                <ItemCard
-                    v-for="item in items"
-                    :key="item.id"
-                    :display-preferences="displayPreferences"
-                    :fields="schemaFields"
-                    :item="item"
-                />
+            <div v-else>
+                <div class="items-grid">
+                    <ItemCard
+                        v-for="item in items"
+                        :key="item.id"
+                        :display-preferences="displayPreferences"
+                        :fields="schemaFields"
+                        :item="item"
+                    />
+                </div>
+
+                <nav
+                    v-if="totalItems > 0"
+                    aria-label="Pagination des items"
+                    class="pagination-bar"
+                >
+                    <button
+                        class="secondary-button"
+                        :disabled="currentPage <= 1"
+                        type="button"
+                        @click="goToPreviousPage"
+                    >
+                        Précédent
+                    </button>
+
+                    <span>
+                        Page {{ currentPage }} / {{ totalPages }}
+                    </span>
+
+                    <button
+                        class="secondary-button"
+                        :disabled="currentPage >= totalPages"
+                        type="button"
+                        @click="goToNextPage"
+                    >
+                        Suivant
+                    </button>
+                </nav>
             </div>
         </section>
     </main>
@@ -278,6 +313,18 @@ const loading =
 const error =
     ref('');
 
+const currentPage =
+    ref(1);
+
+const pageSize =
+    ref(24);
+
+const totalItems =
+    ref(0);
+
+const totalPages =
+    ref(0);
+
 const pluginTitle =
     computed(
         () => pluginSchema.value?.plugin?.name ??
@@ -346,6 +393,8 @@ async function loadPage() {
     ]);
 
     resetFilterValues();
+
+    resetCurrentPage();
 
     await loadItems();
 
@@ -507,11 +556,48 @@ async function loadItems() {
                     pluginId.value,
                 search:
                     searchQuery.value.trim(),
+                page:
+                    currentPage.value,
+                pageSize:
+                    pageSize.value,
                 ...buildBackendFilterParams()
             });
 
+        if (
+            loadedItems.items.length === 0 &&
+            loadedItems.total > 0 &&
+            loadedItems.page > 1
+        ) {
+
+            currentPage.value =
+                Math.max(
+                    1,
+                    Math.min(
+                        loadedItems.totalPages,
+                        loadedItems.page - 1
+                    )
+                );
+
+            await loadItems();
+
+            return;
+
+        }
+
         items.value =
-            loadedItems;
+            loadedItems.items;
+
+        totalItems.value =
+            loadedItems.total;
+
+        currentPage.value =
+            loadedItems.page;
+
+        pageSize.value =
+            loadedItems.pageSize;
+
+        totalPages.value =
+            loadedItems.totalPages;
 
     } catch (loadError) {
 
@@ -529,12 +615,63 @@ async function loadItems() {
 
 }
 
+function searchItems() {
+
+    resetCurrentPage();
+
+    loadItems();
+
+}
+
 function resetFilters() {
 
     searchQuery.value =
         '';
 
     resetFilterValues();
+
+    resetCurrentPage();
+
+    loadItems();
+
+}
+
+function resetCurrentPage() {
+
+    currentPage.value =
+        1;
+
+}
+
+function goToPreviousPage() {
+
+    if (
+        currentPage.value <= 1
+    ) {
+
+        return;
+
+    }
+
+    currentPage.value -=
+        1;
+
+    loadItems();
+
+}
+
+function goToNextPage() {
+
+    if (
+        currentPage.value >= totalPages.value
+    ) {
+
+        return;
+
+    }
+
+    currentPage.value +=
+        1;
 
     loadItems();
 
@@ -979,6 +1116,30 @@ h2 {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 
+.pagination-summary {
+    color: #5f6f89;
+    font-size: 0.9rem;
+    margin-bottom: 14px;
+}
+
+.pagination-bar {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.pagination-bar span {
+    color: #30394b;
+    font-weight: 600;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
 .state-panel {
     align-items: center;
     background: #ffffff;
@@ -1009,6 +1170,12 @@ h2 {
     .filters-header {
         align-items: start;
         display: grid;
+    }
+
+    .pagination-bar {
+        align-items: stretch;
+        display: grid;
+        text-align: center;
     }
 }
 </style>
