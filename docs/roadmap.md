@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 5.11 - Recherche avancée.
+Étape suivante : Lot 5.12 - Recherche backend sur champs searchable ou clarification backend des filtres typés.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.8-lot5.10.
+Version actuelle : v0.8-lot5.11.
 
 ### Lot 5.6 - Livré
 
@@ -86,9 +86,28 @@ Version actuelle : v0.8-lot5.10.
 - Suppression physique des sous-dossiers `originals`, `images` et `thumbs`
 - Erreurs de nettoyage disque logguées sans rollback de la suppression DB
 
+### Lot 5.11 - Livré
+
+- Recherche titre conservée dans la liste d'une collection
+- Filtres dynamiques frontend générés depuis les champs `filterable` du `fields.json`
+- Types de filtres frontend supportés :
+  - text
+  - textarea
+  - select
+  - checkbox
+  - date
+  - number
+  - rating
+- Rating borné côté UI à 0..20 par défaut, avec `step=1`
+- Réinitialisation de la recherche et des filtres
+- Limitation restante : les champs `searchable` ne sont pas encore exploités
+- Limitation restante : pas de pagination
+- Limitation restante : pas de tri
+- Limitation restante : certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
+
 ### Prochaine étape
 
-- Lot 5.11 - Recherche avancée
+- Lot 5.12 - Recherche backend sur champs searchable ou clarification backend des filtres typés
 
 ### Non livré à ce stade
 
@@ -120,9 +139,7 @@ Poser les bases techniques du projet.
 
 - Docker
 - Docker Compose
-- Déploiement Docker auto-hébergé
-- Plateforme prioritaire : Synology NAS
-- Compatible avec tout environnement Docker disposant d'un volume persistant
+- Synology compatible
 
 ### Livrables
 
@@ -301,9 +318,8 @@ Support multilingue.
 
 ### Compatible
 
-- Déploiement Docker auto-hébergé
-- Plateforme prioritaire/testée/documentée : Synology NAS
-- Tout environnement Docker disposant d'un volume persistant
+- Synology NAS
+- Docker Compose
 
 ---
 
@@ -350,5 +366,24 @@ Support multilingue.
 
 ## Lot futur 
 
-- Configuration des champs et préférences d’affichage
-- outil d’audit média permettant de détecter les fichiers orphelins et les entrées DB invalides, avec nettoyage manuel depuis l’administration.
+### Configuration des champs et préférences d’affichage
+
+- Définition d’échelles de notation configurables :
+  - note sur 5
+  - note sur 10
+  - note sur 20
+  - note sur 100
+  - pourcentage
+  - affichage en étoiles
+- Configuration des colonnes affichées dans les listes
+- Choix des métadonnées mises en avant dans les cartes items
+- Préférences d’affichage par collection/plugin
+
+### Outils d’audit et maintenance média
+
+- Détection des fichiers orphelins sur disque
+- Détection des entrées media sans fichier associé
+- Rapport d’audit détaillé
+- Mode dry-run
+- Nettoyage manuel depuis l’interface d’administration
+- Régénération éventuelle des miniatures et images optimisées

@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.10
+Version : v0.8-lot5.11
 
 ## État du projet
 
@@ -109,6 +109,7 @@ Frontend :
 - Création d'item frontend dynamique via `GET /api/plugins/:pluginId/schema`
 - Édition d'item frontend dynamique via `GET /api/items/:id`, `GET /api/plugins/:pluginId/schema` et `PATCH /api/items/:id`
 - Suppression d'item depuis la fiche item via `DELETE /api/items/:id`
+- Filtres dynamiques frontend par collection depuis les champs `filterable`
 - Moteur de formulaires dynamiques frontend :
   - champs fixes `title` obligatoire et `description` optionnel
   - champs dynamiques depuis `schema.fields`
@@ -162,12 +163,15 @@ Frontend :
 - Gestion des plugins
 - Interface complète d'upload images
 - Galerie médias avancée
-- Recherche avancée
 
 ### Limitations connues
 
 - Chargement N+1 des médias/thumbnails dans les listes items
 - Pas de pagination
+- Pas encore de tri configurable
+- Pas encore de recherche globale multi-collections
+- Les champs `searchable` ne sont pas encore exploités par la recherche backend
+- Certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
 - Pas encore d'édition des métadonnées de types non supportés
 - Pas encore de mise en page avancée de la fiche item
 - Certains types déclarés dans `docs/plugin-api.md` ne sont pas encore validés par le backend
@@ -408,9 +412,25 @@ Variables disponibles :
 - Les dossiers ou fichiers déjà absents sont acceptés
 - Les erreurs de nettoyage disque sont logguées sans annuler la suppression DB
 
+### Lot 5.11 - Filtres avancés frontend dans une collection
+
+#### Livré
+
+- Filtres dynamiques générés depuis `schema.fields`
+- Seuls les champs déclarés `filterable` sont proposés comme filtres
+- Recherche titre existante conservée
+- Contrôles frontend adaptés aux types text, textarea, select, checkbox, date, number et rating
+- Bornes rating frontend par défaut `min=0`, `max=20`, `step=1`
+- Affichage des filtres actifs
+- Bouton `Réinitialiser`
+- Message `Item supprimé.` conservé après redirection avec `?deleted=1`
+- Les filtres backend disponibles restent basés sur `GET /api/items`
+- Certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
+- Les champs `searchable` ne sont pas encore utilisés pour une recherche multi-champs
+
 ### Lots suivants
 
-- Lot 5.11 - Recherche avancée
+- Lot 5.12 - Recherche backend sur champs `searchable` ou clarification backend des filtres typés
 - Interface de gestion des collections
 - Galerie médias avancée
 - Sauvegarde / restauration
