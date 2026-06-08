@@ -12,7 +12,7 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État courant
 
-Version actuelle : v0.8-lot5.12.1.
+Version actuelle : v0.8-lot5.12.2.
 
 ### Lot 5.6 - Livré
 
@@ -124,6 +124,16 @@ Version actuelle : v0.8-lot5.12.1.
 - Filtres checkbox, number, rating et date conservés stricts
 - Post-filtrage frontend aligné sur les mêmes règles
 - Limitation restante : pas de normalisation complète des accents ou de l'Unicode
+
+### Lot 5.12.2 - Correctif livré
+
+- Fiche item améliorée côté frontend sans changement backend
+- Chargement du schéma plugin pour présenter les métadonnées
+- Labels de métadonnées issus du schéma plugin
+- Métadonnées affichées dans l'ordre du schéma plugin
+- Description affichée dans une section dédiée avec fallback si vide
+- Métadonnées inconnues conservées dans une section `Autres informations`
+- Galerie média conservée sous la fiche item
 
 ### Prochaine étape
 

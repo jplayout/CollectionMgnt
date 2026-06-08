@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.12.1
+Version : v0.8-lot5.12.2
 
 ## État du projet
 
@@ -107,6 +107,7 @@ Frontend :
 - Support `FormData` dans le service API frontend
 - Support des réponses `Blob` dans le service API frontend
 - Page détail item enrichie
+- Page détail item pilotée par le schéma plugin pour les labels de métadonnées
 - Navigation collections/items minimale
 - Création d'item frontend dynamique via `GET /api/plugins/:pluginId/schema`
 - Édition d'item frontend dynamique via `GET /api/items/:id`, `GET /api/plugins/:pluginId/schema` et `PATCH /api/items/:id`
@@ -177,7 +178,6 @@ Frontend :
 - Pas de normalisation complète des accents ou de l'Unicode pour la recherche
 - Certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
 - Pas encore d'édition des métadonnées de types non supportés
-- Pas encore de mise en page avancée de la fiche item
 - Certains types déclarés dans `docs/plugin-api.md` ne sont pas encore validés par le backend
 
 ---
@@ -456,6 +456,18 @@ Variables disponibles :
 - Filtres checkbox, number, rating et date conservés stricts
 - Post-filtrage frontend aligné sur les mêmes règles
 - Pas de normalisation complète des accents ou de l'Unicode
+
+### Lot 5.12.2 - Amélioration de la fiche item
+
+#### Livré
+
+- Chargement du schéma plugin depuis la fiche item quand le plugin est disponible
+- Affichage des métadonnées connues dans l'ordre du schéma plugin
+- Utilisation des labels de champs du schéma plugin sur la fiche item
+- Section `Description` explicite avec fallback `Aucune description.`
+- Formatage frontend des valeurs checkbox, date, rating, select, arrays et objets
+- Section `Autres informations` pour les métadonnées inconnues du schéma
+- Galerie média conservée sous la fiche item
 
 ### Lots suivants
 

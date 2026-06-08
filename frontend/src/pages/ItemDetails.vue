@@ -63,12 +63,16 @@
                     {{ deleteError }}
                 </p>
 
-                <p
-                    v-if="item.description"
-                    class="description"
-                >
-                    {{ item.description }}
-                </p>
+                <section class="details-section">
+                    <h2>Description</h2>
+
+                    <p
+                        class="description"
+                        :class="{ muted: !hasDescription }"
+                    >
+                        {{ hasDescription ? item.description : 'Aucune description.' }}
+                    </p>
+                </section>
 
                 <dl class="info-list">
                     <div>
@@ -88,17 +92,34 @@
                 </dl>
 
                 <section
-                    v-if="metadataEntries.length"
-                    class="metadata-section"
+                    v-if="knownMetadataEntries.length"
+                    class="details-section"
                 >
-                    <h2>Métadonnées</h2>
+                    <h2>Informations</h2>
 
                     <dl class="metadata-list">
                         <div
-                            v-for="entry in metadataEntries"
+                            v-for="entry in knownMetadataEntries"
                             :key="entry.key"
                         >
-                            <dt>{{ entry.key }}</dt>
+                            <dt>{{ entry.label }}</dt>
+                            <dd>{{ entry.value }}</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section
+                    v-if="unknownMetadataEntries.length"
+                    class="details-section"
+                >
+                    <h2>Autres informations</h2>
+
+                    <dl class="metadata-list">
+                        <div
+                            v-for="entry in unknownMetadataEntries"
+                            :key="entry.key"
+                        >
+                            <dt>{{ entry.label }}</dt>
                             <dd>{{ entry.value }}</dd>
                         </div>
                     </dl>
@@ -138,6 +159,10 @@ import {
     getItem
 } from '../services/item-api.js';
 
+import {
+    getPluginSchema
+} from '../services/plugin-api.js';
+
 const route =
     useRoute();
 
@@ -145,6 +170,9 @@ const router =
     useRouter();
 
 const item =
+    ref(null);
+
+const schema =
     ref(null);
 
 const loading =
@@ -200,26 +228,88 @@ const backLabel =
             : 'Dashboard'
     );
 
-const metadataEntries =
+const schemaFields =
     computed(
-        () => Object
-            .entries(
-                item.value?.metadata ?? {}
-            )
-            .filter(
-                ([, value]) => value !== null &&
-                    value !== undefined &&
-                    value !== ''
-            )
+        () => schema.value?.fields ?? []
+    );
+
+const hasDescription =
+    computed(
+        () => !isEmptyMetadataValue(
+            item.value?.description
+        )
+    );
+
+const knownMetadataEntries =
+    computed(
+        () => schemaFields.value
             .map(
-                ([key, value]) => ({
-                    key,
-                    value:
-                        formatMetadataValue(
+                field => {
+
+                    const value =
+                        item.value?.metadata?.[field.name];
+
+                    if (
+                        isEmptyMetadataValue(
                             value
                         )
-                })
+                    ) {
+
+                        return null;
+
+                    }
+
+                    return {
+                        key:
+                            field.name,
+                        label:
+                            field.label ?? field.name,
+                        value:
+                            formatMetadataValue(
+                                value,
+                                field
+                            )
+                    };
+
+                }
             )
+            .filter(
+                entry => entry !== null
+            )
+    );
+
+const unknownMetadataEntries =
+    computed(
+        () => {
+
+            const knownFieldNames =
+                new Set(
+                    schemaFields.value.map(
+                        field => field.name
+                    )
+                );
+
+            return Object
+                .entries(
+                    item.value?.metadata ?? {}
+                )
+                .filter(
+                    ([key, value]) => !knownFieldNames.has(key) &&
+                        !isEmptyMetadataValue(value)
+                )
+                .map(
+                    ([key, value]) => ({
+                        key,
+                        label:
+                            key,
+                        value:
+                            formatMetadataValue(
+                                value
+                            )
+                    })
+                );
+
+        }
     );
 
 onMounted(
@@ -242,16 +332,48 @@ async function loadItem() {
     deleteError.value =
         '';
 
+    item.value =
+        null;
+
+    schema.value =
+        null;
+
     try {
 
-        item.value =
+        const loadedItem =
             await getItem(
                 itemId.value
             );
 
+        item.value =
+            loadedItem;
+
+        if (
+            loadedItem.plugin
+        ) {
+
+            try {
+
+                schema.value =
+                    await getPluginSchema(
+                        loadedItem.plugin
+                    );
+
+            } catch {
+
+                schema.value =
+                    null;
+
+            }
+
+        }
+
     } catch (loadError) {
 
         item.value =
+            null;
+
+        schema.value =
             null;
 
         error.value =
@@ -350,14 +472,45 @@ async function deleteCurrentItem() {
 }
 
 function formatMetadataValue(
-    value
+    value,
+    field = null
 ) {
 
     if (
+        field?.type === 'checkbox' ||
         typeof value === 'boolean'
     ) {
 
         return value ? 'Oui' : 'Non';
+
+    }
+
+    if (
+        field?.type === 'date'
+    ) {
+
+        return formatMetadataDate(
+            value
+        );
+
+    }
+
+    if (
+        field?.type === 'rating'
+    ) {
+
+        return `${value} / ${field.max ?? 20}`;
+
+    }
+
+    if (
+        field?.type === 'select'
+    ) {
+
+        return getSelectOptionLabel(
+            field,
+            value
+        );
 
     }
 
@@ -371,9 +524,131 @@ function formatMetadataValue(
 
     }
 
+    if (
+        value !== null &&
+        typeof value === 'object'
+    ) {
+
+        try {
+
+            return JSON.stringify(
+                value
+            );
+
+        } catch {
+
+            return String(
+                value
+            );
+
+        }
+
+    }
+
     return String(
         value
     );
+
+}
+
+function formatMetadataDate(
+    value
+) {
+
+    if (
+        !value
+    ) {
+
+        return 'Non renseigné';
+
+    }
+
+    return new Intl.DateTimeFormat(
+        'fr-FR',
+        {
+            dateStyle:
+                'medium'
+        }
+    ).format(
+        new Date(value)
+    );
+
+}
+
+function getSelectOptionLabel(
+    field,
+    value
+) {
+
+    const option =
+        normalizedOptions(
+            field
+        ).find(
+            candidate => String(candidate.value) === String(value)
+        );
+
+    return option?.label ?? String(value);
+
+}
+
+function normalizedOptions(
+    field
+) {
+
+    if (
+        !Array.isArray(field.options)
+    ) {
+
+        return [];
+
+    }
+
+    return field.options.map(
+        option => {
+
+            if (
+                option !== null &&
+                typeof option === 'object' &&
+                option.value !== undefined
+            ) {
+
+                return {
+                    label:
+                        option.label ?? String(option.value),
+                    value:
+                        option.value
+                };
+
+            }
+
+            return {
+                label:
+                    String(option),
+                value:
+                    option
+            };
+
+        }
+    );
+
+}
+
+function isEmptyMetadataValue(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ''
+    ) {
+
+        return true;
+
+    }
+
+    return Array.isArray(value) &&
+        value.length === 0;
 
 }
 
@@ -521,10 +796,21 @@ h2 {
     padding: 10px 12px;
 }
 
+.details-section {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
 .description {
     color: #30394b;
-    margin: 0 0 18px;
+    line-height: 1.6;
+    margin: 0;
     white-space: pre-wrap;
+}
+
+.description.muted {
+    color: #5f6f89;
 }
 
 .info-list,
@@ -555,12 +841,6 @@ dt {
 dd {
     margin: 0;
     overflow-wrap: anywhere;
-}
-
-.metadata-section {
-    display: grid;
-    gap: 12px;
-    margin-top: 22px;
 }
 
 .metadata-list {
