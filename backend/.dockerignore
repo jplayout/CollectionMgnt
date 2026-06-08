@@ -1,0 +1,10 @@
+node_modules
+data
+.env
+*.log
+*.tmp
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal

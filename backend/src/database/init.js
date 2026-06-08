@@ -1,18 +1,36 @@
 import fs from 'fs';
 import path from 'path';
+import {
+    fileURLToPath
+} from 'url';
+
+import {
+    DATA_DIR,
+    DATABASE_PATH
+} from '../config/paths.js';
 
 import { getDatabase } from './database.js';
 
-export async function initializeDatabase() {
-
-    const databasePath = path.join(
-        process.cwd(),
-        'data',
-        'collection-manager.db'
+const CURRENT_DIR =
+    path.dirname(
+        fileURLToPath(
+            import.meta.url
+        )
     );
 
+export async function initializeDatabase() {
+
     const databaseExists =
-        fs.existsSync(databasePath);
+        fs.existsSync(
+            DATABASE_PATH
+        );
+
+    fs.mkdirSync(
+        DATA_DIR,
+        {
+            recursive: true
+        }
+    );
 
     const db = getDatabase();
 
@@ -29,9 +47,7 @@ export async function initializeDatabase() {
     );
 
     const schemaPath = path.join(
-        process.cwd(),
-        'src',
-        'database',
+        CURRENT_DIR,
         'schema.sql'
     );
 

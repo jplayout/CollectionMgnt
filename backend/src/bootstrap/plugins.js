@@ -1,14 +1,15 @@
-import path from 'path';
-
 import { loadPlugins } from '../plugins/plugin-loader.js';
 import { PluginService } from '../plugins/plugin-service.js';
+import {
+    PLUGINS_DIR
+} from '../config/paths.js';
 
 export async function bootstrapPlugins() {
 
     const service = new PluginService();
 
     const plugins = await loadPlugins(
-        path.join(process.cwd(), 'plugins')
+        PLUGINS_DIR
     );
 
     for (const plugin of plugins) {

@@ -8,6 +8,10 @@ import {
     MediaRepository
 } from '../repositories/media-repository.js';
 
+import {
+    getUploadPath
+} from '../config/paths.js';
+
 const ALLOWED_MIME_TYPES = new Map([
     [
         'image/jpeg',
@@ -602,9 +606,7 @@ function getMediaFilePath(
 ) {
 
     return path.join(
-        process.cwd(),
-        'data',
-        'uploads',
+        getUploadPath(),
         'items',
         String(itemId),
         'originals',
@@ -618,9 +620,7 @@ function getItemMediaDirectory(
 ) {
 
     return path.join(
-        process.cwd(),
-        'data',
-        'uploads',
+        getUploadPath(),
         'items',
         String(itemId)
     );
@@ -633,9 +633,7 @@ function getOptimizedFilePath(
 ) {
 
     return path.join(
-        process.cwd(),
-        'data',
-        'uploads',
+        getUploadPath(),
         'items',
         String(itemId),
         'images',
@@ -650,9 +648,7 @@ function getThumbnailFilePath(
 ) {
 
     return path.join(
-        process.cwd(),
-        'data',
-        'uploads',
+        getUploadPath(),
         'items',
         String(itemId),
         'thumbs',

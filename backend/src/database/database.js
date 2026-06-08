@@ -1,5 +1,8 @@
 import Database from 'better-sqlite3';
-import path from 'path';
+
+import {
+    DATABASE_PATH
+} from '../config/paths.js';
 
 let db = null;
 
@@ -9,13 +12,9 @@ export function getDatabase() {
         return db;
     }
 
-    const databasePath = path.join(
-        process.cwd(),
-        'data',
-        'collection-manager.db'
+    db = new Database(
+        DATABASE_PATH
     );
-
-    db = new Database(databasePath);
 
     db.pragma('foreign_keys = ON');
 

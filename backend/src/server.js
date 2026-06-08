@@ -25,6 +25,11 @@ import {
 
 try {
 
+    const port =
+        Number(
+            process.env.PORT ?? 3000
+        );
+
     const db =
         await initializeDatabase();
 
@@ -76,7 +81,7 @@ try {
 
     await app.listen({
         host: '0.0.0.0',
-        port: 3000
+        port
     });
 
 } catch (error) {

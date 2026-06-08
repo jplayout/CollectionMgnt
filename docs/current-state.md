@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.8-lot5.13
+Version : v0.9-lot6.0.1
 
 ## État du projet
 
@@ -105,6 +105,8 @@ Frontend :
 - Restauration de session
 - Logout
 - Service API centralisé
+- Build statique Docker servi par Nginx
+- Proxy Nginx `/api` vers le backend Docker
 - Support `FormData` dans le service API frontend
 - Support des réponses `Blob` dans le service API frontend
 - Page détail item enrichie
@@ -229,6 +231,16 @@ Variables requises :
 - `ADMIN_USERNAME`
 - `ADMIN_PASSWORD`
 
+Variables disponibles pour le déploiement Docker local :
+
+- `PORT`
+- `DATA_DIR`
+- `PLUGINS_DIR`
+- `FRONTEND_PORT`
+- `BACKEND_PORT`
+
+`DATABASE_PATH` est dérivé côté backend de `DATA_DIR` et pointe vers `collection-manager.db`.
+
 ### Frontend
 
 Variables disponibles :
@@ -238,6 +250,23 @@ Variables disponibles :
 ### Développement
 
 - Proxy Vite `/api` → `http://localhost:3000`
+
+### Docker local
+
+- `cp .env.example .env`
+- `docker compose up --build`
+- `docker-compose up --build`
+- `podman-compose up --build`
+- Frontend disponible sur `http://localhost:8080` par défaut
+- Frontend servi en statique par Nginx
+- Proxy Nginx `/api` vers `http://backend:3000`
+- Backend Node 22 lancé avec `node src/server.js`
+- Volume persistant `./backend/data:/app/data:Z`
+- Plugins montés en lecture seule via `./backend/plugins:/app/plugins:ro,Z`
+- Labels SELinux `:Z` validés sur Podman rootless / Bazzite
+- Symptôme possible sans label SELinux : `SQLITE_CANTOPEN` ou `unable to open database file`
+- `backend/data` doit exister avant le premier démarrage
+- Variables d'exemple documentées dans `.env.example`
 
 ---
 
@@ -485,8 +514,26 @@ Variables disponibles :
 - Post-filtrage frontend supprimé pour les types maintenant gérés côté backend
 - Pas de filtres range dans ce lot
 
+### Lot 6.0.1 - Dockerisation locale
+
+#### Livré
+
+- Exécution locale via `docker compose up --build`
+- Exécution locale validée aussi via `podman-compose up --build`
+- Backend Docker Node 22 avec commande de production `node src/server.js`
+- Port backend configurable via `PORT`, avec défaut 3000
+- Chemins backend configurables via `DATA_DIR` et `PLUGINS_DIR`
+- SQLite et médias persistés dans `./backend/data:/app/data:Z`
+- Plugins montés dans le conteneur backend via `./backend/plugins:/app/plugins:ro,Z`
+- Frontend construit avec Vite puis servi en statique par Nginx
+- Proxy Nginx `/api` vers le service backend
+- Port frontend public configurable via `FRONTEND_PORT`, avec défaut 8080
+- Correctif SELinux `:Z` validé sur Podman rootless / Bazzite
+- Documentation Docker locale dans `docs/deployment-docker.md`
+
 ### Lots suivants
 
+- Lot 6.0.2 - CI GitHub Actions
 - Lot 5.14 - Pagination des listes items
 - Interface de gestion des collections
 - Galerie médias avancée

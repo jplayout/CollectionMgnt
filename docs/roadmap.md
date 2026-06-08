@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 5.14 - Pagination des listes items.
+Étape suivante : Lot 6.0.2 - CI GitHub Actions.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.8-lot5.13.
+Version actuelle : v0.9-lot6.0.1.
 
 ### Lot 5.6 - Livré
 
@@ -148,9 +148,26 @@ Version actuelle : v0.8-lot5.13.
 - Suppression du post-filtrage frontend pour les types gérés par le backend
 - Pas de filtres range dans ce lot
 
+### Lot 6.0.1 - Livré
+
+- Exécution locale via `docker compose up --build`, `docker-compose up --build` ou `podman-compose up --build`
+- Service backend Node 22 lancé avec `node src/server.js`
+- Port backend interne 3000, configurable côté hôte via `BACKEND_PORT`
+- Chemins backend configurables via `DATA_DIR` et `PLUGINS_DIR`
+- Base SQLite dérivée de `DATA_DIR` via `collection-manager.db`
+- Volume persistant `./backend/data:/app/data:Z`
+- Plugins montés via `./backend/plugins:/app/plugins:ro,Z`
+- Service frontend construit avec Vite et servi en statique par Nginx
+- Proxy Nginx `/api` vers `http://backend:3000`
+- Port frontend public configurable via `FRONTEND_PORT`, avec défaut 8080
+- Compatibilité Podman rootless / Bazzite / SELinux validée avec labels de volumes `:Z`
+- `.env` requis avec `JWT_SECRET` et `ADMIN_PASSWORD`
+- Documentation de déploiement local dans `docs/deployment-docker.md`
+- GitHub Actions, GHCR, HTTPS et reverse proxy externe non inclus dans ce lot
+
 ### Prochaine étape
 
-- Lot 5.14 - Pagination des listes items
+- Lot 6.0.2 - CI GitHub Actions
 
 ### Non livré à ce stade
 

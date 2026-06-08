@@ -2,10 +2,22 @@
 services:
   backend:
     build: ./backend
-    ports: ["3000:3000"]
+    environment:
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
+      DATA_DIR: ${DATA_DIR:-/app/data}
+      PLUGINS_DIR: ${PLUGINS_DIR:-/app/plugins}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
     volumes:
-      - ./backend/data:/app/data
+      - ./backend/data:${DATA_DIR:-/app/data}:Z
+      - ./backend/plugins:${PLUGINS_DIR:-/app/plugins}:ro,Z
 
   frontend:
     build: ./frontend
-    ports: ["8080:80"]
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
