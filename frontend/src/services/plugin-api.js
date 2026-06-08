@@ -19,3 +19,13 @@ export function getPluginSchema(
     );
 
 }
+
+export function getDisplayPreferences(
+    pluginId
+) {
+
+    return apiFetch(
+        `/api/plugins/${pluginId}/display-preferences`
+    );
+
+}

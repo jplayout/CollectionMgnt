@@ -1,5 +1,8 @@
 <template>
-    <article class="item-card">
+    <article
+        class="item-card"
+        :class="{ compact: isCompact }"
+    >
         <div class="thumb-frame">
             <img
                 v-if="thumbUrl"
@@ -33,7 +36,7 @@
                     v-for="entry in metadataEntries"
                     :key="entry.key"
                 >
-                    <dt>{{ entry.key }}</dt>
+                    <dt>{{ entry.label }}</dt>
                     <dd>{{ entry.value }}</dd>
                 </div>
             </dl>
@@ -61,11 +64,28 @@ import {
     getMediaThumbBlob
 } from '../../services/media-api.js';
 
+import {
+    formatMetadataValue,
+    isEmptyMetadataValue
+} from '../../utils/metadata-formatters.js';
+
 const props =
     defineProps({
         item: {
             required:
                 true,
+            type:
+                Object
+        },
+        fields: {
+            default:
+                () => [],
+            type:
+                Array
+        },
+        displayPreferences: {
+            default:
+                null,
             type:
                 Object
         }
@@ -82,27 +102,21 @@ let requestId =
 
 const metadataEntries =
     computed(
-        () => Object
-            .entries(
-                props.item.metadata ?? {}
-            )
-            .filter(
-                ([, value]) => value !== null &&
-                    value !== undefined &&
-                    value !== ''
-            )
-            .slice(
-                0,
-                3
-            )
-            .map(
-                ([key, value]) => ({
-                    key,
-                    value:
-                        formatMetadataValue(
-                            value
-                        )
-                })
+        () => canUseDisplayPreferences.value
+            ? getPreferredMetadataEntries()
+            : getFallbackMetadataEntries()
+    );
+
+const isCompact =
+    computed(
+        () => props.displayPreferences?.list?.density === 'compact'
+    );
+
+const canUseDisplayPreferences =
+    computed(
+        () => props.fields.length > 0 &&
+            Array.isArray(
+                props.displayPreferences?.list?.highlightedFields
             )
     );
 
@@ -196,31 +210,89 @@ async function loadPrimaryThumb() {
 
 }
 
-function formatMetadataValue(
-    value
-) {
+function getPreferredMetadataEntries() {
 
-    if (
-        typeof value === 'boolean'
-    ) {
-
-        return value ? 'Oui' : 'Non';
-
-    }
-
-    if (
-        Array.isArray(value)
-    ) {
-
-        return value.join(
-            ', '
+    const fieldsByName =
+        new Map(
+            props.fields.map(
+                field => [
+                    field.name,
+                    field
+                ]
+            )
         );
 
-    }
+    return props.displayPreferences.list.highlightedFields
+        .map(
+            fieldName => {
 
-    return String(
-        value
-    );
+                const field =
+                    fieldsByName.get(
+                        fieldName
+                    );
+
+                if (!field) {
+                    return null;
+                }
+
+                const value =
+                    props.item.metadata?.[field.name];
+
+                if (
+                    isEmptyMetadataValue(
+                        value
+                    )
+                ) {
+
+                    return null;
+
+                }
+
+                return {
+                    key:
+                        field.name,
+                    label:
+                        field.label ?? field.name,
+                    value:
+                        formatMetadataValue(
+                            field,
+                            value
+                        )
+                };
+
+            }
+        )
+        .filter(
+            entry => entry !== null
+        );
+
+}
+
+function getFallbackMetadataEntries() {
+
+    return Object
+        .entries(
+            props.item.metadata ?? {}
+        )
+        .filter(
+            ([, value]) => !isEmptyMetadataValue(value)
+        )
+        .slice(
+            0,
+            3
+        )
+        .map(
+            ([key, value]) => ({
+                key,
+                label:
+                    key,
+                value:
+                    formatMetadataValue(
+                        null,
+                        value
+                    )
+            })
+        );
 
 }
 
@@ -288,6 +360,15 @@ img {
     padding: 16px;
 }
 
+.item-card.compact .item-body {
+    gap: 10px;
+    padding: 12px;
+}
+
+.item-card.compact .thumb-frame {
+    aspect-ratio: 16 / 9;
+}
+
 h2 {
     font-size: 1.1rem;
     margin: 0;
@@ -297,6 +378,10 @@ h2 {
     display: grid;
     gap: 8px;
     margin: 0;
+}
+
+.item-card.compact .metadata-list {
+    gap: 6px;
 }
 
 .metadata-list div {

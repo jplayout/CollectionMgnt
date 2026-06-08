@@ -160,8 +160,14 @@ import {
 } from '../services/item-api.js';
 
 import {
+    getDisplayPreferences,
     getPluginSchema
 } from '../services/plugin-api.js';
+
+import {
+    formatMetadataValue,
+    isEmptyMetadataValue
+} from '../utils/metadata-formatters.js';
 
 const route =
     useRoute();
@@ -173,6 +179,9 @@ const item =
     ref(null);
 
 const schema =
+    ref(null);
+
+const displayPreferences =
     ref(null);
 
 const loading =
@@ -233,6 +242,76 @@ const schemaFields =
         () => schema.value?.fields ?? []
     );
 
+const visibleSchemaFields =
+    computed(
+        () => {
+
+            const hiddenFields =
+                new Set(
+                    displayPreferences.value?.details?.hiddenFields ?? []
+                );
+
+            return orderedSchemaFields.value.filter(
+                field => !hiddenFields.has(
+                    field.name
+                )
+            );
+
+        }
+    );
+
+const orderedSchemaFields =
+    computed(
+        () => {
+
+            const fieldsByName =
+                new Map(
+                    schemaFields.value.map(
+                        field => [
+                            field.name,
+                            field
+                        ]
+                    )
+                );
+
+            const orderedFields = [];
+
+            for (
+                const fieldName
+                of displayPreferences.value?.details?.fieldOrder ?? []
+            ) {
+
+                const field =
+                    fieldsByName.get(
+                        fieldName
+                    );
+
+                if (
+                    !field
+                ) {
+
+                    continue;
+
+                }
+
+                orderedFields.push(
+                    field
+                );
+
+                fieldsByName.delete(
+                    fieldName
+                );
+
+            }
+
+            return [
+                ...orderedFields,
+                ...fieldsByName.values()
+            ];
+
+        }
+    );
+
 const hasDescription =
     computed(
         () => !isEmptyMetadataValue(
@@ -242,7 +321,7 @@ const hasDescription =
 
 const knownMetadataEntries =
     computed(
-        () => schemaFields.value
+        () => visibleSchemaFields.value
             .map(
                 field => {
 
@@ -266,8 +345,8 @@ const knownMetadataEntries =
                             field.label ?? field.name,
                         value:
                             formatMetadataValue(
-                                value,
-                                field
+                                field,
+                                value
                             )
                     };
 
@@ -304,6 +383,7 @@ const unknownMetadataEntries =
                             key,
                         value:
                             formatMetadataValue(
+                                null,
                                 value
                             )
                     })
@@ -338,6 +418,9 @@ async function loadItem() {
     schema.value =
         null;
 
+    displayPreferences.value =
+        null;
+
     try {
 
         const loadedItem =
@@ -352,19 +435,14 @@ async function loadItem() {
             loadedItem.plugin
         ) {
 
-            try {
-
-                schema.value =
-                    await getPluginSchema(
-                        loadedItem.plugin
-                    );
-
-            } catch {
-
-                schema.value =
-                    null;
-
-            }
+            await Promise.all([
+                loadSchema(
+                    loadedItem.plugin
+                ),
+                loadDisplayPreferences(
+                    loadedItem.plugin
+                )
+            ]);
 
         }
 
@@ -385,6 +463,46 @@ async function loadItem() {
 
         loading.value =
             false;
+
+    }
+
+}
+
+async function loadSchema(
+    pluginId
+) {
+
+    try {
+
+        schema.value =
+            await getPluginSchema(
+                pluginId
+            );
+
+    } catch {
+
+        schema.value =
+            null;
+
+    }
+
+}
+
+async function loadDisplayPreferences(
+    pluginId
+) {
+
+    try {
+
+        displayPreferences.value =
+            await getDisplayPreferences(
+                pluginId
+            );
+
+    } catch {
+
+        displayPreferences.value =
+            null;
 
     }
 
@@ -468,187 +586,6 @@ async function deleteCurrentItem() {
             false;
 
     }
-
-}
-
-function formatMetadataValue(
-    value,
-    field = null
-) {
-
-    if (
-        field?.type === 'checkbox' ||
-        typeof value === 'boolean'
-    ) {
-
-        return value ? 'Oui' : 'Non';
-
-    }
-
-    if (
-        field?.type === 'date'
-    ) {
-
-        return formatMetadataDate(
-            value
-        );
-
-    }
-
-    if (
-        field?.type === 'rating'
-    ) {
-
-        return `${value} / ${field.max ?? 20}`;
-
-    }
-
-    if (
-        field?.type === 'select'
-    ) {
-
-        return getSelectOptionLabel(
-            field,
-            value
-        );
-
-    }
-
-    if (
-        Array.isArray(value)
-    ) {
-
-        return value.join(
-            ', '
-        );
-
-    }
-
-    if (
-        value !== null &&
-        typeof value === 'object'
-    ) {
-
-        try {
-
-            return JSON.stringify(
-                value
-            );
-
-        } catch {
-
-            return String(
-                value
-            );
-
-        }
-
-    }
-
-    return String(
-        value
-    );
-
-}
-
-function formatMetadataDate(
-    value
-) {
-
-    if (
-        !value
-    ) {
-
-        return 'Non renseigné';
-
-    }
-
-    return new Intl.DateTimeFormat(
-        'fr-FR',
-        {
-            dateStyle:
-                'medium'
-        }
-    ).format(
-        new Date(value)
-    );
-
-}
-
-function getSelectOptionLabel(
-    field,
-    value
-) {
-
-    const option =
-        normalizedOptions(
-            field
-        ).find(
-            candidate => String(candidate.value) === String(value)
-        );
-
-    return option?.label ?? String(value);
-
-}
-
-function normalizedOptions(
-    field
-) {
-
-    if (
-        !Array.isArray(field.options)
-    ) {
-
-        return [];
-
-    }
-
-    return field.options.map(
-        option => {
-
-            if (
-                option !== null &&
-                typeof option === 'object' &&
-                option.value !== undefined
-            ) {
-
-                return {
-                    label:
-                        option.label ?? String(option.value),
-                    value:
-                        option.value
-                };
-
-            }
-
-            return {
-                label:
-                    String(option),
-                value:
-                    option
-            };
-
-        }
-    );
-
-}
-
-function isEmptyMetadataValue(
-    value
-) {
-
-    if (
-        value === null ||
-        value === undefined ||
-        value === ''
-    ) {
-
-        return true;
-
-    }
-
-    return Array.isArray(value) &&
-        value.length === 0;
 
 }
 

@@ -178,6 +178,8 @@
                 <ItemCard
                     v-for="item in items"
                     :key="item.id"
+                    :display-preferences="displayPreferences"
+                    :fields="schemaFields"
                     :item="item"
                 />
             </div>
@@ -207,6 +209,7 @@ import {
 } from '../services/item-api.js';
 
 import {
+    getDisplayPreferences,
     getPluginSchema
 } from '../services/plugin-api.js';
 
@@ -222,6 +225,9 @@ const pluginId =
     );
 
 const pluginSchema =
+    ref(null);
+
+const displayPreferences =
     ref(null);
 
 const items =
@@ -251,11 +257,16 @@ const showDeletedMessage =
         () => route.query.deleted !== undefined
     );
 
+const schemaFields =
+    computed(
+        () => pluginSchema.value?.fields ?? []
+    );
+
 const filterableFields =
     computed(
-        () => pluginSchema.value?.fields?.filter(
+        () => schemaFields.value.filter(
             field => field.filterable
-        ) ?? []
+        )
     );
 
 const activeFilters =
@@ -290,7 +301,10 @@ watch(
 
 async function loadPage() {
 
-    await loadSchema();
+    await Promise.all([
+        loadSchema(),
+        loadDisplayPreferences()
+    ]);
 
     resetFilterValues();
 
@@ -310,6 +324,24 @@ async function loadSchema() {
     } catch {
 
         pluginSchema.value =
+            null;
+
+    }
+
+}
+
+async function loadDisplayPreferences() {
+
+    try {
+
+        displayPreferences.value =
+            await getDisplayPreferences(
+                pluginId.value
+            );
+
+    } catch {
+
+        displayPreferences.value =
             null;
 
     }

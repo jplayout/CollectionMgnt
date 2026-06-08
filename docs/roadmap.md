@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 7.0.2 - Frontend préférences d’affichage.
+Étape suivante : Lot 7.0.3 - Panneau d’édition des préférences d’affichage.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.10-lot7.0.1.
+Version actuelle : v0.10-lot7.0.2.
 
 ### Lot 5.6 - Livré
 
@@ -219,9 +219,21 @@ Version actuelle : v0.10-lot7.0.1.
 - Aucun changement des fichiers `fields.json`
 - Aucun changement frontend dans ce lot
 
+### Lot 7.0.2 - Livré
+
+- Frontend branché sur `GET /api/plugins/:pluginId/display-preferences`
+- Cartes items pilotées par `list.highlightedFields`
+- Cartes items affichant les labels du schéma plugin quand les préférences et le schéma sont disponibles
+- Densité des cartes appliquée via `list.density`
+- Fiche détail pilotée par `details.fieldOrder`
+- Champs masqués en fiche détail via `details.hiddenFields`
+- Section `Autres informations` conservée pour les métadonnées inconnues du schéma plugin
+- Formatage des métadonnées partagé côté frontend
+- Aucun panneau d'édition, de sauvegarde ou de reset des préférences dans ce lot
+
 ### Prochaine étape
 
-- Lot 7.0.2 - Frontend préférences d’affichage
+- Lot 7.0.3 - Panneau d’édition des préférences d’affichage
 
 ### Non livré à ce stade
 

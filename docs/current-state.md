@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.10-lot7.0.1
+Version : v0.10-lot7.0.2
 
 ## État du projet
 
@@ -114,12 +114,15 @@ Frontend :
 - Support des réponses `Blob` dans le service API frontend
 - Page détail item enrichie
 - Page détail item pilotée par le schéma plugin pour les labels de métadonnées
+- Page détail item pilotée par les préférences d'affichage backend pour l'ordre et le masquage des métadonnées
 - Navigation collections/items minimale
 - Création d'item frontend dynamique via `GET /api/plugins/:pluginId/schema`
 - Édition d'item frontend dynamique via `GET /api/items/:id`, `GET /api/plugins/:pluginId/schema` et `PATCH /api/items/:id`
 - Suppression d'item depuis la fiche item via `DELETE /api/items/:id`
 - Recherche large frontend par collection via le paramètre backend `search`
 - Filtres dynamiques frontend par collection depuis les champs `filterable`
+- Cartes items pilotées par les préférences d'affichage backend pour les champs mis en avant et la densité
+- Cartes items avec labels issus du schéma plugin quand les préférences sont disponibles
 - Moteur de formulaires dynamiques frontend :
   - champs fixes `title` obligatoire et `description` optionnel
   - champs dynamiques depuis `schema.fields`
@@ -611,9 +614,20 @@ Variables disponibles :
 - Rejet des champs inconnus et densités invalides avec réponse 400
 - Aucun changement des plugins, des fichiers `fields.json` ou du frontend
 
+### Lot 7.0.2 - Consommation frontend des préférences d'affichage
+
+- Frontend branché sur `GET /api/plugins/:pluginId/display-preferences`
+- Cartes items affichant les champs `list.highlightedFields` dans l'ordre des préférences
+- Cartes items utilisant les labels du schéma plugin au lieu des clés techniques quand le schéma et les préférences sont disponibles
+- Cartes items appliquant la densité `comfortable` ou `compact`
+- Fiche détail appliquant `details.fieldOrder` et `details.hiddenFields`
+- Section `Autres informations` conservée pour les métadonnées inconnues du schéma plugin
+- Formatage metadata partagé côté frontend
+- Aucun panneau d'édition, de sauvegarde ou de reset des préférences dans ce lot
+
 ### Lots suivants
 
-- Lot 7.0.2 - Frontend préférences d'affichage
+- Lot 7.0.3 - Panneau d'édition des préférences d'affichage
 - Lot 5.14 - Pagination des listes items
 - Interface de gestion des collections
 - Galerie médias avancée
