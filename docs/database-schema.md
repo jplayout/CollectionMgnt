@@ -139,9 +139,14 @@ Configuration globale.
 |---------|---------|
 | key | TEXT |
 | value | TEXT |
+| updated_at | DATETIME |
 
 Exemples :
 
 - default_language
 - backup_frequency
 - retention_days
+- displayPreferences.games
+
+Les préférences d'affichage par plugin sont stockées dans cette table avec des clés `displayPreferences.<pluginId>`.
+La valeur est un document JSON contenant les préférences de liste et de fiche détail.

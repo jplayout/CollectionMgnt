@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 6.0.4 - Documentation déploiement images prébuildées / durcissement CI.
+Étape suivante : Lot 7.0.2 - Frontend préférences d’affichage.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.9-lot6.0.3.
+Version actuelle : v0.10-lot7.0.1.
 
 ### Lot 5.6 - Livré
 
@@ -203,9 +203,25 @@ Version actuelle : v0.9-lot6.0.3.
 - Pas de GitHub Release
 - Pas de multi-arch, cosign, SBOM ou scan sécurité dans ce lot
 
+### Lot 7.0.1 - Livré
+
+- API backend persistante de préférences d'affichage par plugin
+- Routes protégées :
+  - `GET /api/plugins/:pluginId/display-preferences`
+  - `PUT /api/plugins/:pluginId/display-preferences`
+  - `DELETE /api/plugins/:pluginId/display-preferences`
+- Stockage dans la table SQLite `settings` avec les clés `displayPreferences.<pluginId>`
+- Calcul de préférences par défaut depuis le schéma plugin
+- Validation stricte des noms de champs depuis le schéma plugin
+- Densités acceptées : `comfortable` et `compact`
+- Rejet des champs inconnus et des densités invalides avec réponse 400
+- Suppression des préférences pour revenir aux valeurs par défaut
+- Aucun changement des fichiers `fields.json`
+- Aucun changement frontend dans ce lot
+
 ### Prochaine étape
 
-- Lot 6.0.4 - Documentation déploiement images prébuildées / durcissement CI
+- Lot 7.0.2 - Frontend préférences d’affichage
 
 ### Non livré à ce stade
 

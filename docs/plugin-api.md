@@ -59,6 +59,9 @@ Exemple :
 ]
 ```
 
+Les préférences d'affichage utilisateur ne font pas partie du contrat plugin.
+Elles ne doivent pas être ajoutées dans `fields.json` et sont persistées côté application avec les clés `displayPreferences.<pluginId>`.
+
 ---
 
 # Types réellement validés actuellement

@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.9-lot6.0.3
+Version : v0.10-lot7.0.1
 
 ## État du projet
 
@@ -26,6 +26,9 @@ Frontend :
 - Validation des manifests
 - Validation des `fields.json`
 - Synchronisation automatique vers SQLite
+- API backend de préférences d'affichage par plugin via la table `settings`
+- Préférences d'affichage stockées avec les clés `displayPreferences.<pluginId>`
+- Préférences d'affichage sans modification des fichiers `fields.json`
 
 ### Collections
 
@@ -199,6 +202,9 @@ Frontend :
 - `GET /api/plugins/:id`
 - `GET /api/plugins/:pluginId/fields`
 - `GET /api/plugins/:pluginId/schema`
+- `GET /api/plugins/:pluginId/display-preferences`
+- `PUT /api/plugins/:pluginId/display-preferences`
+- `DELETE /api/plugins/:pluginId/display-preferences`
 - `PATCH /api/plugins/:id`
 
 ### Items
@@ -594,9 +600,20 @@ Variables disponibles :
   - tag Git exact uniquement depuis les tags `v*`
 - Pas de Docker Hub, pas de GitHub Release, pas de multi-arch, pas de cosign, pas de SBOM et pas de scan sécurité dans ce lot
 
+### Lot 7.0.1 - Préférences d'affichage backend
+
+- API backend persistante de préférences d'affichage par plugin
+- Routes protégées `GET`, `PUT` et `DELETE` sur `/api/plugins/:pluginId/display-preferences`
+- Stockage dans la table `settings` avec les clés `displayPreferences.<pluginId>`
+- Préférences par défaut calculées depuis le schéma plugin
+- Validation stricte des champs depuis le schéma plugin
+- Densités acceptées : `comfortable` et `compact`
+- Rejet des champs inconnus et densités invalides avec réponse 400
+- Aucun changement des plugins, des fichiers `fields.json` ou du frontend
+
 ### Lots suivants
 
-- Lot 6.0.4 - Documentation déploiement images prébuildées / durcissement CI
+- Lot 7.0.2 - Frontend préférences d'affichage
 - Lot 5.14 - Pagination des listes items
 - Interface de gestion des collections
 - Galerie médias avancée
