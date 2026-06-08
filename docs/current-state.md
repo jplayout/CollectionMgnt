@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.9-lot6.0.1
+Version : v0.9-lot6.0.2
 
 ## État du projet
 
@@ -284,6 +284,19 @@ Variables disponibles :
 
 ---
 
+## CI
+
+- Workflow GitHub Actions `.github/workflows/ci.yml`
+- Déclenchement sur push et pull request
+- Node 22 utilisé pour les vérifications backend et frontend
+- Backend : `npm ci` puis vérification syntaxique des fichiers JavaScript avec `node --check`
+- Frontend : `npm ci` puis `npm exec vite build`
+- Docker : build des images backend et frontend après succès des jobs Node
+- Aucune publication d'image dans ce lot
+- Aucun test applicatif n'est lancé actuellement, faute de script `test` existant
+
+---
+
 ## Fonctionnalités prévues
 
 ### Lot 5.6 - Création item frontend dynamique
@@ -531,9 +544,27 @@ Variables disponibles :
 - Correctif SELinux `:Z` validé sur Podman rootless / Bazzite
 - Documentation Docker locale dans `docs/deployment-docker.md`
 
+### Lot 6.0.2 - CI GitHub Actions
+
+#### Livré
+
+- Workflow GitHub Actions minimal dans `.github/workflows/ci.yml`
+- Exécution à chaque push et pull request
+- Job backend sur Ubuntu latest et Node 22
+- Installation backend via `npm ci`
+- Vérification syntaxique backend via `node --check` sur les fichiers JavaScript de `backend/src`
+- Job frontend sur Ubuntu latest et Node 22
+- Installation frontend via `npm ci`
+- Build frontend via `npm exec vite build`
+- Job Docker dépendant des jobs backend et frontend
+- Build de `backend/Dockerfile` avec le tag local `collectionmgnt-backend`
+- Build de `frontend/Dockerfile` avec le tag local `collectionmgnt-frontend`
+- Pas de publication GHCR, Docker Hub ou release GitHub dans ce lot
+- Aucun test applicatif n'est lancé actuellement, faute de script `test` existant
+
 ### Lots suivants
 
-- Lot 6.0.2 - CI GitHub Actions
+- Lot 6.0.3 - Publication automatique GHCR
 - Lot 5.14 - Pagination des listes items
 - Interface de gestion des collections
 - Galerie médias avancée

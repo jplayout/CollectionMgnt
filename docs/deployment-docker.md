@@ -1,6 +1,6 @@
 # Déploiement Docker local
 
-État : v0.9-lot6.0.1.
+État : v0.9-lot6.0.2.
 
 Ce lot permet une exécution locale avec Docker Compose sur Linux, NAS ou serveur personnel. Synology reste une plateforme prioritaire/testée/documentée, mais la cible principale est le Docker auto-hébergé générique.
 
@@ -106,9 +106,14 @@ mkdir -p backend/data
 
 ## Limites du lot
 
-- Pas de GitHub Actions.
 - Pas de publication GHCR.
 - Pas de HTTPS.
 - Pas de Traefik, Caddy ou reverse proxy externe.
 - Pas de stratégie avancée UID/GID pour NAS.
 - Pas de sauvegarde automatisée.
+
+## CI
+
+Le Lot 6.0.2 ajoute une CI GitHub Actions minimale qui vérifie le backend, le frontend et le build des images Docker. Elle ne publie aucune image.
+
+Aucun test applicatif n'est lancé actuellement, faute de script `test` existant.

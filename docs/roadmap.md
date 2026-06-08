@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 6.0.2 - CI GitHub Actions.
+Étape suivante : Lot 6.0.3 - Publication automatique GHCR.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.9-lot6.0.1.
+Version actuelle : v0.9-lot6.0.2.
 
 ### Lot 5.6 - Livré
 
@@ -165,9 +165,28 @@ Version actuelle : v0.9-lot6.0.1.
 - Documentation de déploiement local dans `docs/deployment-docker.md`
 - GitHub Actions, GHCR, HTTPS et reverse proxy externe non inclus dans ce lot
 
+### Lot 6.0.2 - Livré
+
+- Workflow GitHub Actions `.github/workflows/ci.yml`
+- Déclenchement sur push et pull request
+- Jobs sur `ubuntu-latest`
+- Node 22 pour les jobs backend et frontend
+- Job backend :
+  - `npm ci` dans `backend/`
+  - `node --check` sur les fichiers JavaScript de `backend/src`
+- Job frontend :
+  - `npm ci` dans `frontend/`
+  - `npm exec vite build`
+- Job Docker après succès backend et frontend :
+  - `docker build -t collectionmgnt-backend ./backend`
+  - `docker build -t collectionmgnt-frontend ./frontend`
+- Aucune publication d'image dans ce lot
+- Pas de release GitHub, pas de GHCR, pas de Docker Hub
+- Aucun test applicatif n'est lancé actuellement, faute de script `test` existant
+
 ### Prochaine étape
 
-- Lot 6.0.2 - CI GitHub Actions
+- Lot 6.0.3 - Publication automatique GHCR
 
 ### Non livré à ce stade
 
