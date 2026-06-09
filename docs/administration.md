@@ -1,6 +1,6 @@
 # Administration
 
-État courant : v0.11-lot9.0.3.
+État courant : v0.11-lot9.0.4.
 
 ## Objectif
 
@@ -52,6 +52,31 @@ Le mode est strictement `add_only` :
 - les fichiers médias physiques ne sont pas restaurés
 
 Après import, la page affiche un rapport avec collections traitées, items créés, items ignorés, médias ignorés, erreurs et warnings.
+
+### Sauvegarde
+
+La section Sauvegarde propose :
+
+- Télécharger sauvegarde ZIP
+
+La route utilisée est :
+
+- `GET /api/admin/backup.zip`
+
+Cette route est protégée par JWT.
+Elle génère une archive technique complète contenant :
+
+- `manifest.json`
+- une copie SQLite cohérente sous `database/collection-manager.db`
+- les médias physiques sous `media/uploads/items`
+- l'export JSON natif global sous `exports/application.json`
+- les plugins sous `plugins` si `PLUGINS_DIR` est disponible
+
+Le ZIP ne contient pas `.env`, variables d'environnement, `JWT_SECRET`, secrets runtime, tokens ou credentials externes.
+Le manifeste n'expose pas de chemins absolus.
+
+La sauvegarde ZIP est sensible, car elle contient la DB complète, incluant les utilisateurs et `password_hash`.
+Le Lot 9.0.4 ne fournit pas de restauration ZIP.
 
 ### Médias
 
@@ -114,7 +139,7 @@ Exemple :
 
 ```json
 {
-  "version": "v0.11-lot9.0.3",
+  "version": "v0.11-lot9.0.4",
   "counts": {
     "plugins": 0,
     "enabledPlugins": 0,
@@ -126,13 +151,17 @@ Exemple :
 
 ## Limites MVP
 
-Le Lot 9.0.3 ne fournit pas :
+Le Lot 9.0.4 ne fournit pas :
 
 - rôles utilisateurs
 - gestion utilisateurs
 - import CSV
 - cleanup automatique
-- sauvegarde ZIP
+- restauration ZIP
+- cloud ou stockage distant
+- planification automatique
+- sauvegarde incrémentale
+- historique ou rétention de backups
 - restauration
 - restauration des fichiers médias physiques
 - modification du schéma SQLite
@@ -143,7 +172,7 @@ Le Lot 9.0.3 ne fournit pas :
 
 La page `/admin` est structurée pour accueillir plus tard :
 
-- sauvegarde ZIP complète avec fichiers médias
+- restauration ZIP guidée
 - import CSV CollectionMgnt
 - gestion utilisateurs
 - paramètres système

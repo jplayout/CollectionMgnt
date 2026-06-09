@@ -171,7 +171,13 @@ Les fichiers médias physiques stockés sous `DATA_DIR/uploads/items/{itemId}` n
 Les exports JSON référencent uniquement les métadonnées média et les URLs API.
 
 Une sauvegarde complète technique reste distincte de l'export métier.
-Elle devra couvrir SQLite et les fichiers médias physiques dans un lot séparé.
+Depuis le Lot 9.0.4, elle couvre SQLite et les fichiers médias physiques via une archive ZIP.
+
+La sauvegarde ZIP inclut la DB complète sous `database/collection-manager.db`.
+Elle contient donc aussi les tables techniques comme `users`, y compris `password_hash`, et doit être conservée comme un fichier sensible.
+
+La sauvegarde ZIP n'inclut pas `.env`, variables d'environnement, `JWT_SECRET`, secrets runtime, tokens ou credentials externes.
+Elle ne modifie pas le schéma SQLite et ne fournit pas de restauration dans le Lot 9.0.4.
 
 ---
 

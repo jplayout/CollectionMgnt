@@ -19,6 +19,9 @@ from './admin-media-audit.js';
 import adminMediaCleanupRoutes
 from './admin-media-cleanup.js';
 
+import adminBackupRoutes
+from './admin-backup.js';
+
 import adminSystemRoutes
 from './admin-system.js';
 
@@ -63,6 +66,10 @@ export async function registerRoutes(
 
             await protectedRoutes.register(
                 adminMediaCleanupRoutes
+            );
+
+            await protectedRoutes.register(
+                adminBackupRoutes
             );
 
             await protectedRoutes.register(

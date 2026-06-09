@@ -138,6 +138,29 @@
 
             <article class="admin-panel">
                 <div>
+                    <h2>Sauvegarde</h2>
+                    <p>Télécharger une archive complète avec base SQLite, médias physiques, export JSON et manifeste.</p>
+                    <p>Cette archive contient la base complète et doit être conservée en lieu sûr.</p>
+                </div>
+
+                <button
+                    :disabled="backupDownloading"
+                    type="button"
+                    @click="downloadBackup"
+                >
+                    {{ backupDownloading ? 'Préparation...' : 'Télécharger sauvegarde ZIP' }}
+                </button>
+
+                <p
+                    v-if="backupError"
+                    class="error-message"
+                >
+                    {{ backupError }}
+                </p>
+            </article>
+
+            <article class="admin-panel">
+                <div>
                     <h2>Médias</h2>
                     <p>Lancer un audit lecture seule des incohérences entre la base et les fichiers.</p>
                 </div>
@@ -428,6 +451,7 @@ import {
 } from '../services/export-api.js';
 
 import {
+    downloadBackupZip,
     executeMediaCleanup,
     getSystemSummary,
     importNativeJson,
@@ -452,6 +476,12 @@ const importFile =
 
 const importReport =
     ref(null);
+
+const backupDownloading =
+    ref(false);
+
+const backupError =
+    ref('');
 
 const auditing =
     ref(false);
@@ -574,6 +604,35 @@ async function importJson() {
     } finally {
 
         importing.value =
+            false;
+
+    }
+
+}
+
+async function downloadBackup() {
+
+    backupDownloading.value =
+        true;
+
+    backupError.value =
+        '';
+
+    try {
+
+        await downloadBackupZip();
+
+    } catch (error) {
+
+        backupError.value =
+            getErrorMessage(
+                error,
+                'Sauvegarde ZIP indisponible.'
+            );
+
+    } finally {
+
+        backupDownloading.value =
             false;
 
     }

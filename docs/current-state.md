@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.11-lot9.0.3
+Version : v0.11-lot9.0.4
 
 ## État du projet
 
@@ -83,10 +83,12 @@ Frontend :
 - Cleanup média manuel guidé via preview obligatoire `POST /api/admin/media-cleanup/preview` puis exécution confirmée `POST /api/admin/media-cleanup/execute`
 - Cleanup limité aux fichiers orphelins, fichiers inattendus, dossiers item sans item DB et dossiers item réellement vides
 - Cleanup sans suppression ou modification de lignes DB, sans suppression d'item ou ligne `media`, sans suppression de média référencé DB, sans chemins libres fournis par le frontend, sans régénération et sans suppression hors `DATA_DIR/uploads/items`
+- Sauvegarde ZIP complète téléchargeable via `GET /api/admin/backup.zip`
+- Sauvegarde ZIP contenant une copie SQLite cohérente, les médias physiques sous `DATA_DIR/uploads/items`, l'export JSON natif global, un manifeste et les plugins si `PLUGINS_DIR` est disponible
 - Résumé système lecture seule via `GET /api/admin/system-summary`
 - Compteurs système : plugins, plugins actifs, items et médias
 - Version applicative exposée côté admin sans secrets ni données utilisateurs sensibles
-- Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import CSV, aucune sauvegarde ZIP et aucune restauration de fichiers médias physiques dans ce lot
+- Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import CSV, aucune restauration ZIP, aucun cloud, aucune planification automatique et aucune sauvegarde incrémentale dans ce lot
 
 ### Authentification
 
@@ -171,8 +173,9 @@ Frontend :
   - édition via `PATCH /api/items/:id`
   - redirection vers `/items/:id` après création ou édition
 - Galerie médias frontend minimale
-- Page Administration MVP avec sections Données, Médias et Système
+- Page Administration MVP avec sections Données, Sauvegarde, Médias et Système
 - Import JSON natif CollectionMgnt depuis la section Données de l'Administration
+- Téléchargement de sauvegarde ZIP complète depuis l'Administration
 - Preview et exécution confirmée du cleanup média manuel guidé depuis la section Médias de l'Administration
 - Routes frontend protégées :
   - `/dashboard`
@@ -267,6 +270,7 @@ Frontend :
 - `GET /api/admin/media-audit`
 - `POST /api/admin/media-cleanup/preview`
 - `POST /api/admin/media-cleanup/execute`
+- `GET /api/admin/backup.zip`
 - `GET /api/admin/system-summary`
 - `POST /api/admin/imports/native-json`
 
@@ -812,10 +816,25 @@ Variables disponibles :
 - Aucun changement du schéma SQLite
 - Aucun cleanup automatique, aucune sauvegarde ZIP et aucune restauration média physique dans ce lot
 
+### Lot 9.0.4 - Sauvegarde ZIP complète
+
+- Route protégée `GET /api/admin/backup.zip`
+- Téléchargement depuis la page Administration
+- Archive ZIP streamée avec `manifest.json`, `database/collection-manager.db`, `media/uploads/items`, `plugins` et `exports/application.json`
+- Copie SQLite cohérente créée via `db.backup()` avant archivage
+- Export JSON natif global réutilisé sous `exports/application.json`, sans changement du contrat export existant
+- Médias physiques inclus depuis `DATA_DIR/uploads/items` si présents
+- Plugins inclus depuis `PLUGINS_DIR` si présent
+- Manifest sans chemins absolus, avec version, date, compteurs, tailles et warnings
+- Le ZIP est sensible car il contient la DB complète, incluant les utilisateurs et `password_hash`
+- Aucun changement du schéma SQLite
+- Aucune restauration ZIP, aucun cloud, aucun stockage distant, aucune planification automatique, aucune sauvegarde incrémentale et aucun historique/rétention dans ce lot
+
 ### Lots suivants
 
 - Import CSV CollectionMgnt
 - Import CSV externe depuis une autre application de gestion de collection
+- Restauration ZIP guidée
 - Filtres range sur rating/date
 - Interface de gestion des collections
 - Galerie médias avancée

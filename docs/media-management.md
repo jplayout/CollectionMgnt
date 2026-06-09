@@ -38,6 +38,7 @@ Fonctionnalités disponibles :
 - Nettoyage automatique du dossier média d'un item lors de sa suppression
 - Audit média global lecture seule entre SQLite et le disque
 - Cleanup média manuel guidé des candidats disque sûrs depuis l'Administration
+- Sauvegarde ZIP complète incluant les médias physiques sous `DATA_DIR/uploads/items`
 
 ## Stockage disque
 
@@ -116,6 +117,7 @@ Routes disponibles :
 - `GET /api/admin/media-audit`
 - `POST /api/admin/media-cleanup/preview`
 - `POST /api/admin/media-cleanup/execute`
+- `GET /api/admin/backup.zip`
 
 ## Suppression d'un item
 
@@ -170,6 +172,19 @@ Le cleanup :
 - ne supprime pas de média référencé par DB
 - nécessite une confirmation utilisateur côté UI avant exécution
 
+## Sauvegarde ZIP
+
+`GET /api/admin/backup.zip` génère une sauvegarde technique complète.
+
+Contrairement à l'export JSON natif, cette archive inclut les fichiers médias physiques sous :
+
+```text
+media/uploads/items/
+```
+
+Le ZIP contient aussi une copie SQLite cohérente, un manifeste et l'export JSON natif global.
+Il ne fournit pas de restauration dans le Lot 9.0.4.
+
 ## Non encore implémenté
 
 - Galerie avancée
@@ -178,4 +193,4 @@ Le cleanup :
 
 ## Prochaine étape
 
-Sauvegarde ZIP complète avec fichiers médias ou amélioration des rapports d'administration.
+Restauration ZIP guidée ou amélioration des rapports d'administration.

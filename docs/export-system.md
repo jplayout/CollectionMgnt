@@ -1,6 +1,6 @@
 # Export System
 
-État courant : v0.11-lot9.0.2.
+État courant : v0.11-lot9.0.4.
 
 ## Objectif
 
@@ -8,7 +8,8 @@ Le Lot 8.0.1 fournit un export métier des données CollectionMgnt.
 
 Il ne s'agit pas d'une sauvegarde technique complète.
 Il fournit aussi un import JSON natif non destructif depuis le Lot 9.0.2.
-Il ne fournit pas encore d'import CSV, de restauration complète, de ZIP, de dump SQLite ou d'export des fichiers médias physiques.
+Depuis le Lot 9.0.4, la sauvegarde ZIP complète existe comme fonctionnalité distincte.
+L'export JSON natif reste un export métier et ne devient pas une sauvegarde technique.
 
 ## Routes
 
@@ -92,7 +93,31 @@ Chaque média est exporté comme métadonnée :
 
 `includes_media_files` reste toujours `false`.
 
-Une archive ZIP complète avec SQLite et fichiers médias devra être traitée dans un lot séparé.
+La sauvegarde ZIP complète avec SQLite et fichiers médias est traitée séparément de cet export métier.
+
+## Export Métier vs Sauvegarde ZIP
+
+L'export JSON natif est un format métier :
+
+- portable
+- versionné
+- lisible
+- sans fichiers médias physiques
+- sans utilisateurs, `password_hash`, secrets ou variables d'environnement
+- réimportable partiellement via l'import natif `add_only`
+
+La sauvegarde ZIP complète est un instantané technique :
+
+- route `GET /api/admin/backup.zip`
+- archive `collectionmgnt.full-backup`
+- contient une copie SQLite cohérente
+- contient les médias physiques sous `DATA_DIR/uploads/items`
+- contient l'export JSON natif global sous `exports/application.json`
+- contient un manifeste
+- contient les plugins si `PLUGINS_DIR` est disponible
+
+Le ZIP est sensible, car il contient la DB complète, incluant les utilisateurs et `password_hash`.
+Il ne contient pas `.env`, variables d'environnement, `JWT_SECRET`, secrets runtime, tokens ou credentials externes.
 
 ## CSV Collection
 
@@ -186,9 +211,8 @@ Elles sont comptées comme ignorées, car les fichiers médias physiques ne sont
 - pas de restauration des métadonnées média en lignes DB
 - pas d'import CSV externe
 - pas de restauration
-- pas de ZIP
-- pas de dump SQLite
-- pas de fichiers médias inclus
+- pas de restauration ZIP
+- pas de fichiers médias inclus dans l'export JSON natif
 - pas de streaming optimisé pour très gros exports
 - pas de sélection de colonnes CSV depuis l'interface
 
@@ -198,6 +222,6 @@ Les suites possibles sont :
 
 - import CSV CollectionMgnt
 - import CSV externe provenant d'une autre application de gestion de collection
-- sauvegarde ZIP complète avec fichiers médias physiques
+- restauration ZIP guidée
 
 Ces lots devront rester distincts de l'import natif JSON afin de ne pas confondre le format métier CollectionMgnt, les CSV externes à mapper et la sauvegarde technique complète de l'application.

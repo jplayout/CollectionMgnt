@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Sauvegarde ZIP complète, import CSV CollectionMgnt ou amélioration des rapports admin.
+Étape suivante : Restauration ZIP guidée, import CSV CollectionMgnt ou amélioration des rapports admin.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.11-lot9.0.3.
+Version actuelle : v0.11-lot9.0.4.
 
 ### Lot 5.6 - Livré
 
@@ -363,16 +363,28 @@ Version actuelle : v0.11-lot9.0.3.
 - UI avec liste de candidats sûrs, sélection manuelle, confirmation `window.confirm` et rapport supprimés/ignorés/erreurs
 - Aucun changement de schéma SQLite, aucune sauvegarde ZIP et aucun cleanup automatique
 
+### Lot 9.0.4 - Livré
+
+- Sauvegarde ZIP complète téléchargeable depuis la page Administration
+- Route protégée `GET /api/admin/backup.zip`
+- Archive streamée avec `manifest.json`, copie SQLite cohérente, médias physiques, plugins si disponibles et export JSON natif global
+- Copie SQLite créée via `db.backup()` avant archivage, sans zipper directement le fichier DB vivant
+- Médias inclus sous `media/uploads/items` depuis `DATA_DIR/uploads/items`
+- Export JSON natif global inclus sous `exports/application.json`, sans modification du contrat export existant
+- Manifest `collectionmgnt.full-backup`, `format_version=1`, sans chemins absolus et avec compteurs, tailles et warnings
+- ZIP traité comme sensible car il contient la DB complète, incluant les utilisateurs et `password_hash`
+- Aucun changement de schéma SQLite, aucune restauration ZIP, aucun cloud, aucun stockage distant, aucune planification, aucun incrémental et aucun historique/rétention
+
 ### Prochaine étape
 
-- Sauvegarde ZIP complète avec fichiers médias
+- Restauration ZIP guidée
 - Import CSV CollectionMgnt
 - Amélioration des rapports et historiques d'administration
 
 ### Non livré à ce stade
 
 - Support backend des types plugin avancés : multiselect, url, email, barcode, isbn
-- Sauvegarde complète ZIP avec fichiers médias
+- Restauration ZIP complète
 - Import CSV externe depuis une autre application de gestion de collection
 
 ---
@@ -649,3 +661,7 @@ Support multilingue.
 - Mode dry-run
 - Nettoyage manuel depuis l’interface d’administration
 - Régénération éventuelle des miniatures et images optimisées
+
+### Import CSV externe
+
+- Importer un export CSV venant de l'application Icollect
