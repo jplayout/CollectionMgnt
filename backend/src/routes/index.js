@@ -10,6 +10,9 @@ from './items.js';
 import mediaRoutes
 from '../media/routes.js';
 
+import exportsRoutes
+from './exports.js';
+
 export async function registerRoutes(
     app
 ) {
@@ -36,6 +39,10 @@ export async function registerRoutes(
 
             await protectedRoutes.register(
                 mediaRoutes
+            );
+
+            await protectedRoutes.register(
+                exportsRoutes
             );
 
         }

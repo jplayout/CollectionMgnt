@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.10-lot5.16.1
+Version : v0.10-lot8.0.1
 
 ## État du projet
 
@@ -46,6 +46,9 @@ Frontend :
 - Réponse paginée avec `items`, `total`, `page`, `pageSize` et `totalPages`
 - Tri configurable de `GET /api/items` via `sort` et `direction`
 - Tri disponible sur `title`, `created_at`, `updated_at` et les champs metadata supportés du plugin courant
+- Export métier JSON global
+- Export métier JSON par collection
+- Export CSV simple par collection
 
 ### Médias
 
@@ -116,6 +119,7 @@ Frontend :
 - Proxy Nginx `/api` vers le backend Docker
 - Support `FormData` dans le service API frontend
 - Support des réponses `Blob` dans le service API frontend
+- Téléchargement d'exports collection JSON et CSV depuis la liste d'une collection
 - Page détail item enrichie
 - Page détail item pilotée par le schéma plugin pour les labels de métadonnées
 - Page détail item pilotée par les préférences d'affichage backend pour l'ordre et le masquage des métadonnées
@@ -234,6 +238,12 @@ Frontend :
 - `GET /api/media/:id/thumb`
 - `PATCH /api/media/:id/primary`
 - `DELETE /api/media/:id`
+
+### Exports
+
+- `GET /api/exports/application.json`
+- `GET /api/exports/collections/:pluginId.json`
+- `GET /api/exports/collections/:pluginId.csv`
 
 ---
 
@@ -700,8 +710,24 @@ Variables disponibles :
 - Suppression depuis la fiche conservant le contexte de liste et ajoutant `deleted=1`
 - Aucun changement backend, API, schéma SQLite, plugins, préférences d'affichage, pagination ou contrat de tri dans ce lot
 
+### Lot 8.0.1 - Export métier JSON et CSV collection
+
+- Routes protégées JWT pour les exports métier
+- Export JSON applicatif global via `GET /api/exports/application.json`
+- Export JSON d'une collection via `GET /api/exports/collections/:pluginId.json`
+- Export CSV d'une collection via `GET /api/exports/collections/:pluginId.csv`
+- Format JSON versionné `collectionmgnt.native-export`, `format_version=1`
+- Export des plugins, schémas plugin, settings applicatifs non sensibles, items et métadonnées média
+- Items exportés avec `source_id`, titre, description, metadata parsé, dates de création et modification
+- Médias référencés par métadonnées et URLs API, sans fichiers physiques
+- `includes_media_files=false` dans les exports JSON
+- CSV collection avec colonnes système puis champs metadata dans l'ordre du schéma plugin
+- En-têtes CSV basés sur `field.name` pour préparer un futur import stable
+- Pas d'import, pas de restauration, pas de ZIP, pas de dump SQLite et aucun changement de schéma SQLite dans ce lot
+
 ### Lots suivants
 
+- Import CSV externe depuis une autre application de gestion de collection
 - Filtres range sur rating/date
 - Interface de gestion des collections
 - Galerie médias avancée

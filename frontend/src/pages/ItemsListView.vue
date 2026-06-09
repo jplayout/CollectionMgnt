@@ -56,6 +56,28 @@
                         Affichage
                     </button>
 
+                    <details class="export-menu">
+                        <summary>
+                            Exporter
+                        </summary>
+
+                        <div class="export-menu-content">
+                            <button
+                                type="button"
+                                @click="exportCollectionJson"
+                            >
+                                Export JSON
+                            </button>
+
+                            <button
+                                type="button"
+                                @click="exportCollectionCsv"
+                            >
+                                Export CSV
+                            </button>
+                        </div>
+                    </details>
+
                     <div
                         aria-label="Mode d’affichage"
                         class="view-toggle"
@@ -224,6 +246,13 @@
             Item supprimé.
         </p>
 
+        <p
+            v-if="exportError"
+            class="error-message"
+        >
+            {{ exportError }}
+        </p>
+
         <section class="content-panel">
             <div
                 v-if="!loading && !error && totalItems > 0"
@@ -329,6 +358,11 @@ import {
 } from '../services/item-api.js';
 
 import {
+    downloadCollectionCsvExport,
+    downloadCollectionJsonExport
+} from '../services/export-api.js';
+
+import {
     getDisplayPreferences,
     getPluginSchema,
     resetDisplayPreferences,
@@ -398,6 +432,9 @@ const loading =
     ref(false);
 
 const error =
+    ref('');
+
+const exportError =
     ref('');
 
 const currentPage =
@@ -981,6 +1018,46 @@ async function changeViewMode(
 
 }
 
+async function exportCollectionJson() {
+
+    await runExport(
+        () => downloadCollectionJsonExport(
+            pluginId.value
+        )
+    );
+
+}
+
+async function exportCollectionCsv() {
+
+    await runExport(
+        () => downloadCollectionCsvExport(
+            pluginId.value
+        )
+    );
+
+}
+
+async function runExport(exportAction) {
+
+    exportError.value =
+        '';
+
+    try {
+
+        await exportAction();
+
+    } catch (downloadError) {
+
+        exportError.value =
+            downloadError instanceof ApiError
+                ? downloadError.message
+                : 'Export impossible';
+
+    }
+
+}
+
 function goToPreviousPage() {
 
     if (
@@ -1556,6 +1633,17 @@ h1 {
     padding: 12px 14px;
 }
 
+.error-message {
+    background: #fff4f2;
+    border: 1px solid #f0b8ae;
+    border-radius: 6px;
+    color: #b42318;
+    font-weight: 600;
+    margin: 0 auto 18px;
+    max-width: 1080px;
+    padding: 12px 14px;
+}
+
 .search-panel {
     display: grid;
     gap: 18px;
@@ -1570,6 +1658,55 @@ h1 {
 
 .search-form label:first-child {
     grid-column: span 2;
+}
+
+.export-menu {
+    position: relative;
+}
+
+.export-menu summary {
+    background: #eef2f7;
+    border-radius: 6px;
+    color: #172033;
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+    min-height: 22px;
+    padding: 10px 14px;
+    text-align: center;
+}
+
+.export-menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.export-menu[open] summary {
+    background: #dde5f0;
+}
+
+.export-menu-content {
+    background: #ffffff;
+    border: 1px solid #d8dee8;
+    border-radius: 8px;
+    box-shadow: 0 12px 24px rgb(23 32 51 / 0.14);
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+    min-width: 160px;
+    padding: 8px;
+    position: absolute;
+    right: 0;
+    z-index: 5;
+}
+
+.export-menu-content button {
+    background: transparent;
+    color: #172033;
+    text-align: left;
+}
+
+.export-menu-content button:hover {
+    background: #eef2f7;
 }
 
 .view-toggle {
@@ -1748,6 +1885,10 @@ button:disabled {
     .filters-header {
         align-items: start;
         display: grid;
+    }
+
+    .export-menu-content {
+        position: static;
     }
 
     .pagination-bar {

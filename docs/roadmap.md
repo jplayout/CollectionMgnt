@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Filtres range sur rating/date.
+Étape suivante : Lot 8.0.2 - Import CSV externe depuis une autre application de gestion de collection.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.10-lot5.16.1.
+Version actuelle : v0.10-lot8.0.1.
 
 ### Lot 5.6 - Livré
 
@@ -299,13 +299,28 @@ Version actuelle : v0.10-lot5.16.1.
 - Suppression depuis la fiche conservant le contexte de liste et ajoutant `deleted=1`
 - Aucun changement backend, API, schéma SQLite, plugins, préférences d'affichage, pagination ou contrat de tri dans ce lot
 
+### Lot 8.0.1 - Livré
+
+- Export métier JSON applicatif global via `GET /api/exports/application.json`
+- Export métier JSON par collection via `GET /api/exports/collections/:pluginId.json`
+- Export CSV simple par collection via `GET /api/exports/collections/:pluginId.csv`
+- Routes export protégées par JWT
+- Format JSON natif versionné `collectionmgnt.native-export`, `format_version=1`
+- Export des plugins, schémas plugin, settings applicatifs non sensibles, items et métadonnées média
+- Médias référencés sans fichiers physiques, avec `includes_media_files=false`
+- CSV collection basé sur les colonnes système puis les champs metadata `field.name` dans l'ordre du schéma plugin
+- Téléchargement frontend JSON et CSV disponible depuis la liste d'une collection
+- Aucun import, aucune restauration, aucun ZIP, aucun dump SQLite, aucun changement de schéma SQLite ou de plugins
+
 ### Prochaine étape
 
-- Filtres range sur rating/date
+- Lot 8.0.2 - Import CSV externe depuis une autre application de gestion de collection
 
 ### Non livré à ce stade
 
 - Support backend des types plugin avancés : multiselect, url, email, barcode, isbn
+- Restauration native d'un export JSON
+- Sauvegarde complète ZIP avec fichiers médias
 
 ---
 

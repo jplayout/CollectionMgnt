@@ -150,3 +150,25 @@ Exemples :
 
 Les préférences d'affichage par plugin sont stockées dans cette table avec des clés `displayPreferences.<pluginId>`.
 La valeur est un document JSON contenant les préférences de liste et de fiche détail.
+
+---
+
+# Export Métier Et Sauvegarde Technique
+
+Le Lot 8.0.1 ajoute un export métier sans modifier le schéma SQLite.
+
+L'export métier JSON/CSV lit les tables applicatives existantes et produit un format transportable :
+
+- plugins
+- schémas plugins chargés par l'application
+- settings applicatifs non sensibles
+- items avec `metadata` parsé
+- métadonnées `media`
+
+Les utilisateurs, `password_hash`, secrets et variables d'environnement ne font pas partie de l'export métier.
+
+Les fichiers médias physiques stockés sous `DATA_DIR/uploads/items/{itemId}` ne sont pas inclus dans le Lot 8.0.1.
+Les exports JSON référencent uniquement les métadonnées média et les URLs API.
+
+Une sauvegarde complète technique reste distincte de l'export métier.
+Elle devra couvrir SQLite et les fichiers médias physiques dans un lot séparé.

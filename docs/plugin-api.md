@@ -1,6 +1,6 @@
 # Plugin API
 
-État courant : v0.10-lot5.16.1.
+État courant : v0.10-lot8.0.1.
 
 ## Structure
 
@@ -70,6 +70,9 @@ Il n'existe pas de propriété plugin `table.columns` à ce stade.
 La configuration de tri utilisateur ne fait pas encore partie du contrat plugin.
 Il n'existe pas de propriété `sortable` dans `fields.json` à ce stade.
 Les champs metadata triables par `GET /api/items?sort=...` sont inférés côté backend depuis les champs du plugin courant et les types supportés : text, textarea, select, date, number, rating et checkbox.
+
+L'export CSV collection utilise les noms techniques `field.name` comme en-têtes de colonnes metadata.
+Les labels `field.label` restent destinés à l'affichage utilisateur et ne sont pas utilisés comme identifiants stables d'export.
 
 ---
 
