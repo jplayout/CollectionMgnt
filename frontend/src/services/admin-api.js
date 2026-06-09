@@ -17,3 +17,25 @@ export function runMediaAudit() {
     );
 
 }
+
+export function importNativeJson(file) {
+
+    const formData =
+        new FormData();
+
+    formData.append(
+        'file',
+        file
+    );
+
+    return apiFetch(
+        '/api/admin/imports/native-json',
+        {
+            method:
+                'POST',
+            body:
+                formData
+        }
+    );
+
+}

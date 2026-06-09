@@ -19,6 +19,9 @@ from './admin-media-audit.js';
 import adminSystemRoutes
 from './admin-system.js';
 
+import adminImportsRoutes
+from './admin-imports.js';
+
 export async function registerRoutes(
     app
 ) {
@@ -57,6 +60,10 @@ export async function registerRoutes(
 
             await protectedRoutes.register(
                 adminSystemRoutes
+            );
+
+            await protectedRoutes.register(
+                adminImportsRoutes
             );
 
         }

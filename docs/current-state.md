@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.11-lot9.0.1
+Version : v0.11-lot9.0.2
 
 ## État du projet
 
@@ -76,11 +76,13 @@ Frontend :
 - Page frontend protégée `/admin`
 - Accès depuis le Dashboard
 - Export JSON global présenté côté Administration via `GET /api/exports/application.json`
+- Import JSON natif CollectionMgnt depuis l'Administration via `POST /api/admin/imports/native-json`
+- Import JSON natif en mode `add_only`, sans remplacement, sans suppression et sans restauration des IDs d'origine
 - Audit média lecture seule accessible côté Administration via `GET /api/admin/media-audit`
 - Résumé système lecture seule via `GET /api/admin/system-summary`
 - Compteurs système : plugins, plugins actifs, items et médias
 - Version applicative exposée côté admin sans secrets ni données utilisateurs sensibles
-- Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import JSON, aucun cleanup média et aucune sauvegarde ZIP dans ce lot
+- Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import CSV, aucun cleanup média, aucune sauvegarde ZIP et aucune restauration de fichiers médias physiques dans ce lot
 
 ### Authentification
 
@@ -166,6 +168,7 @@ Frontend :
   - redirection vers `/items/:id` après création ou édition
 - Galerie médias frontend minimale
 - Page Administration MVP avec sections Données, Médias et Système
+- Import JSON natif CollectionMgnt depuis la section Données de l'Administration
 - Routes frontend protégées :
   - `/dashboard`
   - `/admin`
@@ -258,6 +261,7 @@ Frontend :
 
 - `GET /api/admin/media-audit`
 - `GET /api/admin/system-summary`
+- `POST /api/admin/imports/native-json`
 
 ### Exports
 
@@ -768,10 +772,29 @@ Variables disponibles :
 - Aucun changement du schéma SQLite
 - Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import JSON, aucun cleanup média et aucune sauvegarde ZIP dans ce lot
 
+### Lot 9.0.2 - Import JSON natif CollectionMgnt
+
+- Import JSON natif depuis la section Données de la page Administration
+- Route protégée `POST /api/admin/imports/native-json`
+- Payload multipart `file`, limité à 10 MB
+- Formats acceptés : `format=collectionmgnt.native-export`, `format_version=1`, `scope=application` ou `scope=collection`
+- Mode unique `add_only`
+- Chaque item importé crée un nouvel item avec un nouvel ID
+- Mapping interne des `source_id` pendant l'import, sans restauration des IDs d'origine
+- Aucun remplacement, aucune suppression et aucune fusion complexe
+- Plugins absents ignorés avec warning
+- Plugins désactivés importés avec warning
+- Validation des champs connus avec le schéma local courant
+- Champs metadata inconnus conservés avec warning
+- Métadonnées média comptées comme ignorées, sans création de lignes `media` et sans restauration de fichiers physiques
+- Rapport d'import avec collections traitées, items créés, items ignorés, médias ignorés, erreurs et warnings
+- Aucun changement du schéma SQLite
+- Aucun import CSV, aucune sauvegarde ZIP et aucune restauration média physique dans ce lot
+
 ### Lots suivants
 
 - Nettoyage manuel guidé des incohérences média
-- Import JSON natif depuis l'administration
+- Import CSV CollectionMgnt
 - Import CSV externe depuis une autre application de gestion de collection
 - Filtres range sur rating/date
 - Interface de gestion des collections

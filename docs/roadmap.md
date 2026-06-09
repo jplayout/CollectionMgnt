@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Import JSON natif admin, cleanup média manuel ou sauvegarde ZIP.
+Étape suivante : Cleanup média manuel, sauvegarde ZIP ou import CSV CollectionMgnt.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.11-lot9.0.1.
+Version actuelle : v0.11-lot9.0.2.
 
 ### Lot 5.6 - Livré
 
@@ -334,11 +334,28 @@ Version actuelle : v0.11-lot9.0.1.
 - Résumé système basé uniquement sur des `SELECT COUNT(*)`
 - Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import JSON, aucun cleanup média, aucune sauvegarde ZIP et aucun changement de schéma SQLite
 
+### Lot 9.0.2 - Livré
+
+- Import JSON natif CollectionMgnt depuis la section Données de la page Administration
+- Route protégée `POST /api/admin/imports/native-json`
+- Upload multipart avec champ `file` et limite MVP de 10 MB
+- Validation du format `collectionmgnt.native-export`, `format_version=1` et `scope=application|collection`
+- Mode unique `add_only`
+- Création de nouveaux items avec nouveaux IDs, sans restauration des `source_id`
+- Aucun remplacement, aucune suppression et aucune fusion complexe
+- Plugins absents ignorés avec warning
+- Plugins désactivés importés avec warning
+- Validation des champs connus avec le schéma local courant
+- Champs metadata inconnus conservés avec warning
+- Métadonnées média ignorées avec warning, sans création de lignes `media` et sans restauration de fichiers physiques
+- Rapport d'import avec compteurs, items créés, items ignorés, erreurs et warnings
+- Aucun import CSV, aucune sauvegarde ZIP, aucune restauration médias physiques et aucun changement de schéma SQLite
+
 ### Prochaine étape
 
-- Import JSON natif depuis l'administration
 - Nettoyage manuel guidé des incohérences média
 - Sauvegarde ZIP complète avec fichiers médias
+- Import CSV CollectionMgnt
 
 ### Non livré à ce stade
 

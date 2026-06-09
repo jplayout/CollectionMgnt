@@ -35,6 +35,105 @@
                 >
                     {{ exportError }}
                 </p>
+
+                <div class="panel-divider"></div>
+
+                <div>
+                    <h3>Import JSON natif</h3>
+                    <p>Import non destructif : les items sont ajoutés, rien n’est remplacé.</p>
+                    <p>Les fichiers médias physiques ne sont pas restaurés dans ce lot.</p>
+                </div>
+
+                <label class="file-field">
+                    Fichier JSON
+                    <input
+                        accept="application/json,.json"
+                        type="file"
+                        @change="selectImportFile"
+                    >
+                </label>
+
+                <button
+                    :disabled="importing"
+                    type="button"
+                    @click="importJson"
+                >
+                    {{ importing ? 'Import en cours...' : 'Importer JSON' }}
+                </button>
+
+                <p
+                    v-if="importError"
+                    class="error-message"
+                >
+                    {{ importError }}
+                </p>
+
+                <dl
+                    v-if="importReport"
+                    class="summary-list"
+                >
+                    <div>
+                        <dt>Collections traitées</dt>
+                        <dd>{{ importReport.summary.collectionsProcessed }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Items créés</dt>
+                        <dd>{{ importReport.summary.itemsCreated }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Items ignorés</dt>
+                        <dd>{{ importReport.summary.itemsSkipped }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Médias ignorés</dt>
+                        <dd>{{ importReport.summary.mediaMetadataSkipped }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Erreurs</dt>
+                        <dd>{{ importReport.summary.errorCount }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Warnings</dt>
+                        <dd>{{ importReport.summary.warningCount }}</dd>
+                    </div>
+                </dl>
+
+                <div
+                    v-if="importReport?.warnings.length"
+                    class="report-details"
+                >
+                    <h4>Warnings</h4>
+
+                    <ul>
+                        <li
+                            v-for="warning in importReport.warnings"
+                            :key="`${warning.code}-${warning.message}`"
+                        >
+                            {{ warning.message }}
+                        </li>
+                    </ul>
+                </div>
+
+                <div
+                    v-if="importReport?.errors.length"
+                    class="report-details"
+                >
+                    <h4>Erreurs</h4>
+
+                    <ul>
+                        <li
+                            v-for="error in importReport.errors"
+                            :key="`${error.code}-${error.message}`"
+                        >
+                            {{ error.message }}
+                        </li>
+                    </ul>
+                </div>
             </article>
 
             <article class="admin-panel">
@@ -164,6 +263,7 @@ import {
 
 import {
     getSystemSummary,
+    importNativeJson,
     runMediaAudit
 } from '../services/admin-api.js';
 
@@ -172,6 +272,18 @@ const exporting =
 
 const exportError =
     ref('');
+
+const importing =
+    ref(false);
+
+const importError =
+    ref('');
+
+const importFile =
+    ref(null);
+
+const importReport =
+    ref(null);
 
 const auditing =
     ref(false);
@@ -218,6 +330,64 @@ async function exportGlobalJson() {
     } finally {
 
         exporting.value =
+            false;
+
+    }
+
+}
+
+function selectImportFile(event) {
+
+    importFile.value =
+        event.target.files?.[0] ?? null;
+
+    importError.value =
+        '';
+
+}
+
+async function importJson() {
+
+    if (
+        !importFile.value
+    ) {
+
+        importError.value =
+            'Sélectionnez un fichier JSON à importer.';
+
+        return;
+
+    }
+
+    importing.value =
+        true;
+
+    importError.value =
+        '';
+
+    importReport.value =
+        null;
+
+    try {
+
+        importReport.value =
+            await importNativeJson(
+                importFile.value
+            );
+
+        await loadSystemSummary();
+
+    } catch (error) {
+
+        importError.value =
+            getErrorMessage(
+                error,
+                'Import JSON indisponible.'
+            );
+
+    } finally {
+
+        importing.value =
             false;
 
     }
@@ -340,12 +510,22 @@ function getErrorMessage(
 
 h1,
 h2,
+h3,
+h4,
 p {
     margin: 0;
 }
 
 h2 {
     font-size: 1.2rem;
+}
+
+h3 {
+    font-size: 1rem;
+}
+
+h4 {
+    font-size: 0.95rem;
 }
 
 .admin-grid {
@@ -366,6 +546,25 @@ h2 {
     color: #5f6f89;
     line-height: 1.5;
     margin-top: 6px;
+}
+
+.panel-divider {
+    background: #d8dee8;
+    height: 1px;
+}
+
+.file-field {
+    color: #30394b;
+    display: grid;
+    font-size: 0.9rem;
+    gap: 8px;
+}
+
+input[type="file"] {
+    border: 1px solid #b8c2d1;
+    border-radius: 6px;
+    font: inherit;
+    padding: 10px 12px;
 }
 
 button {
@@ -413,6 +612,19 @@ dd {
 .error-message {
     color: #b42318;
     font-size: 0.9rem;
+}
+
+.report-details {
+    display: grid;
+    gap: 8px;
+}
+
+.report-details ul {
+    color: #5f6f89;
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding-left: 18px;
 }
 
 @media (min-width: 820px) {

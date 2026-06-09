@@ -1,6 +1,6 @@
 # Administration
 
-État courant : v0.11-lot9.0.1.
+État courant : v0.11-lot9.0.2.
 
 ## Objectif
 
@@ -26,6 +26,7 @@ Tout utilisateur authentifié accède donc à la page Administration dans ce lot
 La section Données propose :
 
 - Export JSON global
+- Import JSON natif CollectionMgnt
 
 L'export utilise la route existante :
 
@@ -33,6 +34,24 @@ L'export utilise la route existante :
 
 Cette route est protégée par JWT.
 Elle produit un export métier JSON sans fichiers médias physiques, sans utilisateurs, sans `password_hash`, sans secrets et sans variables d'environnement.
+
+L'import utilise :
+
+- `POST /api/admin/imports/native-json`
+
+L'import accepte un fichier JSON natif CollectionMgnt via le champ multipart `file`.
+Il accepte uniquement `format=collectionmgnt.native-export`, `format_version=1` et `scope=application|collection`.
+
+Le mode est strictement `add_only` :
+
+- les items sont ajoutés avec de nouveaux IDs
+- les IDs d'origine ne sont pas restaurés
+- aucun item existant n'est remplacé
+- aucune suppression n'est effectuée
+- les plugins ne sont pas créés ou modifiés
+- les fichiers médias physiques ne sont pas restaurés
+
+Après import, la page affiche un rapport avec collections traitées, items créés, items ignorés, médias ignorés, erreurs et warnings.
 
 ### Médias
 
@@ -76,7 +95,7 @@ Exemple :
 
 ```json
 {
-  "version": "v0.11-lot9.0.1",
+  "version": "v0.11-lot9.0.2",
   "counts": {
     "plugins": 0,
     "enabledPlugins": 0,
@@ -88,15 +107,16 @@ Exemple :
 
 ## Limites MVP
 
-Le Lot 9.0.1 ne fournit pas :
+Le Lot 9.0.2 ne fournit pas :
 
 - rôles utilisateurs
 - gestion utilisateurs
-- import JSON
+- import CSV
 - cleanup média
 - suppression automatique de fichiers
 - sauvegarde ZIP
 - restauration
+- restauration des fichiers médias physiques
 - modification du schéma SQLite
 - dashboard admin avancé
 - navigation admin multi-pages
@@ -105,9 +125,9 @@ Le Lot 9.0.1 ne fournit pas :
 
 La page `/admin` est structurée pour accueillir plus tard :
 
-- import JSON natif
 - cleanup média manuel avec dry-run et confirmation
 - sauvegarde ZIP complète avec fichiers médias
+- import CSV CollectionMgnt
 - gestion utilisateurs
 - paramètres système
 

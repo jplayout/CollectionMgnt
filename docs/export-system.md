@@ -1,13 +1,14 @@
 # Export System
 
-État courant : v0.10-lot8.0.1.
+État courant : v0.11-lot9.0.2.
 
 ## Objectif
 
 Le Lot 8.0.1 fournit un export métier des données CollectionMgnt.
 
 Il ne s'agit pas d'une sauvegarde technique complète.
-Il ne fournit pas encore d'import, de restauration, de ZIP, de dump SQLite ou d'export des fichiers médias physiques.
+Il fournit aussi un import JSON natif non destructif depuis le Lot 9.0.2.
+Il ne fournit pas encore d'import CSV, de restauration complète, de ZIP, de dump SQLite ou d'export des fichiers médias physiques.
 
 ## Routes
 
@@ -134,9 +135,44 @@ Les noms de fichiers sont contrôlés côté serveur :
 - `collectionmgnt-<plugin>-YYYY-MM-DD.json`
 - `collectionmgnt-<plugin>-YYYY-MM-DD.csv`
 
+## Import JSON Natif
+
+`POST /api/admin/imports/native-json` importe un fichier JSON natif CollectionMgnt.
+
+La route accepte un payload `multipart/form-data` avec le champ fichier `file`.
+La limite MVP est de 10 MB.
+
+Formats acceptés :
+
+- `format = collectionmgnt.native-export`
+- `format_version = 1`
+- `scope = application` ou `collection`
+
+Le mode d'import est strictement `add_only` :
+
+- chaque item importé crée un nouvel item
+- les `source_id` servent uniquement au rapport et au mapping interne pendant l'import
+- les IDs d'origine ne sont jamais restaurés
+- aucun item existant n'est remplacé
+- aucune suppression n'est effectuée
+- aucune fusion complexe n'est effectuée
+
+Les plugins ne sont pas créés ou modifiés par l'import.
+Une collection dont le plugin est absent est ignorée avec warning.
+Une collection dont le plugin est désactivé peut être importée avec warning.
+
+Les champs connus sont validés avec le schéma local courant.
+Les champs metadata inconnus sont conservés avec warning.
+
+Les métadonnées média présentes dans l'export JSON ne créent pas de lignes `media`.
+Elles sont comptées comme ignorées, car les fichiers médias physiques ne sont pas inclus dans le JSON natif.
+
 ## Sécurité
 
 - routes protégées par JWT
+- route d'import natif protégée par JWT
+- validation stricte du JSON natif avant import
+- import natif non destructif en mode `add_only`
 - pas d'export des utilisateurs ni des hashes de mot de passe
 - pas d'export des secrets ou variables d'environnement
 - settings filtrés pour éviter les clés sensibles évidentes
@@ -144,7 +180,10 @@ Les noms de fichiers sont contrôlés côté serveur :
 
 ## Limites
 
-- pas d'import natif
+- import natif limité au JSON CollectionMgnt version 1
+- pas de remplacement ou fusion d'items existants
+- pas de restauration des IDs d'origine
+- pas de restauration des métadonnées média en lignes DB
 - pas d'import CSV externe
 - pas de restauration
 - pas de ZIP
@@ -155,10 +194,10 @@ Les noms de fichiers sont contrôlés côté serveur :
 
 ## Suite Prévue
 
-Le lot suivant prévu est le Lot 8.0.2 : import CSV externe provenant d'une autre application de gestion de collection.
+Les suites possibles sont :
 
-Cet import devra rester distinct de l'export natif JSON afin de ne pas confondre :
+- import CSV CollectionMgnt
+- import CSV externe provenant d'une autre application de gestion de collection
+- sauvegarde ZIP complète avec fichiers médias physiques
 
-- le format natif CollectionMgnt
-- les CSV externes à mapper vers un schéma plugin
-- la sauvegarde technique complète de l'application
+Ces lots devront rester distincts de l'import natif JSON afin de ne pas confondre le format métier CollectionMgnt, les CSV externes à mapper et la sauvegarde technique complète de l'application.
