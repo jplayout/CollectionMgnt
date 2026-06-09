@@ -55,6 +55,38 @@
                     >
                         Affichage
                     </button>
+
+                    <label>
+                        Trier par
+                        <select
+                            v-model="sort"
+                            @change="changeSort"
+                        >
+                            <option
+                                v-for="option in sortOptions"
+                                :key="option.value"
+                                :value="option.value"
+                            >
+                                {{ option.label }}
+                            </option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Ordre
+                        <select
+                            v-model="direction"
+                            @change="changeSort"
+                        >
+                            <option value="asc">
+                                Croissant
+                            </option>
+
+                            <option value="desc">
+                                Décroissant
+                            </option>
+                        </select>
+                    </label>
                 </div>
 
                 <section
@@ -325,6 +357,12 @@ const totalItems =
 const totalPages =
     ref(0);
 
+const sort =
+    ref('title');
+
+const direction =
+    ref('asc');
+
 const pluginTitle =
     computed(
         () => pluginSchema.value?.plugin?.name ??
@@ -347,6 +385,47 @@ const filterableFields =
         () => schemaFields.value.filter(
             field => field.filterable
         )
+    );
+
+const sortableMetadataFields =
+    computed(
+        () => schemaFields.value.filter(
+            field => isSortableMetadataField(
+                field
+            )
+        )
+    );
+
+const sortOptions =
+    computed(
+        () => [
+            {
+                label:
+                    'Date de création',
+                value:
+                    'created_at'
+            },
+            {
+                label:
+                    'Date de modification',
+                value:
+                    'updated_at'
+            },
+            {
+                label:
+                    'Titre',
+                value:
+                    'title'
+            },
+            ...sortableMetadataFields.value.map(
+                field => ({
+                    label:
+                        field.label ?? field.name,
+                    value:
+                        field.name
+                })
+            )
+        ]
     );
 
 const activeFilters =
@@ -392,11 +471,36 @@ async function loadPage() {
         loadDisplayPreferences()
     ]);
 
+    ensureSelectedSortIsAvailable();
+
     resetFilterValues();
 
     resetCurrentPage();
 
     await loadItems();
+
+}
+
+function ensureSelectedSortIsAvailable() {
+
+    const isSortAvailable =
+        sortOptions.value.some(
+            option => option.value === sort.value
+        );
+
+    if (
+        isSortAvailable
+    ) {
+
+        return;
+
+    }
+
+    sort.value =
+        'title';
+
+    direction.value =
+        'asc';
 
 }
 
@@ -556,6 +660,10 @@ async function loadItems() {
                     pluginId.value,
                 search:
                     searchQuery.value.trim(),
+                sort:
+                    sort.value,
+                direction:
+                    direction.value,
                 page:
                     currentPage.value,
                 pageSize:
@@ -640,6 +748,14 @@ function resetCurrentPage() {
 
     currentPage.value =
         1;
+
+}
+
+function changeSort() {
+
+    resetCurrentPage();
+
+    loadItems();
 
 }
 
@@ -750,6 +866,22 @@ function canFilterOnBackend(
         'date',
         'number',
         'rating'
+    ].includes(field.type);
+
+}
+
+function isSortableMetadataField(
+    field
+) {
+
+    return [
+        'text',
+        'textarea',
+        'select',
+        'date',
+        'number',
+        'rating',
+        'checkbox'
     ].includes(field.type);
 
 }
@@ -1018,7 +1150,11 @@ h1 {
     align-items: end;
     display: grid;
     gap: 12px;
-    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.search-form label:first-child {
+    grid-column: span 2;
 }
 
 label {
@@ -1165,6 +1301,10 @@ button:disabled {
 
     .search-form {
         grid-template-columns: 1fr;
+    }
+
+    .search-form label:first-child {
+        grid-column: auto;
     }
 
     .filters-header {

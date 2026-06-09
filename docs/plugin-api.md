@@ -63,6 +63,10 @@ Les préférences d'affichage utilisateur ne font pas partie du contrat plugin.
 Elles ne doivent pas être ajoutées dans `fields.json` et sont persistées côté application avec les clés `displayPreferences.<pluginId>`.
 L'interface d'édition des préférences écrit dans ces préférences applicatives et ne modifie jamais les fichiers `fields.json`.
 
+La configuration de tri utilisateur ne fait pas encore partie du contrat plugin.
+Il n'existe pas de propriété `sortable` dans `fields.json` à ce stade.
+Les champs metadata triables par `GET /api/items?sort=...` sont inférés côté backend depuis les champs du plugin courant et les types supportés : text, textarea, select, date, number, rating et checkbox.
+
 ---
 
 # Types réellement validés actuellement

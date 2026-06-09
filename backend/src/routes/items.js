@@ -255,6 +255,25 @@ export default async function (
 
             }
 
+            const parsedSorting =
+                parseSorting(
+                    query,
+                    pluginDefinition
+                );
+
+            if (
+                parsedSorting.error
+            ) {
+
+                return reply
+                    .code(400)
+                    .send({
+                        error:
+                            parsedSorting.error
+                    });
+
+            }
+
             const {
                 items,
                 total
@@ -262,7 +281,8 @@ export default async function (
                 repository
                     .findAll(
                         filters,
-                        parsedPagination.value
+                        parsedPagination.value,
+                        parsedSorting.value
                     );
 
             return {
@@ -491,6 +511,151 @@ export default async function (
 
         }
     );
+
+}
+
+function parseSorting(
+    query,
+    pluginDefinition
+) {
+
+    const sort =
+        query.sort ?? 'title';
+
+    const direction =
+        query.direction ?? 'asc';
+
+    if (
+        typeof sort !== 'string' ||
+        sort.trim() === ''
+    ) {
+
+        return {
+            error:
+                'sort must be a valid sortable field'
+        };
+
+    }
+
+    if (
+        direction !== 'asc' &&
+        direction !== 'desc'
+    ) {
+
+        return {
+            error:
+                'direction must be asc or desc'
+        };
+
+    }
+
+    const normalizedDirection =
+        direction === 'asc'
+            ? 'ASC'
+            : 'DESC';
+
+    const systemSort =
+        parseSystemSort(
+            sort,
+            normalizedDirection
+        );
+
+    if (
+        systemSort
+    ) {
+
+        return {
+            value:
+                systemSort
+        };
+
+    }
+
+    if (
+        !pluginDefinition
+    ) {
+
+        return {
+            error:
+                'metadata sort requires a known plugin'
+        };
+
+    }
+
+    const metadataField =
+        pluginDefinition.fields.find(
+            field => field.name === sort
+        );
+
+    if (
+        !metadataField ||
+        !isSortableMetadataType(
+            metadataField.type
+        )
+    ) {
+
+        return {
+            error:
+                'sort must be a valid sortable field'
+        };
+
+    }
+
+    return {
+        value: {
+            field:
+                metadataField.name,
+            kind:
+                'metadata',
+            type:
+                metadataField.type,
+            direction:
+                normalizedDirection
+        }
+    };
+
+}
+
+function parseSystemSort(
+    sort,
+    direction
+) {
+
+    if (
+        [
+            'title',
+            'created_at',
+            'updated_at'
+        ].includes(sort)
+    ) {
+
+        return {
+            field:
+                sort,
+            kind:
+                'system',
+            direction
+        };
+
+    }
+
+    return null;
+
+}
+
+function isSortableMetadataType(
+    type
+) {
+
+    return [
+        'text',
+        'textarea',
+        'select',
+        'date',
+        'number',
+        'rating',
+        'checkbox'
+    ].includes(type);
 
 }
 

@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.10-lot5.14
+Version : v0.10-lot5.15
 
 ## État du projet
 
@@ -44,6 +44,8 @@ Frontend :
 - Filtres metadata typés côté backend pour text, textarea, select, checkbox, date, number et rating
 - Pagination de `GET /api/items` via `page` et `pageSize`
 - Réponse paginée avec `items`, `total`, `page`, `pageSize` et `totalPages`
+- Tri configurable de `GET /api/items` via `sort` et `direction`
+- Tri disponible sur `title`, `created_at`, `updated_at` et les champs metadata supportés du plugin courant
 
 ### Médias
 
@@ -124,6 +126,7 @@ Frontend :
 - Recherche large frontend par collection via le paramètre backend `search`
 - Filtres dynamiques frontend par collection depuis les champs `filterable`
 - Pagination frontend des listes items avec total, page courante et navigation précédent/suivant
+- Tri frontend des listes items avec choix du champ et de la direction
 - Cartes items pilotées par les préférences d'affichage backend pour les champs mis en avant et la densité
 - Cartes items avec labels issus du schéma plugin quand les préférences sont disponibles
 - Panneau d'édition des préférences d'affichage depuis la liste d'une collection
@@ -185,7 +188,6 @@ Frontend :
 ### Limitations connues
 
 - Chargement N+1 des médias/thumbnails dans les listes items
-- Pas encore de tri configurable
 - Pas encore de recherche globale multi-collections
 - Pas de recherche globale multi-plugins sur les metadata `searchable`
 - Pas de normalisation complète des accents ou de l'Unicode pour la recherche
@@ -656,9 +658,27 @@ Variables disponibles :
 - Retour automatique à une page valide si la page courante devient vide après suppression ou changement externe
 - Aucun changement de schéma SQLite, aucun tri configurable, aucune recherche FTS et aucun infinite scroll dans ce lot
 
+### Lot 5.15 - Tri configurable des listes items
+
+- `GET /api/items` accepte `sort` et `direction`
+- Valeurs par défaut : `sort=title`, `direction=asc`
+- Le tri par défaut utilise `title`, champ obligatoire commun à tous les items
+- Champs système triables : `title`, `created_at`, `updated_at`
+- Le tri `sort=created_at`, `direction=desc` reste disponible explicitement
+- Champs metadata triables depuis le schéma plugin courant pour les types text, textarea, select, date, number, rating et checkbox
+- `sort` ou `direction` invalides rejetés avec une réponse 400
+- Tri metadata sans plugin connu rejeté avec une réponse 400
+- Tri appliqué avant `LIMIT` / `OFFSET`, avec total inchangé
+- Tie-breaker stable via `id`
+- Recherche `search`, recherche legacy `title`, filtres `filterable`, filtrage plugin et pagination combinables avec le tri
+- Liste frontend avec sélecteurs `Trier par` et `Ordre`
+- Changement de tri ramenant automatiquement à la première page
+- Fallback frontend vers `sort=title`, `direction=asc` si un tri metadata devient invalide après changement de schéma
+- Aucun changement de schéma SQLite, aucune propriété plugin `sortable`, aucun tri multi-colonnes, aucune recherche FTS et aucune vue tableau dans ce lot
+
 ### Lots suivants
 
-- Lot 5.15 - Tri configurable des listes items
+- Filtres range sur rating/date
 - Interface de gestion des collections
 - Galerie médias avancée
 - Sauvegarde / restauration

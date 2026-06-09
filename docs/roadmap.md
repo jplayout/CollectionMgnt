@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 5.15 - Tri configurable des listes items.
+Étape suivante : Filtres range sur rating/date.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.10-lot5.14.
+Version actuelle : v0.10-lot5.15.
 
 ### Lot 5.6 - Livré
 
@@ -256,9 +256,28 @@ Version actuelle : v0.10-lot5.14.
 - Retour automatique à une page valide si la page courante devient vide après suppression ou changement externe
 - Aucun changement de schéma SQLite, tri configurable, FTS ou infinite scroll dans ce lot
 
+### Lot 5.15 - Livré
+
+- Tri configurable de `GET /api/items` via `sort` et `direction`
+- Valeurs par défaut : `sort=title`, `direction=asc`
+- Le tri par défaut utilise `title`, champ obligatoire commun à tous les items
+- Champs système triables : `title`, `created_at`, `updated_at`
+- Le tri `sort=created_at`, `direction=desc` reste disponible explicitement
+- Champs metadata triables depuis le schéma plugin courant pour les types text, textarea, select, date, number, rating et checkbox
+- Validation stricte de `sort` et `direction`, avec réponse 400 en cas de valeur invalide
+- Rejet du tri metadata sans plugin connu
+- Tri appliqué avant `LIMIT` / `OFFSET`, avec `COUNT(*)` inchangé
+- Tie-breaker stable via `id`
+- Recherche `search`, recherche legacy `title`, filtres metadata `filterable` et pagination combinables avec le tri
+- Pagination frontend conservant le tri sélectionné
+- Sélecteurs frontend `Trier par` et `Ordre`
+- Retour à la première page lors d'un changement de tri
+- Fallback frontend vers `sort=title`, `direction=asc` si un tri metadata devient invalide après changement de schéma
+- Aucun changement de schéma SQLite, propriété plugin `sortable`, tri multi-colonnes, FTS/ranking ou vue tableau dans ce lot
+
 ### Prochaine étape
 
-- Lot 5.15 - Tri configurable des listes items
+- Filtres range sur rating/date
 
 ### Non livré à ce stade
 

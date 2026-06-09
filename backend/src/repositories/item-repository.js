@@ -81,7 +81,8 @@ export class ItemRepository {
 
     findAll(
         filters = {},
-        pagination = {}
+        pagination = {},
+        sorting = {}
     ) {
 
         const page =
@@ -94,6 +95,11 @@ export class ItemRepository {
             (
                 page - 1
             ) * pageSize;
+
+        const orderBySql =
+            buildOrderByClause(
+                sorting
+            );
 
         const {
             whereSql,
@@ -118,7 +124,7 @@ export class ItemRepository {
                     SELECT *
                     FROM items
                     ${whereSql}
-                    ORDER BY created_at DESC
+                    ${orderBySql}
                     LIMIT ?
                     OFFSET ?
                 `)
@@ -155,6 +161,142 @@ export class ItemRepository {
             .run(id);
 
     }
+
+}
+
+function buildOrderByClause(
+    sorting
+) {
+
+    const direction =
+        sorting.direction === 'ASC'
+            ? 'ASC'
+            : 'DESC';
+
+    const idDirection =
+        direction;
+
+    if (
+        sorting.kind === 'system'
+    ) {
+
+        return buildSystemOrderByClause(
+            sorting.field,
+            direction,
+            idDirection
+        );
+
+    }
+
+    if (
+        sorting.kind === 'metadata' &&
+        isSafeMetadataFieldName(
+            sorting.field
+        )
+    ) {
+
+        return buildMetadataOrderByClause(
+            sorting,
+            direction,
+            idDirection
+        );
+
+    }
+
+    return `
+        ORDER BY created_at DESC, id DESC
+    `;
+
+}
+
+function buildSystemOrderByClause(
+    field,
+    direction,
+    idDirection
+) {
+
+    if (
+        field === 'title'
+    ) {
+
+        return `
+            ORDER BY LOWER(title) ${direction}, id ${idDirection}
+        `;
+
+    }
+
+    if (
+        field === 'updated_at'
+    ) {
+
+        return `
+            ORDER BY updated_at ${direction}, id ${idDirection}
+        `;
+
+    }
+
+    return `
+        ORDER BY created_at ${direction}, id ${idDirection}
+    `;
+
+}
+
+function buildMetadataOrderByClause(
+    sorting,
+    direction,
+    idDirection
+) {
+
+    if (
+        [
+            'text',
+            'textarea',
+            'select'
+        ].includes(sorting.type)
+    ) {
+
+        return `
+            ORDER BY LOWER(CAST(json_extract(
+                metadata,
+                '$.${sorting.field}'
+            ) AS TEXT)) ${direction}, id ${idDirection}
+        `;
+
+    }
+
+    if (
+        sorting.type === 'number' ||
+        sorting.type === 'rating'
+    ) {
+
+        return `
+            ORDER BY CAST(json_extract(
+                metadata,
+                '$.${sorting.field}'
+            ) AS REAL) ${direction}, id ${idDirection}
+        `;
+
+    }
+
+    if (
+        sorting.type === 'checkbox'
+    ) {
+
+        return `
+            ORDER BY json_extract(
+                metadata,
+                '$.${sorting.field}'
+            ) ${direction}, id ${idDirection}
+        `;
+
+    }
+
+    return `
+        ORDER BY CAST(json_extract(
+            metadata,
+            '$.${sorting.field}'
+        ) AS TEXT) ${direction}, id ${idDirection}
+    `;
 
 }
 

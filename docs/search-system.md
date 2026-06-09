@@ -1,6 +1,6 @@
 # Recherche
 
-État courant : v0.10-lot5.14.
+État courant : v0.10-lot5.15.
 
 ## Disponible
 
@@ -15,6 +15,7 @@ Capacités backend actuellement utilisées par `GET /api/items` :
 - filtres metadata via `json_extract`, insensibles à la casse simple pour text, textarea et select, stricts pour checkbox, number, rating et date
 - validation backend des valeurs de filtres selon le type déclaré dans le schéma plugin
 - pagination via `page` et `pageSize`
+- tri configurable via `sort` et `direction`
 
 ## Recherche `search`
 
@@ -32,6 +33,7 @@ Exemples :
 - `GET /api/items?plugin=games&search=nintendo` cherche aussi dans les metadata `searchable` du plugin `games`
 - `GET /api/items?plugin=games&search=nintendo&platform=Switch` combine la recherche large et les filtres `filterable`
 - `GET /api/items?plugin=games&search=nintendo&page=2&pageSize=24` combine recherche, filtres éventuels et pagination
+- `GET /api/items?plugin=games&sort=rating&direction=desc&page=1&pageSize=24` combine tri metadata et pagination
 
 Si `title` et `search` sont présents, les deux contraintes sont combinées en `AND`.
 
@@ -57,6 +59,35 @@ Paramètres disponibles :
 La pagination est combinable avec `plugin`, `title`, `search` et les filtres metadata `filterable`.
 Le total est calculé avec les mêmes contraintes que la liste retournée.
 Les valeurs invalides de `page` ou `pageSize` retournent une réponse 400.
+
+## Tri
+
+`GET /api/items` accepte :
+
+- `sort` : champ trié, défaut `title`.
+- `direction` : `asc` ou `desc`, défaut `asc`.
+
+Le tri par défaut est `title` ascendant, car `title` est le champ obligatoire commun à tous les items.
+
+Champs système triables :
+
+- `title`
+- `created_at`
+- `updated_at`
+
+Le tri `sort=created_at&direction=desc` reste disponible explicitement.
+
+Champs metadata triables :
+
+- champs du plugin courant uniquement ;
+- types supportés : text, textarea, select, date, number, rating et checkbox.
+
+Le tri metadata nécessite un plugin connu via `plugin=...`, afin que le backend puisse valider le champ depuis le schéma plugin.
+Un tri metadata sans plugin connu retourne une réponse 400.
+Les valeurs invalides de `sort` ou `direction` retournent une réponse 400.
+Le tri est appliqué avant `LIMIT` / `OFFSET`.
+Le total reste calculé avec les mêmes filtres/recherche, indépendamment du tri.
+Un tie-breaker stable via `id` est appliqué aux tris.
 
 ## `searchable` Et `filterable`
 
@@ -95,6 +126,8 @@ Capacités frontend disponibles :
 - réinitialisation de la recherche et des filtres
 - affichage du total d'items
 - navigation paginée précédente/suivante
+- sélection du champ trié et de l'ordre de tri
+- retour à `title` / `asc` si le tri courant n'est plus disponible après changement de schéma
 
 ## Types De Filtres Frontend
 
@@ -107,7 +140,6 @@ Capacités frontend disponibles :
 
 ## Limites Actuelles
 
-- pas de tri configurable
 - pas de recherche globale multi-collections
 - pas de recherche globale multi-plugins sur les metadata `searchable`
 - pas de FTS
@@ -119,4 +151,4 @@ Capacités frontend disponibles :
 
 ## Étape Suivante
 
-Lot 5.15 - Tri configurable des listes items.
+Filtres range sur rating/date.
