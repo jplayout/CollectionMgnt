@@ -18,6 +18,33 @@ export function runMediaAudit() {
 
 }
 
+export function previewMediaCleanup() {
+
+    return apiFetch(
+        '/api/admin/media-cleanup/preview',
+        {
+            method:
+                'POST'
+        }
+    );
+
+}
+
+export function executeMediaCleanup(candidateIds) {
+
+    return apiFetch(
+        '/api/admin/media-cleanup/execute',
+        {
+            method:
+                'POST',
+            body: {
+                candidateIds
+            }
+        }
+    );
+
+}
+
 export function importNativeJson(file) {
 
     const formData =

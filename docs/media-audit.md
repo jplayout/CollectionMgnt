@@ -1,6 +1,6 @@
 # Audit Média
 
-État courant : v0.10-lot8.1.1.
+État courant : v0.11-lot9.0.3.
 
 ## Objectif
 
@@ -95,10 +95,33 @@ Chaque issue contient au minimum :
 
 ## Cleanup Candidates
 
-`cleanupCandidates` liste des candidats potentiels à un futur nettoyage manuel.
+`cleanupCandidates` liste des candidats potentiels au nettoyage manuel guidé.
 
-Dans le Lot 8.1.1, ces candidats sont informatifs uniquement.
-Aucune suppression n'est effectuée.
+L'audit reste strictement lecture seule.
+Il n'effectue aucune suppression.
+
+Depuis le Lot 9.0.3, le cleanup manuel utilise uniquement une sous-partie sûre de ces candidats :
+
+- `FILE_WITHOUT_MEDIA_ROW`
+- `UNEXPECTED_FILE`
+- `ITEM_FOLDER_WITHOUT_ITEM`
+- `EMPTY_ITEM_FOLDER`
+
+Les problèmes DB et les fichiers attendus manquants restent exclus du cleanup :
+
+- `MEDIA_ITEM_MISSING`
+- `MEDIA_FILENAME_EMPTY`
+- `MEDIA_ORIGINAL_MISSING`
+- `MEDIA_OPTIMIZED_MISSING`
+- `MEDIA_THUMBNAIL_MISSING`
+
+Le cleanup est déclenché via des routes séparées et protégées :
+
+- `POST /api/admin/media-cleanup/preview`
+- `POST /api/admin/media-cleanup/execute`
+
+L'exécution recalcule les candidats côté backend et ne reçoit que des IDs de candidats.
+Elle ne reçoit jamais de chemin libre depuis le frontend.
 
 ## Sécurité
 
@@ -110,18 +133,11 @@ Aucune suppression n'est effectuée.
 
 ## Limites
 
-- pas de cleanup
 - pas de suppression automatique
 - pas de modification DB
 - pas de régénération de thumbnails ou images optimisées
-- pas d'interface frontend dans ce lot
 - scan synchrone adapté aux volumes modestes
 
 ## Suite Prévue
 
-Le lot suivant recommandé est un nettoyage manuel guidé :
-
-- dry-run obligatoire
-- sélection explicite des candidats
-- suppression limitée aux fichiers orphelins et dossiers vides
-- aucune suppression automatique par défaut
+Les suites possibles concernent la sauvegarde ZIP, l'amélioration des rapports admin ou la régénération guidée des thumbnails/images dans un lot distinct.

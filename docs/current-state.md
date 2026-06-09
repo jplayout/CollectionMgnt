@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.11-lot9.0.2
+Version : v0.11-lot9.0.3
 
 ## État du projet
 
@@ -70,6 +70,7 @@ Frontend :
 - Garantie d'une seule image principale par item
 - Promotion automatique de la plus ancienne image restante si l'image principale est supprimée
 - Audit média global lecture seule pour détecter les incohérences DB/disque
+- Cleanup média manuel guidé des candidats disque sûrs depuis l'Administration
 
 ### Administration
 
@@ -79,10 +80,13 @@ Frontend :
 - Import JSON natif CollectionMgnt depuis l'Administration via `POST /api/admin/imports/native-json`
 - Import JSON natif en mode `add_only`, sans remplacement, sans suppression et sans restauration des IDs d'origine
 - Audit média lecture seule accessible côté Administration via `GET /api/admin/media-audit`
+- Cleanup média manuel guidé via preview obligatoire `POST /api/admin/media-cleanup/preview` puis exécution confirmée `POST /api/admin/media-cleanup/execute`
+- Cleanup limité aux fichiers orphelins, fichiers inattendus, dossiers item sans item DB et dossiers item réellement vides
+- Cleanup sans suppression ou modification de lignes DB, sans suppression d'item ou ligne `media`, sans suppression de média référencé DB, sans chemins libres fournis par le frontend, sans régénération et sans suppression hors `DATA_DIR/uploads/items`
 - Résumé système lecture seule via `GET /api/admin/system-summary`
 - Compteurs système : plugins, plugins actifs, items et médias
 - Version applicative exposée côté admin sans secrets ni données utilisateurs sensibles
-- Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import CSV, aucun cleanup média, aucune sauvegarde ZIP et aucune restauration de fichiers médias physiques dans ce lot
+- Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import CSV, aucune sauvegarde ZIP et aucune restauration de fichiers médias physiques dans ce lot
 
 ### Authentification
 
@@ -169,6 +173,7 @@ Frontend :
 - Galerie médias frontend minimale
 - Page Administration MVP avec sections Données, Médias et Système
 - Import JSON natif CollectionMgnt depuis la section Données de l'Administration
+- Preview et exécution confirmée du cleanup média manuel guidé depuis la section Médias de l'Administration
 - Routes frontend protégées :
   - `/dashboard`
   - `/admin`
@@ -260,6 +265,8 @@ Frontend :
 ### Administration
 
 - `GET /api/admin/media-audit`
+- `POST /api/admin/media-cleanup/preview`
+- `POST /api/admin/media-cleanup/execute`
 - `GET /api/admin/system-summary`
 - `POST /api/admin/imports/native-json`
 
@@ -791,9 +798,22 @@ Variables disponibles :
 - Aucun changement du schéma SQLite
 - Aucun import CSV, aucune sauvegarde ZIP et aucune restauration média physique dans ce lot
 
+### Lot 9.0.3 - Cleanup média manuel guidé
+
+- Cleanup média manuel guidé depuis la section Médias de la page Administration
+- Routes protégées `POST /api/admin/media-cleanup/preview` et `POST /api/admin/media-cleanup/execute`
+- Preview obligatoire avec IDs déterministes générés côté backend
+- Execute limité aux IDs de candidats et recalculant le preview côté backend avant suppression
+- Candidats sûrs limités à `FILE_WITHOUT_MEDIA_ROW`, `UNEXPECTED_FILE`, `ITEM_FOLDER_WITHOUT_ITEM` et `EMPTY_ITEM_FOLDER`
+- Suppression uniquement sous `DATA_DIR/uploads/items`
+- Aucun chemin libre accepté depuis le frontend
+- Aucun changement DB, aucune suppression de ligne DB, aucun item supprimé, aucune ligne `media` supprimée, aucune régénération et aucune réparation DB
+- UI avec liste de candidats, sélection manuelle, confirmation obligatoire et rapport d'exécution
+- Aucun changement du schéma SQLite
+- Aucun cleanup automatique, aucune sauvegarde ZIP et aucune restauration média physique dans ce lot
+
 ### Lots suivants
 
-- Nettoyage manuel guidé des incohérences média
 - Import CSV CollectionMgnt
 - Import CSV externe depuis une autre application de gestion de collection
 - Filtres range sur rating/date

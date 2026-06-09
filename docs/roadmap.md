@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Cleanup média manuel, sauvegarde ZIP ou import CSV CollectionMgnt.
+Étape suivante : Sauvegarde ZIP complète, import CSV CollectionMgnt ou amélioration des rapports admin.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.11-lot9.0.2.
+Version actuelle : v0.11-lot9.0.3.
 
 ### Lot 5.6 - Livré
 
@@ -351,16 +351,27 @@ Version actuelle : v0.11-lot9.0.2.
 - Rapport d'import avec compteurs, items créés, items ignorés, erreurs et warnings
 - Aucun import CSV, aucune sauvegarde ZIP, aucune restauration médias physiques et aucun changement de schéma SQLite
 
+### Lot 9.0.3 - Livré
+
+- Cleanup média manuel guidé depuis la section Médias de la page Administration
+- Routes protégées `POST /api/admin/media-cleanup/preview` et `POST /api/admin/media-cleanup/execute`
+- Preview obligatoire avant exécution, avec IDs déterministes générés côté backend
+- Exécution limitée aux IDs de candidats, avec recalcul du preview côté backend avant suppression
+- Candidats nettoyables limités à `FILE_WITHOUT_MEDIA_ROW`, `UNEXPECTED_FILE`, `ITEM_FOLDER_WITHOUT_ITEM` et `EMPTY_ITEM_FOLDER`
+- Suppression uniquement sous `DATA_DIR/uploads/items`, sans chemin libre accepté depuis le frontend
+- Aucun changement DB, aucune suppression de ligne DB, aucun item supprimé, aucune ligne `media` supprimée, aucune suppression de média référencé DB, aucune régénération thumbnail/image et aucune réparation DB
+- UI avec liste de candidats sûrs, sélection manuelle, confirmation `window.confirm` et rapport supprimés/ignorés/erreurs
+- Aucun changement de schéma SQLite, aucune sauvegarde ZIP et aucun cleanup automatique
+
 ### Prochaine étape
 
-- Nettoyage manuel guidé des incohérences média
 - Sauvegarde ZIP complète avec fichiers médias
 - Import CSV CollectionMgnt
+- Amélioration des rapports et historiques d'administration
 
 ### Non livré à ce stade
 
 - Support backend des types plugin avancés : multiselect, url, email, barcode, isbn
-- Restauration native d'un export JSON
 - Sauvegarde complète ZIP avec fichiers médias
 - Import CSV externe depuis une autre application de gestion de collection
 

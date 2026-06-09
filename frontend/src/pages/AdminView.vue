@@ -191,6 +191,172 @@
                         <dd>{{ auditReport.summary.warningCount }}</dd>
                     </div>
                 </dl>
+
+                <div class="panel-divider"></div>
+
+                <div>
+                    <h3>Nettoyage manuel guidé</h3>
+                    <p>Prévisualiser les fichiers et dossiers orphelins sûrs avant suppression.</p>
+                </div>
+
+                <button
+                    :disabled="cleanupPreviewing"
+                    type="button"
+                    @click="previewCleanup"
+                >
+                    {{ cleanupPreviewing ? 'Prévisualisation...' : 'Prévisualiser nettoyage' }}
+                </button>
+
+                <p
+                    v-if="cleanupError"
+                    class="error-message"
+                >
+                    {{ cleanupError }}
+                </p>
+
+                <dl
+                    v-if="cleanupPreview"
+                    class="summary-list"
+                >
+                    <div>
+                        <dt>Candidats sûrs</dt>
+                        <dd>{{ cleanupPreview.summary.candidateCount }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Fichiers</dt>
+                        <dd>{{ cleanupPreview.summary.fileCount }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Dossiers</dt>
+                        <dd>{{ cleanupPreview.summary.folderCount }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Taille fichiers</dt>
+                        <dd>{{ formatBytes(cleanupPreview.summary.totalBytes) }}</dd>
+                    </div>
+                </dl>
+
+                <div
+                    v-if="cleanupPreview?.candidates.length"
+                    class="cleanup-controls"
+                >
+                    <div class="button-row">
+                        <button
+                            class="secondary-button"
+                            type="button"
+                            @click="selectAllCleanupCandidates"
+                        >
+                            Tout sélectionner
+                        </button>
+
+                        <button
+                            class="secondary-button"
+                            type="button"
+                            @click="clearCleanupSelection"
+                        >
+                            Tout désélectionner
+                        </button>
+                    </div>
+
+                    <ul class="candidate-list">
+                        <li
+                            v-for="candidate in cleanupPreview.candidates"
+                            :key="candidate.id"
+                        >
+                            <label class="candidate-row">
+                                <input
+                                    v-model="selectedCleanupCandidateIds"
+                                    type="checkbox"
+                                    :value="candidate.id"
+                                >
+
+                                <span>
+                                    <strong>{{ candidate.code }}</strong>
+                                    <small>
+                                        {{ candidate.relativePath }}
+                                        <template v-if="candidate.size !== undefined">
+                                            · {{ formatBytes(candidate.size) }}
+                                        </template>
+                                    </small>
+                                    <small>{{ candidate.reason }}</small>
+                                </span>
+                            </label>
+                        </li>
+                    </ul>
+
+                    <button
+                        :disabled="cleanupExecuting || selectedCleanupCandidateIds.length === 0"
+                        type="button"
+                        @click="executeCleanup"
+                    >
+                        {{ cleanupExecuting ? 'Nettoyage...' : 'Nettoyer la sélection' }}
+                    </button>
+                </div>
+
+                <dl
+                    v-if="cleanupResult"
+                    class="summary-list"
+                >
+                    <div>
+                        <dt>Demandés</dt>
+                        <dd>{{ cleanupResult.summary.requested }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Supprimés</dt>
+                        <dd>{{ cleanupResult.summary.deleted }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Ignorés</dt>
+                        <dd>{{ cleanupResult.summary.skipped }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Erreurs</dt>
+                        <dd>{{ cleanupResult.summary.errors }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Octets supprimés</dt>
+                        <dd>{{ formatBytes(cleanupResult.summary.bytesDeleted) }}</dd>
+                    </div>
+                </dl>
+
+                <div
+                    v-if="cleanupResult?.skipped.length"
+                    class="report-details"
+                >
+                    <h4>Ignorés</h4>
+
+                    <ul>
+                        <li
+                            v-for="skipped in cleanupResult.skipped"
+                            :key="`${skipped.id}-${skipped.reason}`"
+                        >
+                            {{ skipped.reason }}<template v-if="skipped.relativePath"> : {{ skipped.relativePath }}</template>
+                        </li>
+                    </ul>
+                </div>
+
+                <div
+                    v-if="cleanupResult?.errors.length"
+                    class="report-details"
+                >
+                    <h4>Erreurs</h4>
+
+                    <ul>
+                        <li
+                            v-for="error in cleanupResult.errors"
+                            :key="`${error.id}-${error.reason}`"
+                        >
+                            {{ error.reason }} : {{ error.relativePath }}
+                        </li>
+                    </ul>
+                </div>
             </article>
 
             <article class="admin-panel">
@@ -262,8 +428,10 @@ import {
 } from '../services/export-api.js';
 
 import {
+    executeMediaCleanup,
     getSystemSummary,
     importNativeJson,
+    previewMediaCleanup,
     runMediaAudit
 } from '../services/admin-api.js';
 
@@ -293,6 +461,24 @@ const auditError =
 
 const auditReport =
     ref(null);
+
+const cleanupPreviewing =
+    ref(false);
+
+const cleanupExecuting =
+    ref(false);
+
+const cleanupError =
+    ref('');
+
+const cleanupPreview =
+    ref(null);
+
+const cleanupResult =
+    ref(null);
+
+const selectedCleanupCandidateIds =
+    ref([]);
 
 const systemLoading =
     ref(false);
@@ -424,6 +610,117 @@ async function runAudit() {
 
 }
 
+async function previewCleanup() {
+
+    cleanupPreviewing.value =
+        true;
+
+    cleanupError.value =
+        '';
+
+    cleanupResult.value =
+        null;
+
+    selectedCleanupCandidateIds.value =
+        [];
+
+    try {
+
+        cleanupPreview.value =
+            await previewMediaCleanup();
+
+    } catch (error) {
+
+        cleanupError.value =
+            getErrorMessage(
+                error,
+                'Prévisualisation du nettoyage indisponible.'
+            );
+
+    } finally {
+
+        cleanupPreviewing.value =
+            false;
+
+    }
+
+}
+
+function selectAllCleanupCandidates() {
+
+    selectedCleanupCandidateIds.value =
+        cleanupPreview.value?.candidates.map(
+            candidate => candidate.id
+        ) ?? [];
+
+}
+
+function clearCleanupSelection() {
+
+    selectedCleanupCandidateIds.value =
+        [];
+
+}
+
+async function executeCleanup() {
+
+    if (
+        selectedCleanupCandidateIds.value.length === 0
+    ) {
+
+        return;
+
+    }
+
+    const confirmed =
+        window.confirm(
+            `Supprimer ${selectedCleanupCandidateIds.value.length} candidat(s) média sélectionné(s) ?`
+        );
+
+    if (
+        !confirmed
+    ) {
+
+        return;
+
+    }
+
+    cleanupExecuting.value =
+        true;
+
+    cleanupError.value =
+        '';
+
+    try {
+
+        cleanupResult.value =
+            await executeMediaCleanup(
+                selectedCleanupCandidateIds.value
+            );
+
+        cleanupPreview.value =
+            await previewMediaCleanup();
+
+        selectedCleanupCandidateIds.value =
+            [];
+
+    } catch (error) {
+
+        cleanupError.value =
+            getErrorMessage(
+                error,
+                'Nettoyage média indisponible.'
+            );
+
+    } finally {
+
+        cleanupExecuting.value =
+            false;
+
+    }
+
+}
+
 async function loadSystemSummary() {
 
     systemLoading.value =
@@ -468,6 +765,56 @@ function getErrorMessage(
     }
 
     return fallback;
+
+}
+
+function formatBytes(bytes) {
+
+    if (
+        !Number.isFinite(
+            bytes
+        )
+    ) {
+
+        return '0 o';
+
+    }
+
+    if (
+        bytes < 1024
+    ) {
+
+        return `${bytes} o`;
+
+    }
+
+    const units =
+        [
+            'Ko',
+            'Mo',
+            'Go'
+        ];
+
+    let value =
+        bytes / 1024;
+
+    let unitIndex =
+        0;
+
+    while (
+        value >= 1024 &&
+        unitIndex < units.length - 1
+    ) {
+
+        value /=
+            1024;
+
+        unitIndex +=
+            1;
+
+    }
+
+    return `${value.toFixed(1)} ${units[unitIndex]}`;
 
 }
 </script>
@@ -584,6 +931,17 @@ button:disabled {
     opacity: 0.65;
 }
 
+.secondary-button {
+    background: #eef2f7;
+    color: #172033;
+}
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
 .summary-list {
     display: grid;
     gap: 12px;
@@ -625,6 +983,43 @@ dd {
     gap: 6px;
     margin: 0;
     padding-left: 18px;
+}
+
+.cleanup-controls,
+.candidate-list {
+    display: grid;
+    gap: 12px;
+}
+
+.candidate-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.candidate-row {
+    align-items: start;
+    border: 1px solid #d8dee8;
+    border-radius: 6px;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 10px;
+}
+
+.candidate-row input {
+    margin-top: 3px;
+}
+
+.candidate-row span {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.candidate-row small {
+    color: #5f6f89;
+    overflow-wrap: anywhere;
 }
 
 @media (min-width: 820px) {

@@ -2,7 +2,7 @@
 
 ## État actuel
 
-Lot livré : 8.1.1 - Audit média lecture seule.
+Lot livré : 9.0.3 - Cleanup média manuel guidé.
 
 Fonctionnalités disponibles :
 
@@ -37,6 +37,7 @@ Fonctionnalités disponibles :
 - Chargement des thumbnails des cartes items via `Blob` authentifié
 - Nettoyage automatique du dossier média d'un item lors de sa suppression
 - Audit média global lecture seule entre SQLite et le disque
+- Cleanup média manuel guidé des candidats disque sûrs depuis l'Administration
 
 ## Stockage disque
 
@@ -113,6 +114,8 @@ Routes disponibles :
 - `DELETE /api/media/:id`
 - `DELETE /api/items/:id`
 - `GET /api/admin/media-audit`
+- `POST /api/admin/media-cleanup/preview`
+- `POST /api/admin/media-cleanup/execute`
 
 ## Suppression d'un item
 
@@ -142,19 +145,37 @@ L'audit vérifie :
 Le rapport ne contient que des chemins relatifs à `DATA_DIR`.
 L'audit ne supprime aucun fichier, ne modifie aucune ligne SQLite et ne régénère aucune image.
 
+## Cleanup média manuel guidé
+
+`POST /api/admin/media-cleanup/preview` relance l'audit côté backend, filtre les candidats sûrs et retourne une liste sélectionnable.
+
+Les candidats nettoyables sont limités à :
+
+- `FILE_WITHOUT_MEDIA_ROW`
+- `UNEXPECTED_FILE`
+- `ITEM_FOLDER_WITHOUT_ITEM`
+- `EMPTY_ITEM_FOLDER`
+
+`POST /api/admin/media-cleanup/execute` reçoit uniquement des IDs de candidats.
+Le backend recalcule le preview, ignore les IDs inconnus, revalide les chemins et supprime uniquement les candidats encore présents et sûrs.
+
+Le cleanup :
+
+- ne reçoit jamais de chemin libre depuis le frontend
+- ne supprime jamais hors `DATA_DIR/uploads/items`
+- ne supprime et ne modifie aucune ligne DB
+- ne supprime aucun item et aucune ligne `media`
+- ne régénère aucune image ou miniature
+- ne répare aucune incohérence DB
+- ne supprime pas de média référencé par DB
+- nécessite une confirmation utilisateur côté UI avant exécution
+
 ## Non encore implémenté
 
 - Galerie avancée
 - Optimisation du chargement N+1 des médias/thumbnails dans les listes
-- Nettoyage manuel guidé des incohérences média
 - Régénération des miniatures ou images optimisées depuis les originaux
 
 ## Prochaine étape
 
-Nettoyage manuel guidé des incohérences média.
-
-Objectifs :
-
-- dry-run explicite
-- sélection manuelle des candidats de nettoyage
-- suppression encadrée des fichiers orphelins et dossiers vides
+Sauvegarde ZIP complète avec fichiers médias ou amélioration des rapports d'administration.

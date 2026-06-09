@@ -1,6 +1,6 @@
 # Administration
 
-État courant : v0.11-lot9.0.2.
+État courant : v0.11-lot9.0.3.
 
 ## Objectif
 
@@ -58,6 +58,8 @@ Après import, la page affiche un rapport avec collections traitées, items cré
 La section Médias propose :
 
 - Lancer audit média
+- Prévisualiser nettoyage
+- Nettoyer la sélection après confirmation utilisateur
 
 L'audit utilise la route existante :
 
@@ -74,6 +76,23 @@ Après exécution, la page affiche un résumé du dernier audit lancé dans la s
 - `filesystemIssueCount`
 - `cleanupCandidateCount`
 - `warningCount`
+
+Le cleanup média manuel guidé utilise :
+
+- `POST /api/admin/media-cleanup/preview`
+- `POST /api/admin/media-cleanup/execute`
+
+La preview filtre uniquement les candidats sûrs :
+
+- `FILE_WITHOUT_MEDIA_ROW`
+- `UNEXPECTED_FILE`
+- `ITEM_FOLDER_WITHOUT_ITEM`
+- `EMPTY_ITEM_FOLDER`
+
+La page affiche les candidats sûrs, permet une sélection manuelle, propose tout sélectionner/tout désélectionner, puis demande une confirmation `window.confirm` avant exécution.
+
+L'exécution reçoit uniquement des IDs de candidats, recalcule le preview côté backend et retourne un rapport avec supprimés, ignorés, erreurs et octets supprimés.
+Elle ne modifie jamais la DB, ne supprime aucun item ou ligne `media`, ne supprime jamais hors `DATA_DIR/uploads/items`, ne supprime pas de média référencé DB, ne régénère aucune image et ne répare aucune incohérence DB.
 
 ### Système
 
@@ -95,7 +114,7 @@ Exemple :
 
 ```json
 {
-  "version": "v0.11-lot9.0.2",
+  "version": "v0.11-lot9.0.3",
   "counts": {
     "plugins": 0,
     "enabledPlugins": 0,
@@ -107,13 +126,12 @@ Exemple :
 
 ## Limites MVP
 
-Le Lot 9.0.2 ne fournit pas :
+Le Lot 9.0.3 ne fournit pas :
 
 - rôles utilisateurs
 - gestion utilisateurs
 - import CSV
-- cleanup média
-- suppression automatique de fichiers
+- cleanup automatique
 - sauvegarde ZIP
 - restauration
 - restauration des fichiers médias physiques
@@ -125,7 +143,6 @@ Le Lot 9.0.2 ne fournit pas :
 
 La page `/admin` est structurée pour accueillir plus tard :
 
-- cleanup média manuel avec dry-run et confirmation
 - sauvegarde ZIP complète avec fichiers médias
 - import CSV CollectionMgnt
 - gestion utilisateurs
