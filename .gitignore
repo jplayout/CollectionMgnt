@@ -1,6 +1,8 @@
 node_modules/
 dist/
 backend/data/
+backup/
+backups/
 .env
 .env.local
 .vscode/
@@ -12,5 +14,6 @@ backend/data/
 *.db-shm
 *.db-wal
 *.log
+*.zip
 Thumbs.db
 TODO.md

@@ -109,8 +109,8 @@ mkdir -p backend/data
 Le Lot 6.0.3 publie automatiquement les images sur GitHub Container Registry :
 
 ```text
-ghcr.io/<owner>/collectionmgnt-backend
-ghcr.io/<owner>/collectionmgnt-frontend
+`ghcr.io/jplayout/collectionmgnt-backend:latest`
+`ghcr.io/jplayout/collectionmgnt-frontend:latest`
 ```
 
 Les tags publiés sont :
@@ -122,8 +122,8 @@ Les tags publiés sont :
 Exemple :
 
 ```bash
-docker pull ghcr.io/<owner>/collectionmgnt-backend:latest
-docker pull ghcr.io/<owner>/collectionmgnt-frontend:latest
+docker pull ghcr.io/jplayout/collectionmgnt-backend:latest
+docker pull ghcr.io/jplayout/collectionmgnt-frontend:latest
 ```
 
 Les packages GHCR peuvent être privés selon les paramètres GitHub du dépôt ou de l'organisation.
@@ -133,7 +133,7 @@ Pour utiliser des images prébuildées au lieu de builder localement, remplacer 
 ```yaml
 services:
   backend:
-    image: ghcr.io/<owner>/collectionmgnt-backend:latest
+    image: ghcr.io/jplayout/collectionmgnt-backend:latest
     environment:
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
@@ -148,7 +148,7 @@ services:
       - ./backend/plugins:${PLUGINS_DIR:-/app/plugins}:ro,Z
 
   frontend:
-    image: ghcr.io/<owner>/collectionmgnt-frontend:latest
+    image: ghcr.io/jplayout/collectionmgnt-frontend:latest
     depends_on:
       - backend
     ports:
