@@ -172,3 +172,14 @@ Les exports JSON référencent uniquement les métadonnées média et les URLs A
 
 Une sauvegarde complète technique reste distincte de l'export métier.
 Elle devra couvrir SQLite et les fichiers médias physiques dans un lot séparé.
+
+---
+
+# Audit Média
+
+Le Lot 8.1.1 ajoute un audit média lecture seule sans modifier le schéma SQLite.
+
+L'audit lit les tables existantes `items` et `media`, puis compare ces données aux fichiers présents sous `DATA_DIR/uploads/items`.
+
+Aucune table, colonne, index ou contrainte n'est ajouté pour ce lot.
+L'audit ne supprime aucun fichier et ne modifie aucune ligne SQLite.

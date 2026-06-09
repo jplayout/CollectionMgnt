@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Lot 8.0.2 - Import CSV externe depuis une autre application de gestion de collection.
+Étape suivante : Nettoyage manuel guidé des incohérences média.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.10-lot8.0.1.
+Version actuelle : v0.10-lot8.1.1.
 
 ### Lot 5.6 - Livré
 
@@ -312,15 +312,26 @@ Version actuelle : v0.10-lot8.0.1.
 - Téléchargement frontend JSON et CSV disponible depuis la liste d'une collection
 - Aucun import, aucune restauration, aucun ZIP, aucun dump SQLite, aucun changement de schéma SQLite ou de plugins
 
+### Lot 8.1.1 - Livré
+
+- Audit média global lecture seule via `GET /api/admin/media-audit`
+- Route protégée par JWT
+- Détection des entrées `media` incohérentes avec les items ou les fichiers attendus
+- Détection des fichiers et dossiers orphelins sous `DATA_DIR/uploads/items`
+- Rapport JSON structuré avec résumé, issues DB, issues disque, candidats de cleanup et warnings
+- Chemins du rapport relatifs à `DATA_DIR`, sans exposition de chemins absolus
+- Aucun cleanup, aucune suppression de fichier, aucune modification DB, aucune régénération thumbnail/image et aucun changement de schéma SQLite
+
 ### Prochaine étape
 
-- Lot 8.0.2 - Import CSV externe depuis une autre application de gestion de collection
+- Nettoyage manuel guidé des incohérences média
 
 ### Non livré à ce stade
 
 - Support backend des types plugin avancés : multiselect, url, email, barcode, isbn
 - Restauration native d'un export JSON
 - Sauvegarde complète ZIP avec fichiers médias
+- Import CSV externe depuis une autre application de gestion de collection
 
 ---
 

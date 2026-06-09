@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.10-lot8.0.1
+Version : v0.10-lot8.1.1
 
 ## État du projet
 
@@ -68,6 +68,7 @@ Frontend :
 - Définition de l'image principale
 - Garantie d'une seule image principale par item
 - Promotion automatique de la plus ancienne image restante si l'image principale est supprimée
+- Audit média global lecture seule pour détecter les incohérences DB/disque
 
 ### Authentification
 
@@ -238,6 +239,10 @@ Frontend :
 - `GET /api/media/:id/thumb`
 - `PATCH /api/media/:id/primary`
 - `DELETE /api/media/:id`
+
+### Administration
+
+- `GET /api/admin/media-audit`
 
 ### Exports
 
@@ -725,8 +730,19 @@ Variables disponibles :
 - En-têtes CSV basés sur `field.name` pour préparer un futur import stable
 - Pas d'import, pas de restauration, pas de ZIP, pas de dump SQLite et aucun changement de schéma SQLite dans ce lot
 
+### Lot 8.1.1 - Audit média lecture seule
+
+- Route protégée `GET /api/admin/media-audit`
+- Audit global en lecture seule des incohérences entre la table `media`, les items et les fichiers sous `DATA_DIR/uploads/items`
+- Détection DB vers disque : item manquant, filename vide, original manquant, image optimisée manquante et thumbnail manquant
+- Détection disque vers DB : dossier item sans item DB, fichier sans ligne media correspondante, fichier inattendu et dossier item vide
+- Rapport JSON avec `summary`, `dbIssues`, `filesystemIssues`, `cleanupCandidates` et `warnings`
+- Chemins exposés relatifs à `DATA_DIR`, sans chemins absolus
+- Aucune suppression, aucune modification DB, aucune régénération d'image et aucun changement de schéma SQLite dans ce lot
+
 ### Lots suivants
 
+- Nettoyage manuel guidé des incohérences média
 - Import CSV externe depuis une autre application de gestion de collection
 - Filtres range sur rating/date
 - Interface de gestion des collections

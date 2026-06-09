@@ -2,7 +2,7 @@
 
 ## État actuel
 
-Lot livré : 5.10 - Nettoyage des fichiers média lors de la suppression d'un item.
+Lot livré : 8.1.1 - Audit média lecture seule.
 
 Fonctionnalités disponibles :
 
@@ -36,6 +36,7 @@ Fonctionnalités disponibles :
 - Affichage de l'image principale dans les cartes items
 - Chargement des thumbnails des cartes items via `Blob` authentifié
 - Nettoyage automatique du dossier média d'un item lors de sa suppression
+- Audit média global lecture seule entre SQLite et le disque
 
 ## Stockage disque
 
@@ -111,6 +112,7 @@ Routes disponibles :
 - `PATCH /api/media/:id/primary`
 - `DELETE /api/media/:id`
 - `DELETE /api/items/:id`
+- `GET /api/admin/media-audit`
 
 ## Suppression d'un item
 
@@ -123,17 +125,36 @@ Lorsqu'un item est supprimé via `DELETE /api/items/:id` :
 - le nettoyage disque est best-effort : les fichiers ou dossiers déjà absents sont acceptés
 - une erreur de nettoyage disque est logguée sans annuler la suppression DB déjà effectuée
 
+## Audit média
+
+`GET /api/admin/media-audit` exécute un audit global en lecture seule.
+
+L'audit vérifie :
+
+- les lignes `media` dont l'item n'existe plus
+- les lignes `media` avec `filename` vide
+- la présence des fichiers attendus dans `originals`, `images` et `thumbs`
+- les dossiers numériques sous `DATA_DIR/uploads/items`
+- les fichiers présents dans `originals`, `images` et `thumbs` sans ligne `media` correspondante
+- les fichiers inattendus
+- les dossiers item vides ou sans fichier média utile
+
+Le rapport ne contient que des chemins relatifs à `DATA_DIR`.
+L'audit ne supprime aucun fichier, ne modifie aucune ligne SQLite et ne régénère aucune image.
+
 ## Non encore implémenté
 
 - Galerie avancée
 - Optimisation du chargement N+1 des médias/thumbnails dans les listes
+- Nettoyage manuel guidé des incohérences média
+- Régénération des miniatures ou images optimisées depuis les originaux
 
 ## Prochaine étape
 
-Lot 5.11 - Recherche avancée.
+Nettoyage manuel guidé des incohérences média.
 
 Objectifs :
 
-- Recherche multi-collections
-- Filtres dynamiques plus complets
-- Exploitation des champs `searchable` et `filterable`
+- dry-run explicite
+- sélection manuelle des candidats de nettoyage
+- suppression encadrée des fichiers orphelins et dossiers vides
