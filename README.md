@@ -140,8 +140,8 @@ Un déploiement local Docker/Podman est documenté dans `docs/deployment-docker.
 
 Des images prébuildées peuvent être publiées sur GitHub Container Registry :
 
-- `ghcr.io/<owner>/collectionmgnt-backend`
-- `ghcr.io/<owner>/collectionmgnt-frontend`
+- `ghcr.io/jplayout/collectionmgnt-backend:latest`
+- `ghcr.io/jplayout/collectionmgnt-frontend:latest`
 
 ## Architecture
 
