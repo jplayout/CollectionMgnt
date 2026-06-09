@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.10-lot8.1.1
+Version : v0.11-lot9.0.1
 
 ## État du projet
 
@@ -10,6 +10,7 @@ Frontend :
 
 - Authentification : opérationnelle
 - Dashboard : minimal
+- Administration : fondation MVP disponible
 - Collections : navigation minimale disponible
 - Création item : formulaire dynamique frontend disponible
 - Édition item : formulaire dynamique frontend disponible
@@ -69,6 +70,17 @@ Frontend :
 - Garantie d'une seule image principale par item
 - Promotion automatique de la plus ancienne image restante si l'image principale est supprimée
 - Audit média global lecture seule pour détecter les incohérences DB/disque
+
+### Administration
+
+- Page frontend protégée `/admin`
+- Accès depuis le Dashboard
+- Export JSON global présenté côté Administration via `GET /api/exports/application.json`
+- Audit média lecture seule accessible côté Administration via `GET /api/admin/media-audit`
+- Résumé système lecture seule via `GET /api/admin/system-summary`
+- Compteurs système : plugins, plugins actifs, items et médias
+- Version applicative exposée côté admin sans secrets ni données utilisateurs sensibles
+- Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import JSON, aucun cleanup média et aucune sauvegarde ZIP dans ce lot
 
 ### Authentification
 
@@ -153,8 +165,10 @@ Frontend :
   - édition via `PATCH /api/items/:id`
   - redirection vers `/items/:id` après création ou édition
 - Galerie médias frontend minimale
+- Page Administration MVP avec sections Données, Médias et Système
 - Routes frontend protégées :
   - `/dashboard`
+  - `/admin`
   - `/collections`
   - `/collections/:pluginId/items`
   - `/collections/:pluginId/items/new`
@@ -243,6 +257,7 @@ Frontend :
 ### Administration
 
 - `GET /api/admin/media-audit`
+- `GET /api/admin/system-summary`
 
 ### Exports
 
@@ -740,9 +755,23 @@ Variables disponibles :
 - Chemins exposés relatifs à `DATA_DIR`, sans chemins absolus
 - Aucune suppression, aucune modification DB, aucune régénération d'image et aucun changement de schéma SQLite dans ce lot
 
+### Lot 9.0.1 - Fondation Administration
+
+- Route frontend protégée `/admin`
+- Lien `Administration` depuis le Dashboard, sans refonte de la navigation globale
+- Section Données avec export JSON global via `GET /api/exports/application.json`
+- Section Médias avec lancement manuel de l'audit média lecture seule via `GET /api/admin/media-audit`
+- Résumé du dernier audit média exécuté dans la session de page
+- Section Système avec version application, nombre de plugins, plugins actifs, items et médias
+- Nouvelle route protégée read-only `GET /api/admin/system-summary`
+- Résumé système basé uniquement sur des `SELECT COUNT(*)`
+- Aucun changement du schéma SQLite
+- Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import JSON, aucun cleanup média et aucune sauvegarde ZIP dans ce lot
+
 ### Lots suivants
 
 - Nettoyage manuel guidé des incohérences média
+- Import JSON natif depuis l'administration
 - Import CSV externe depuis une autre application de gestion de collection
 - Filtres range sur rating/date
 - Interface de gestion des collections

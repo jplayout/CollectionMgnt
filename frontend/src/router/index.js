@@ -28,6 +28,9 @@ from '../pages/ItemEditView.vue';
 import ItemDetails
 from '../pages/ItemDetails.vue';
 
+import AdminView
+from '../pages/AdminView.vue';
+
 const router =
     createRouter({
         history:
@@ -58,6 +61,18 @@ const router =
                     'dashboard',
                 component:
                     Dashboard,
+                meta: {
+                    requiresAuth:
+                        true
+                }
+            },
+            {
+                path:
+                    '/admin',
+                name:
+                    'admin',
+                component:
+                    AdminView,
                 meta: {
                     requiresAuth:
                         true

@@ -6,13 +6,13 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Nettoyage manuel guidé des incohérences média.
+Étape suivante : Import JSON natif admin, cleanup média manuel ou sauvegarde ZIP.
 
 ---
 
 ## État courant
 
-Version actuelle : v0.10-lot8.1.1.
+Version actuelle : v0.11-lot9.0.1.
 
 ### Lot 5.6 - Livré
 
@@ -322,9 +322,23 @@ Version actuelle : v0.10-lot8.1.1.
 - Chemins du rapport relatifs à `DATA_DIR`, sans exposition de chemins absolus
 - Aucun cleanup, aucune suppression de fichier, aucune modification DB, aucune régénération thumbnail/image et aucun changement de schéma SQLite
 
+### Lot 9.0.1 - Livré
+
+- Fondation Administration via une page frontend protégée `/admin`
+- Accès Administration ajouté depuis le Dashboard sans refonte de la navigation globale
+- Section Données avec export JSON applicatif global via `GET /api/exports/application.json`
+- Section Médias avec lancement manuel de l'audit média lecture seule via `GET /api/admin/media-audit`
+- Affichage du résumé du dernier audit média exécuté dans la session de page
+- Section Système avec version application et compteurs plugins, plugins actifs, items et médias
+- Nouvelle route protégée read-only `GET /api/admin/system-summary`
+- Résumé système basé uniquement sur des `SELECT COUNT(*)`
+- Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import JSON, aucun cleanup média, aucune sauvegarde ZIP et aucun changement de schéma SQLite
+
 ### Prochaine étape
 
+- Import JSON natif depuis l'administration
 - Nettoyage manuel guidé des incohérences média
+- Sauvegarde ZIP complète avec fichiers médias
 
 ### Non livré à ce stade
 

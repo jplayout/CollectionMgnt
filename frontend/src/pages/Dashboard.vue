@@ -34,6 +34,13 @@
             >
                 Ouvrir les collections
             </RouterLink>
+
+            <RouterLink
+                class="primary-link"
+                :to="{ name: 'admin' }"
+            >
+                Administration
+            </RouterLink>
         </section>
     </main>
 </template>
@@ -137,6 +144,7 @@ dd {
     color: #1f6feb;
     display: inline-block;
     font-weight: 600;
+    margin-right: 18px;
     margin-top: 22px;
     text-decoration: none;
 }
