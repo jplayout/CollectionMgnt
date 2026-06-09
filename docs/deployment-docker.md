@@ -109,8 +109,8 @@ mkdir -p backend/data
 Le Lot 6.0.3 publie automatiquement les images sur GitHub Container Registry :
 
 ```text
-`ghcr.io/jplayout/collectionmgnt-backend:latest`
-`ghcr.io/jplayout/collectionmgnt-frontend:latest`
+ghcr.io/jplayout/collectionmgnt-backend:latest
+ghcr.io/jplayout/collectionmgnt-frontend:latest
 ```
 
 Les tags publiés sont :
