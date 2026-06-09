@@ -1,5 +1,7 @@
 # Plugin API
 
+État courant : v0.10-lot5.16.1.
+
 ## Structure
 
 Chaque plugin est un dossier.
@@ -62,6 +64,8 @@ Exemple :
 Les préférences d'affichage utilisateur ne font pas partie du contrat plugin.
 Elles ne doivent pas être ajoutées dans `fields.json` et sont persistées côté application avec les clés `displayPreferences.<pluginId>`.
 L'interface d'édition des préférences écrit dans ces préférences applicatives et ne modifie jamais les fichiers `fields.json`.
+La vue liste dense des listes items réutilise les préférences applicatives `list.highlightedFields` pour choisir ses champs metadata.
+Il n'existe pas de propriété plugin `table.columns` à ce stade.
 
 La configuration de tri utilisateur ne fait pas encore partie du contrat plugin.
 Il n'existe pas de propriété `sortable` dans `fields.json` à ce stade.

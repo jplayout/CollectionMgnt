@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.10-lot5.15
+Version : v0.10-lot5.16.1
 
 ## État du projet
 
@@ -127,6 +127,7 @@ Frontend :
 - Filtres dynamiques frontend par collection depuis les champs `filterable`
 - Pagination frontend des listes items avec total, page courante et navigation précédent/suivant
 - Tri frontend des listes items avec choix du champ et de la direction
+- Vue liste dense alternative pour les listes items
 - Cartes items pilotées par les préférences d'affichage backend pour les champs mis en avant et la densité
 - Cartes items avec labels issus du schéma plugin quand les préférences sont disponibles
 - Panneau d'édition des préférences d'affichage depuis la liste d'une collection
@@ -643,7 +644,7 @@ Variables disponibles :
 - Sauvegarde via `PUT /api/plugins/:pluginId/display-preferences`
 - Réinitialisation via `DELETE /api/plugins/:pluginId/display-preferences`
 - Fermeture du panneau après sauvegarde ou réinitialisation réussie
-- Aucun drag & drop, format rating/date avancé, champ principal alternatif ou vue tableau dans ce lot
+- Aucun drag & drop, format rating/date avancé, champ principal alternatif ou vue liste dense dans ce lot
 
 ### Lot 5.14 - Pagination des listes items
 
@@ -674,7 +675,30 @@ Variables disponibles :
 - Liste frontend avec sélecteurs `Trier par` et `Ordre`
 - Changement de tri ramenant automatiquement à la première page
 - Fallback frontend vers `sort=title`, `direction=asc` si un tri metadata devient invalide après changement de schéma
-- Aucun changement de schéma SQLite, aucune propriété plugin `sortable`, aucun tri multi-colonnes, aucune recherche FTS et aucune vue tableau dans ce lot
+- Aucun changement de schéma SQLite, aucune propriété plugin `sortable`, aucun tri multi-colonnes, aucune recherche FTS et aucune vue liste dense dans ce lot
+
+### Lot 5.16 - Vue liste dense des items
+
+- Vue cartes conservée par défaut dans les listes items
+- Bascule frontend locale `Cartes` / `Liste`
+- Vue liste dense alimentée par les mêmes items déjà chargés que la vue cartes
+- Colonnes MVP : `Titre`, champs metadata de `list.highlightedFields` et action `Ouvrir`
+- Formatage des valeurs metadata partagé avec les cartes et la fiche détail
+- Valeurs metadata vides affichées `—`
+- Recherche, filtres, tri et pagination conservés en vue liste
+- Préférences d'affichage existantes réutilisées sans nouvelle préférence `table.columns`
+- Pas de vue de données avancée : aucun tri par header, redimensionnement de colonnes, édition inline, export CSV ou configuration dédiée des colonnes
+- Aucun changement backend, API, schéma SQLite, plugins ou thumbnails en liste dans ce lot
+
+### Lot 5.16.1 - Navigation retour et contexte de liste
+
+- Contexte des listes items représenté dans la query frontend
+- Paramètres conservés : recherche, filtres dynamiques, page, taille de page, tri, direction et mode `Cartes` / `Liste`
+- Liens `Ouvrir` depuis les cartes et la liste dense transmettant un `returnTo`
+- Retour depuis la fiche item vers la liste avec le contexte conservé
+- Libellé de retour fiche item stabilisé sur `Retour à la liste`
+- Suppression depuis la fiche conservant le contexte de liste et ajoutant `deleted=1`
+- Aucun changement backend, API, schéma SQLite, plugins, préférences d'affichage, pagination ou contrat de tri dans ce lot
 
 ### Lots suivants
 

@@ -213,28 +213,62 @@ const pluginLabel =
             'Item details'
     );
 
+const validReturnTo =
+    computed(
+        () => {
+
+            const returnTo =
+                getStringQueryParam(
+                    route.query.returnTo
+                );
+
+            return isValidReturnTo(
+                returnTo
+            )
+                ? returnTo
+                : '';
+
+        }
+    );
+
 const backTarget =
     computed(
-        () => item.value?.plugin
-            ? {
-                name:
-                    'collection-items',
-                params: {
-                    pluginId:
-                        item.value.plugin
-                }
+        () => {
+
+            if (
+                validReturnTo.value
+            ) {
+
+                return validReturnTo.value;
+
             }
-            : {
-                name:
-                    'dashboard'
+
+            if (
+                item.value?.plugin
+            ) {
+
+                return {
+                    name:
+                        'collection-items',
+                    params: {
+                        pluginId:
+                            item.value.plugin
+                    }
+                };
+
             }
+
+            return {
+                name:
+                    'collections'
+            };
+
+        }
     );
 
 const backLabel =
     computed(
-        () => item.value?.plugin
-            ? 'Items'
-            : 'Dashboard'
+        () => 'Retour à la liste'
     );
 
 const schemaFields =
@@ -548,6 +582,20 @@ async function deleteCurrentItem() {
         );
 
         if (
+            validReturnTo.value
+        ) {
+
+            await router.push(
+                addDeletedMessageToReturnTo(
+                    validReturnTo.value
+                )
+            );
+
+            return;
+
+        }
+
+        if (
             plugin
         ) {
 
@@ -586,6 +634,55 @@ async function deleteCurrentItem() {
             false;
 
     }
+
+}
+
+function getStringQueryParam(
+    value
+) {
+
+    if (
+        Array.isArray(
+            value
+        )
+    ) {
+
+        return value[0] ?? '';
+
+    }
+
+    return typeof value === 'string'
+        ? value
+        : '';
+
+}
+
+function isValidReturnTo(
+    value
+) {
+
+    return value.startsWith(
+        '/collections/'
+    );
+
+}
+
+function addDeletedMessageToReturnTo(
+    returnTo
+) {
+
+    const url =
+        new URL(
+            returnTo,
+            window.location.origin
+        );
+
+    url.searchParams.set(
+        'deleted',
+        '1'
+    );
+
+    return `${url.pathname}${url.search}${url.hash}`;
 
 }
 

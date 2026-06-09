@@ -12,7 +12,7 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État courant
 
-Version actuelle : v0.10-lot5.15.
+Version actuelle : v0.10-lot5.16.1.
 
 ### Lot 5.6 - Livré
 
@@ -241,7 +241,7 @@ Version actuelle : v0.10-lot5.15.
 - Masquage de champs en fiche détail via `details.hiddenFields`
 - Sauvegarde via `PUT /api/plugins/:pluginId/display-preferences`
 - Réinitialisation via `DELETE /api/plugins/:pluginId/display-preferences`
-- Aucun drag & drop, format rating/date avancé, champ principal alternatif ou vue tableau dans ce lot
+- Aucun drag & drop, format rating/date avancé, champ principal alternatif ou vue liste dense dans ce lot
 
 ### Lot 5.14 - Livré
 
@@ -273,7 +273,31 @@ Version actuelle : v0.10-lot5.15.
 - Sélecteurs frontend `Trier par` et `Ordre`
 - Retour à la première page lors d'un changement de tri
 - Fallback frontend vers `sort=title`, `direction=asc` si un tri metadata devient invalide après changement de schéma
-- Aucun changement de schéma SQLite, propriété plugin `sortable`, tri multi-colonnes, FTS/ranking ou vue tableau dans ce lot
+- Aucun changement de schéma SQLite, propriété plugin `sortable`, tri multi-colonnes, FTS/ranking ou vue liste dense dans ce lot
+
+### Lot 5.16 - Livré
+
+- Vue liste dense alternative dans les listes items
+- Vue cartes conservée comme affichage par défaut
+- Bascule frontend locale `Cartes` / `Liste`
+- Liste dense basée sur les mêmes données paginées déjà chargées
+- Colonnes MVP : `Titre`, champs metadata de `list.highlightedFields` et action `Ouvrir`
+- Réutilisation du formatage metadata frontend partagé
+- Valeurs metadata vides affichées `—`
+- Recherche, filtres, tri et pagination compatibles avec la vue liste
+- Préférences d'affichage existantes réutilisées sans nouvelle préférence `table.columns`
+- Pas de vue de données avancée : aucun tri par clic header, redimensionnement de colonnes, édition inline, export CSV ou configuration dédiée des colonnes
+- Aucun changement backend, API, schéma SQLite, plugins ou thumbnails en liste dans ce lot
+
+### Lot 5.16.1 - Livré
+
+- Contexte des listes items conservé dans la query frontend
+- Paramètres conservés : recherche, filtres dynamiques, page, taille de page, tri, direction et mode `Cartes` / `Liste`
+- Liens `Ouvrir` depuis les cartes et la liste dense transmettant un `returnTo`
+- Retour depuis la fiche item vers la liste avec le contexte conservé
+- Libellé de retour fiche item stabilisé sur `Retour à la liste`
+- Suppression depuis la fiche conservant le contexte de liste et ajoutant `deleted=1`
+- Aucun changement backend, API, schéma SQLite, plugins, préférences d'affichage, pagination ou contrat de tri dans ce lot
 
 ### Prochaine étape
 

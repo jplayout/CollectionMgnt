@@ -1,6 +1,6 @@
 # Recherche
 
-État courant : v0.10-lot5.15.
+État courant : v0.10-lot5.16.1.
 
 ## Disponible
 
@@ -128,6 +128,8 @@ Capacités frontend disponibles :
 - navigation paginée précédente/suivante
 - sélection du champ trié et de l'ordre de tri
 - retour à `title` / `asc` si le tri courant n'est plus disponible après changement de schéma
+- affichage des résultats en cartes ou en liste dense, avec recherche, filtres, tri et pagination inchangés
+- représentation du contexte de liste dans l'URL frontend pour conserver recherche, filtres, tri, pagination et mode d'affichage au retour d'une fiche item
 
 ## Types De Filtres Frontend
 

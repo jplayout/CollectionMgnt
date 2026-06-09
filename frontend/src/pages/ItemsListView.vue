@@ -56,6 +56,29 @@
                         Affichage
                     </button>
 
+                    <div
+                        aria-label="Mode d’affichage"
+                        class="view-toggle"
+                    >
+                        <button
+                            :class="{ active: viewMode === 'cards' }"
+                            :aria-pressed="viewMode === 'cards'"
+                            type="button"
+                            @click="changeViewMode('cards')"
+                        >
+                            Cartes
+                        </button>
+
+                        <button
+                            :class="{ active: viewMode === 'list' }"
+                            :aria-pressed="viewMode === 'list'"
+                            type="button"
+                            @click="changeViewMode('list')"
+                        >
+                            Liste
+                        </button>
+                    </div>
+
                     <label>
                         Trier par
                         <select
@@ -92,7 +115,7 @@
                 <section
                     v-if="filterableFields.length"
                     class="filters-section"
-                    @change="resetCurrentPage"
+                    @change="changeFilters"
                 >
                     <div class="filters-header">
                         <h2>Filtres</h2>
@@ -231,7 +254,10 @@
             </div>
 
             <div v-else>
-                <div class="items-grid">
+                <div
+                    v-if="viewMode === 'cards'"
+                    class="items-grid"
+                >
                     <ItemCard
                         v-for="item in items"
                         :key="item.id"
@@ -240,6 +266,13 @@
                         :item="item"
                     />
                 </div>
+
+                <ItemList
+                    v-else
+                    :display-preferences="displayPreferences"
+                    :fields="schemaFields"
+                    :items="items"
+                />
 
                 <nav
                     v-if="totalItems > 0"
@@ -283,7 +316,8 @@ import {
 } from 'vue';
 
 import {
-    useRoute
+    useRoute,
+    useRouter
 } from 'vue-router';
 
 import {
@@ -307,8 +341,29 @@ from '../components/display/DisplayPreferencesPanel.vue';
 import ItemCard
 from '../components/items/ItemCard.vue';
 
+import ItemList
+from '../components/items/ItemList.vue';
+
 const route =
     useRoute();
+
+const router =
+    useRouter();
+
+const defaultPage =
+    1;
+
+const defaultPageSize =
+    24;
+
+const defaultSort =
+    'title';
+
+const defaultDirection =
+    'asc';
+
+const defaultViewMode =
+    'cards';
 
 const pluginId =
     computed(
@@ -346,10 +401,10 @@ const error =
     ref('');
 
 const currentPage =
-    ref(1);
+    ref(defaultPage);
 
 const pageSize =
-    ref(24);
+    ref(defaultPageSize);
 
 const totalItems =
     ref(0);
@@ -357,11 +412,14 @@ const totalItems =
 const totalPages =
     ref(0);
 
+const viewMode =
+    ref(defaultViewMode);
+
 const sort =
-    ref('title');
+    ref(defaultSort);
 
 const direction =
-    ref('asc');
+    ref(defaultDirection);
 
 const pluginTitle =
     computed(
@@ -471,11 +529,9 @@ async function loadPage() {
         loadDisplayPreferences()
     ]);
 
+    applyStateFromQuery();
+
     ensureSelectedSortIsAvailable();
-
-    resetFilterValues();
-
-    resetCurrentPage();
 
     await loadItems();
 
@@ -497,10 +553,141 @@ function ensureSelectedSortIsAvailable() {
     }
 
     sort.value =
-        'title';
+        defaultSort;
 
     direction.value =
-        'asc';
+        defaultDirection;
+
+}
+
+function applyStateFromQuery() {
+
+    searchQuery.value =
+        getStringQueryParam(
+            route.query.search,
+            ''
+        );
+
+    currentPage.value =
+        parseIntegerQueryParam(
+            route.query.page,
+            defaultPage,
+            {
+                min:
+                    1
+            }
+        );
+
+    pageSize.value =
+        parseIntegerQueryParam(
+            route.query.pageSize,
+            defaultPageSize,
+            {
+                max:
+                    100,
+                min:
+                    1
+            }
+        );
+
+    const querySort =
+        getStringQueryParam(
+            route.query.sort,
+            defaultSort
+        );
+
+    sort.value =
+        querySort.trim() === ''
+            ? defaultSort
+            : querySort;
+
+    const queryDirection =
+        getStringQueryParam(
+            route.query.direction,
+            defaultDirection
+        );
+
+    direction.value =
+        queryDirection === 'desc'
+            ? 'desc'
+            : defaultDirection;
+
+    const queryView =
+        getStringQueryParam(
+            route.query.view,
+            defaultViewMode
+        );
+
+    viewMode.value =
+        queryView === 'list'
+            ? 'list'
+            : defaultViewMode;
+
+    resetFilterValuesFromQuery();
+
+}
+
+function resetFilterValuesFromQuery() {
+
+    for (
+        const key
+        of Object.keys(
+            filterValues
+        )
+    ) {
+
+        delete filterValues[key];
+
+    }
+
+    for (
+        const field
+        of filterableFields.value
+    ) {
+
+        filterValues[field.name] =
+            getFilterValueFromQuery(
+                field
+            );
+
+    }
+
+}
+
+function getFilterValueFromQuery(
+    field
+) {
+
+    const queryValue =
+        getStringQueryParam(
+            route.query[field.name],
+            ''
+        );
+
+    if (
+        queryValue === ''
+    ) {
+
+        return '';
+
+    }
+
+    if (
+        field.type === 'select'
+    ) {
+
+        const selectedOption =
+            normalizedOptions(
+                field
+            ).find(
+                option => String(option.value) === queryValue
+            );
+
+        return selectedOption?.value ?? queryValue;
+
+    }
+
+    return queryValue;
 
 }
 
@@ -723,15 +910,17 @@ async function loadItems() {
 
 }
 
-function searchItems() {
+async function searchItems() {
 
     resetCurrentPage();
+
+    await syncRouteQuery();
 
     loadItems();
 
 }
 
-function resetFilters() {
+async function resetFilters() {
 
     searchQuery.value =
         '';
@@ -740,6 +929,18 @@ function resetFilters() {
 
     resetCurrentPage();
 
+    await syncRouteQuery();
+
+    loadItems();
+
+}
+
+async function changeFilters() {
+
+    resetCurrentPage();
+
+    await syncRouteQuery();
+
     loadItems();
 
 }
@@ -747,15 +948,36 @@ function resetFilters() {
 function resetCurrentPage() {
 
     currentPage.value =
-        1;
+        defaultPage;
 
 }
 
-function changeSort() {
+async function changeSort() {
 
     resetCurrentPage();
 
+    await syncRouteQuery();
+
     loadItems();
+
+}
+
+async function changeViewMode(
+    nextViewMode
+) {
+
+    if (
+        viewMode.value === nextViewMode
+    ) {
+
+        return;
+
+    }
+
+    viewMode.value =
+        nextViewMode;
+
+    await syncRouteQuery();
 
 }
 
@@ -772,7 +994,10 @@ function goToPreviousPage() {
     currentPage.value -=
         1;
 
-    loadItems();
+    syncRouteQuery()
+        .then(
+            loadItems
+        );
 
 }
 
@@ -789,7 +1014,10 @@ function goToNextPage() {
     currentPage.value +=
         1;
 
-    loadItems();
+    syncRouteQuery()
+        .then(
+            loadItems
+        );
 
 }
 
@@ -815,6 +1043,120 @@ function resetFilterValues() {
             '';
 
     }
+
+}
+
+async function syncRouteQuery() {
+
+    await router.replace({
+        name:
+            'collection-items',
+        params: {
+            pluginId:
+                pluginId.value
+        },
+        query:
+            buildListQuery()
+    });
+
+}
+
+function buildListQuery() {
+
+    const query = {};
+
+    const search =
+        searchQuery.value.trim();
+
+    if (
+        search
+    ) {
+
+        query.search =
+            search;
+
+    }
+
+    for (
+        const field
+        of filterableFields.value
+    ) {
+
+        const value =
+            normalizeFilterValue(
+                field,
+                filterValues[field.name]
+            );
+
+        if (
+            value === undefined ||
+            !canFilterOnBackend(
+                field,
+                value
+            )
+        ) {
+
+            continue;
+
+        }
+
+        query[field.name] =
+            String(
+                value
+            );
+
+    }
+
+    if (
+        currentPage.value !== defaultPage
+    ) {
+
+        query.page =
+            String(
+                currentPage.value
+            );
+
+    }
+
+    if (
+        pageSize.value !== defaultPageSize
+    ) {
+
+        query.pageSize =
+            String(
+                pageSize.value
+            );
+
+    }
+
+    if (
+        sort.value !== defaultSort
+    ) {
+
+        query.sort =
+            sort.value;
+
+    }
+
+    if (
+        direction.value !== defaultDirection
+    ) {
+
+        query.direction =
+            direction.value;
+
+    }
+
+    if (
+        viewMode.value !== defaultViewMode
+    ) {
+
+        query.view =
+            viewMode.value;
+
+    }
+
+    return query;
 
 }
 
@@ -993,6 +1335,79 @@ function isSelectWithOptions(
 
 }
 
+function getStringQueryParam(
+    value,
+    fallback
+) {
+
+    if (
+        Array.isArray(
+            value
+        )
+    ) {
+
+        return value[0] ?? fallback;
+
+    }
+
+    return value === undefined ||
+        value === null
+        ? fallback
+        : String(
+            value
+        );
+
+}
+
+function parseIntegerQueryParam(
+    value,
+    fallback,
+    options = {}
+) {
+
+    const stringValue =
+        getStringQueryParam(
+            value,
+            ''
+        );
+
+    if (
+        !/^\d+$/.test(
+            stringValue
+        )
+    ) {
+
+        return fallback;
+
+    }
+
+    const numberValue =
+        Number(
+            stringValue
+        );
+
+    if (
+        options.min !== undefined &&
+        numberValue < options.min
+    ) {
+
+        return fallback;
+
+    }
+
+    if (
+        options.max !== undefined &&
+        numberValue > options.max
+    ) {
+
+        return fallback;
+
+    }
+
+    return numberValue;
+
+}
+
 function normalizedOptions(
     field
 ) {
@@ -1155,6 +1570,29 @@ h1 {
 
 .search-form label:first-child {
     grid-column: span 2;
+}
+
+.view-toggle {
+    align-items: stretch;
+    background: #eef2f7;
+    border: 1px solid #d8dee8;
+    border-radius: 6px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 42px;
+    padding: 3px;
+}
+
+.view-toggle button {
+    background: transparent;
+    border-radius: 4px;
+    color: #172033;
+    padding: 7px 10px;
+}
+
+.view-toggle button.active {
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgb(23 32 51 / 0.14);
 }
 
 label {

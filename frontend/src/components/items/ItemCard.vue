@@ -43,7 +43,7 @@
 
             <RouterLink
                 class="open-link"
-                :to="{ name: 'item-details', params: { id: item.id } }"
+                :to="itemDetailsTarget"
             >
                 Ouvrir
             </RouterLink>
@@ -58,6 +58,10 @@ import {
     ref,
     watch
 } from 'vue';
+
+import {
+    useRoute
+} from 'vue-router';
 
 import {
     getItemMedia,
@@ -91,6 +95,9 @@ const props =
         }
     });
 
+const route =
+    useRoute();
+
 const thumbUrl =
     ref('');
 
@@ -110,6 +117,22 @@ const metadataEntries =
 const isCompact =
     computed(
         () => props.displayPreferences?.list?.density === 'compact'
+    );
+
+const itemDetailsTarget =
+    computed(
+        () => ({
+            name:
+                'item-details',
+            params: {
+                id:
+                    props.item.id
+            },
+            query: {
+                returnTo:
+                    route.fullPath
+            }
+        })
     );
 
 const canUseDisplayPreferences =
