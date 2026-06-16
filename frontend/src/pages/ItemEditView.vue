@@ -1,12 +1,7 @@
 <template>
     <main class="item-edit-page">
         <header class="page-header">
-            <RouterLink
-                class="back-link"
-                :to="{ name: 'item-details', params: { id: itemId } }"
-            >
-                Détail item
-            </RouterLink>
+            <BreadcrumbTrail :items="breadcrumbItems" />
 
             <div>
                 <p class="eyebrow">{{ pluginName }}</p>
@@ -62,6 +57,9 @@ import {
 import DynamicForm
 from '../components/forms/DynamicForm.vue';
 
+import BreadcrumbTrail
+from '../components/navigation/BreadcrumbTrail.vue';
+
 import {
     ApiError
 } from '../services/api.js';
@@ -74,6 +72,11 @@ import {
 import {
     getPluginSchema
 } from '../services/plugin-api.js';
+
+import {
+    getStringQueryParam,
+    isValidReturnTo
+} from '../utils/route-query.js';
 
 const route =
     useRoute();
@@ -138,6 +141,126 @@ const initialValue =
                     item.value.metadata ?? {}
             }
             : null
+    );
+
+const validReturnTo =
+    computed(
+        () => {
+
+            const returnTo =
+                getStringQueryParam(
+                    route.query.returnTo
+                );
+
+            return isValidReturnTo(
+                returnTo
+            )
+                ? returnTo
+                : '';
+
+        }
+    );
+
+const collectionBreadcrumbTarget =
+    computed(
+        () => {
+
+            if (
+                validReturnTo.value
+            ) {
+
+                return validReturnTo.value;
+
+            }
+
+            if (
+                pluginId.value
+            ) {
+
+                return {
+                    name:
+                        'collection-items',
+                    params: {
+                        pluginId:
+                            pluginId.value
+                    }
+                };
+
+            }
+
+            return {
+                name:
+                    'collections'
+            };
+
+        }
+    );
+
+const itemDetailsTarget =
+    computed(
+        () => {
+
+            const target = {
+                name:
+                    'item-details',
+                params: {
+                    id:
+                        itemId.value
+                }
+            };
+
+            if (
+                validReturnTo.value
+            ) {
+
+                target.query = {
+                    returnTo:
+                        validReturnTo.value
+                };
+
+            }
+
+            return target;
+
+        }
+    );
+
+const breadcrumbItems =
+    computed(
+        () => [
+            {
+                label:
+                    'Dashboard',
+                to: {
+                    name:
+                        'dashboard'
+                }
+            },
+            {
+                label:
+                    'Collections',
+                to: {
+                    name:
+                        'collections'
+                }
+            },
+            {
+                label:
+                    pluginName.value,
+                to:
+                    collectionBreadcrumbTarget.value
+            },
+            {
+                label:
+                    itemTitle.value,
+                to:
+                    itemDetailsTarget.value
+            },
+            {
+                label:
+                    'Modifier'
+            }
+        ]
     );
 
 onMounted(
@@ -215,12 +338,7 @@ async function submitItem(
         );
 
         await router.push({
-            name:
-                'item-details',
-            params: {
-                id:
-                    itemId.value
-            }
+            ...itemDetailsTarget.value
         });
 
     } catch (error) {
@@ -238,6 +356,7 @@ async function submitItem(
     }
 
 }
+
 </script>
 
 <style scoped>
@@ -258,16 +377,6 @@ async function submitItem(
     display: grid;
     gap: 14px;
     margin-bottom: 24px;
-}
-
-.back-link {
-    color: #1f6feb;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.back-link:hover {
-    text-decoration: underline;
 }
 
 .eyebrow {

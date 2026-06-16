@@ -1,16 +1,11 @@
 <template>
     <main class="item-create-page">
         <header class="page-header">
-            <RouterLink
-                class="back-link"
-                :to="{ name: 'collection-items', params: { pluginId } }"
-            >
-                Items
-            </RouterLink>
+            <BreadcrumbTrail :items="breadcrumbItems" />
 
             <div>
-                <p class="eyebrow">{{ pluginId }}</p>
-                <h1>Nouvel item - {{ pluginName }}</h1>
+                <p class="eyebrow">{{ pluginName }}</p>
+                <h1>Nouvel item</h1>
             </div>
         </header>
 
@@ -58,6 +53,9 @@ import {
 import DynamicForm
 from '../components/forms/DynamicForm.vue';
 
+import BreadcrumbTrail
+from '../components/navigation/BreadcrumbTrail.vue';
+
 import {
     ApiError
 } from '../services/api.js';
@@ -101,6 +99,44 @@ const pluginName =
         () => schema.value?.plugin?.name ??
             schema.value?.plugin?.id ??
             pluginId.value
+    );
+
+const breadcrumbItems =
+    computed(
+        () => [
+            {
+                label:
+                    'Dashboard',
+                to: {
+                    name:
+                        'dashboard'
+                }
+            },
+            {
+                label:
+                    'Collections',
+                to: {
+                    name:
+                        'collections'
+                }
+            },
+            {
+                label:
+                    pluginName.value,
+                to: {
+                    name:
+                        'collection-items',
+                    params: {
+                        pluginId:
+                            pluginId.value
+                    }
+                }
+            },
+            {
+                label:
+                    'Nouvel item'
+            }
+        ]
     );
 
 const schemaFields =
@@ -215,16 +251,6 @@ async function submitItem(
     display: grid;
     gap: 14px;
     margin-bottom: 24px;
-}
-
-.back-link {
-    color: #1f6feb;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.back-link:hover {
-    text-decoration: underline;
 }
 
 .eyebrow {

@@ -1,15 +1,9 @@
 <template>
     <main class="admin-page">
         <header class="page-header">
-            <RouterLink
-                class="back-link"
-                :to="{ name: 'dashboard' }"
-            >
-                Dashboard
-            </RouterLink>
+            <BreadcrumbTrail :items="breadcrumbItems" />
 
             <div>
-                <p class="eyebrow">Administration</p>
                 <h1>Administration</h1>
             </div>
         </header>
@@ -446,6 +440,9 @@ import {
     ApiError
 } from '../services/api.js';
 
+import BreadcrumbTrail
+from '../components/navigation/BreadcrumbTrail.vue';
+
 import {
     downloadApplicationExport
 } from '../services/export-api.js';
@@ -458,6 +455,22 @@ import {
     previewMediaCleanup,
     runMediaAudit
 } from '../services/admin-api.js';
+
+const breadcrumbItems =
+    [
+        {
+            label:
+                'Dashboard',
+            to: {
+                name:
+                    'dashboard'
+            }
+        },
+        {
+            label:
+                'Administration'
+        }
+    ];
 
 const exporting =
     ref(false);
@@ -896,22 +909,6 @@ function formatBytes(bytes) {
     display: grid;
     gap: 14px;
     margin-bottom: 24px;
-}
-
-.back-link {
-    color: #1f6feb;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.back-link:hover {
-    text-decoration: underline;
-}
-
-.eyebrow {
-    color: #5f6f89;
-    font-size: 0.85rem;
-    margin: 0 0 4px;
 }
 
 h1,

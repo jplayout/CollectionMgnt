@@ -1,15 +1,8 @@
 <template>
     <main class="items-page">
         <header class="page-header">
-            <RouterLink
-                class="back-link"
-                :to="{ name: 'collections' }"
-            >
-                Collections
-            </RouterLink>
-
-            <div>
-                <p class="eyebrow">{{ pluginId }}</p>
+            <div class="header-main">
+                <BreadcrumbTrail :items="breadcrumbItems" />
                 <h1>{{ pluginTitle }}</h1>
             </div>
 
@@ -56,27 +49,13 @@
                         Affichage
                     </button>
 
-                    <details class="export-menu">
-                        <summary>
-                            Exporter
-                        </summary>
-
-                        <div class="export-menu-content">
-                            <button
-                                type="button"
-                                @click="exportCollectionJson"
-                            >
-                                Export JSON
-                            </button>
-
-                            <button
-                                type="button"
-                                @click="exportCollectionCsv"
-                            >
-                                Export CSV
-                            </button>
-                        </div>
-                    </details>
+                    <button
+                        class="secondary-button"
+                        type="button"
+                        @click="exportCollectionCsv"
+                    >
+                        Export CSV
+                    </button>
 
                     <div
                         aria-label="Mode d’affichage"
@@ -353,13 +332,15 @@ import {
     ApiError
 } from '../services/api.js';
 
+import BreadcrumbTrail
+from '../components/navigation/BreadcrumbTrail.vue';
+
 import {
     getItems
 } from '../services/item-api.js';
 
 import {
-    downloadCollectionCsvExport,
-    downloadCollectionJsonExport
+    downloadCollectionCsvExport
 } from '../services/export-api.js';
 
 import {
@@ -463,6 +444,32 @@ const pluginTitle =
         () => pluginSchema.value?.plugin?.name ??
             pluginSchema.value?.plugin?.id ??
             pluginId.value
+    );
+
+const breadcrumbItems =
+    computed(
+        () => [
+            {
+                label:
+                    'Dashboard',
+                to: {
+                    name:
+                        'dashboard'
+                }
+            },
+            {
+                label:
+                    'Collections',
+                to: {
+                    name:
+                        'collections'
+                }
+            },
+            {
+                label:
+                    pluginTitle.value
+            }
+        ]
     );
 
 const showDeletedMessage =
@@ -1015,16 +1022,6 @@ async function changeViewMode(
         nextViewMode;
 
     await syncRouteQuery();
-
-}
-
-async function exportCollectionJson() {
-
-    await runExport(
-        () => downloadCollectionJsonExport(
-            pluginId.value
-        )
-    );
 
 }
 
@@ -1581,14 +1578,9 @@ function getNumberStep(
     margin-bottom: 24px;
 }
 
-.back-link {
-    color: #1f6feb;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.back-link:hover {
-    text-decoration: underline;
+.header-main {
+    display: grid;
+    gap: 8px;
 }
 
 .create-link {
@@ -1602,12 +1594,6 @@ function getNumberStep(
 
 .create-link:hover {
     background: #26324a;
-}
-
-.eyebrow {
-    color: #5f6f89;
-    font-size: 0.85rem;
-    margin: 0 0 4px;
 }
 
 h1 {
@@ -1658,55 +1644,6 @@ h1 {
 
 .search-form label:first-child {
     grid-column: span 2;
-}
-
-.export-menu {
-    position: relative;
-}
-
-.export-menu summary {
-    background: #eef2f7;
-    border-radius: 6px;
-    color: #172033;
-    cursor: pointer;
-    font-weight: 600;
-    list-style: none;
-    min-height: 22px;
-    padding: 10px 14px;
-    text-align: center;
-}
-
-.export-menu summary::-webkit-details-marker {
-    display: none;
-}
-
-.export-menu[open] summary {
-    background: #dde5f0;
-}
-
-.export-menu-content {
-    background: #ffffff;
-    border: 1px solid #d8dee8;
-    border-radius: 8px;
-    box-shadow: 0 12px 24px rgb(23 32 51 / 0.14);
-    display: grid;
-    gap: 6px;
-    margin-top: 8px;
-    min-width: 160px;
-    padding: 8px;
-    position: absolute;
-    right: 0;
-    z-index: 5;
-}
-
-.export-menu-content button {
-    background: transparent;
-    color: #172033;
-    text-align: left;
-}
-
-.export-menu-content button:hover {
-    background: #eef2f7;
 }
 
 .view-toggle {
@@ -1885,10 +1822,6 @@ button:disabled {
     .filters-header {
         align-items: start;
         display: grid;
-    }
-
-    .export-menu-content {
-        position: static;
     }
 
     .pagination-bar {

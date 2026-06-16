@@ -1,15 +1,9 @@
 <template>
     <main class="collections-page">
         <header class="page-header">
-            <RouterLink
-                class="back-link"
-                :to="{ name: 'dashboard' }"
-            >
-                Dashboard
-            </RouterLink>
+            <BreadcrumbTrail :items="breadcrumbItems" />
 
             <div>
-                <p class="eyebrow">Collections</p>
                 <h1>Collections</h1>
             </div>
         </header>
@@ -65,6 +59,9 @@ import {
     getPlugins
 } from '../services/plugin-api.js';
 
+import BreadcrumbTrail
+from '../components/navigation/BreadcrumbTrail.vue';
+
 import CollectionCard
 from '../components/collections/CollectionCard.vue';
 
@@ -83,6 +80,22 @@ const enabledPlugins =
             plugin => plugin.enabled
         )
     );
+
+const breadcrumbItems =
+    [
+        {
+            label:
+                'Dashboard',
+            to: {
+                name:
+                    'dashboard'
+            }
+        },
+        {
+            label:
+                'Collections'
+        }
+    ];
 
 onMounted(
     loadPlugins
@@ -136,22 +149,6 @@ async function loadPlugins() {
     display: grid;
     gap: 14px;
     margin-bottom: 24px;
-}
-
-.back-link {
-    color: #1f6feb;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.back-link:hover {
-    text-decoration: underline;
-}
-
-.eyebrow {
-    color: #5f6f89;
-    font-size: 0.85rem;
-    margin: 0 0 4px;
 }
 
 h1 {

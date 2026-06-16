@@ -25,6 +25,30 @@ Workflow attendu :
 - pousser la branche ;
 - ouvrir une Pull Request vers `main`.
 
+## Pull Requests
+
+La branche `main` est protégée. Le développement se fait sur une branche dédiée, puis passe par une Pull Request avant d'être fusionné.
+
+Workflow recommandé :
+
+```bash
+git checkout -b feat/native-json-import
+```
+
+Puis :
+
+- développer la modification sur cette branche ;
+- exécuter les vérifications adaptées ;
+- pousser la branche vers le dépôt distant ;
+- ouvrir une Pull Request vers `main` ;
+- attendre la review avant le merge.
+
+Titre recommandé pour la Pull Request :
+
+```text
+feat: add native JSON import
+```
+
 ## Vérifications Minimales
 
 Backend :
@@ -71,14 +95,27 @@ Ne jamais committer :
 - credentials externes
 - logs
 
-## Conventions De Commit
+## Convention de commits
 
-Préfixes recommandés :
+Convention officielle :
 
-- `feat:` pour une fonctionnalité
-- `fix:` pour une correction
-- `docs:` pour la documentation
-- `chore:` pour la maintenance
+- `feat:` nouvelle fonctionnalité
+- `fix:` correction de bug ou amélioration UX
+- `docs:` documentation
+- `refactor:` refactoring sans changement fonctionnel
+- `chore:` maintenance, CI, dépendances ou tooling
+
+Exemples issus du projet :
+
+```text
+feat: add native JSON import
+feat: add full ZIP backup download
+fix: hide collection JSON export from the UI
+fix: display collection names instead of plugin codes
+docs: document export system boundaries
+refactor: share breadcrumb rendering across pages
+chore: add frontend build to CI
+```
 
 ## Licence
 
@@ -106,6 +143,30 @@ Expected workflow:
 - create a commit;
 - push the branch;
 - open a Pull Request targeting `main`.
+
+## Pull Requests
+
+The `main` branch is protected. Development happens on a dedicated branch, then goes through a Pull Request before it is merged.
+
+Recommended workflow:
+
+```bash
+git checkout -b feat/native-json-import
+```
+
+Then:
+
+- develop the change on that branch;
+- run the relevant checks;
+- push the branch to the remote repository;
+- open a Pull Request targeting `main`;
+- wait for review before merging.
+
+Recommended Pull Request title:
+
+```text
+feat: add native JSON import
+```
 
 ## Minimal Checks
 
@@ -155,12 +216,25 @@ Never commit:
 
 ## Commit Conventions
 
-Recommended prefixes:
+Official convention:
 
-- `feat:` for a feature
-- `fix:` for a bug fix
-- `docs:` for documentation
-- `chore:` for maintenance
+- `feat:` new feature
+- `fix:` bug fix or UX improvement
+- `docs:` documentation
+- `refactor:` refactoring without functional change
+- `chore:` maintenance, CI, dependencies or tooling
+
+Examples from the project:
+
+```text
+feat: add native JSON import
+feat: add full ZIP backup download
+fix: hide collection JSON export from the UI
+fix: display collection names instead of plugin codes
+docs: document export system boundaries
+refactor: share breadcrumb rendering across pages
+chore: add frontend build to CI
+```
 
 ## License
 

@@ -9,8 +9,7 @@
         }"
     >
         <div>
-            <p class="collection-code">{{ collection.code }}</p>
-            <h2>{{ collection.display_name }}</h2>
+            <h2>{{ collectionTitle }}</h2>
         </div>
 
         <dl>
@@ -28,7 +27,12 @@
 </template>
 
 <script setup>
-defineProps({
+import {
+    computed
+} from 'vue';
+
+const props =
+    defineProps({
     collection: {
         required:
             true,
@@ -36,6 +40,12 @@ defineProps({
             Object
     }
 });
+
+const collectionTitle =
+    computed(
+        () => props.collection.display_name ||
+            props.collection.code
+    );
 </script>
 
 <style scoped>
@@ -55,12 +65,6 @@ defineProps({
 .collection-card:hover {
     border-color: #1f6feb;
     transform: translateY(-1px);
-}
-
-.collection-code {
-    color: #5f6f89;
-    font-size: 0.85rem;
-    margin: 0 0 6px;
 }
 
 h2 {
