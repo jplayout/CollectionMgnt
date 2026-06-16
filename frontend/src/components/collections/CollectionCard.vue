@@ -8,21 +8,7 @@
             }
         }"
     >
-        <div>
-            <h2>{{ collectionTitle }}</h2>
-        </div>
-
-        <dl>
-            <div>
-                <dt>Images</dt>
-                <dd>{{ collection.supports_images ? 'Oui' : 'Non' }}</dd>
-            </div>
-
-            <div>
-                <dt>Prets</dt>
-                <dd>{{ collection.supports_loans ? 'Oui' : 'Non' }}</dd>
-            </div>
-        </dl>
+        <h2>{{ collectionTitle }}</h2>
     </RouterLink>
 </template>
 
@@ -50,14 +36,16 @@ const collectionTitle =
 
 <style scoped>
 .collection-card {
+    align-items: center;
     background: #ffffff;
     border: 1px solid #d8dee8;
     border-radius: 8px;
     color: #172033;
-    display: grid;
-    gap: 18px;
+    display: flex;
+    justify-content: center;
     min-height: 160px;
     padding: 20px;
+    text-align: center;
     text-decoration: none;
     transition: border-color 0.15s ease, transform 0.15s ease;
 }
@@ -68,24 +56,9 @@ const collectionTitle =
 }
 
 h2 {
-    font-size: 1.25rem;
+    font-size: 1.45rem;
+    line-height: 1.2;
     margin: 0;
-}
-
-dl {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin: 0;
-}
-
-dt {
-    color: #5f6f89;
-    font-size: 0.8rem;
-}
-
-dd {
-    font-weight: 700;
-    margin: 2px 0 0;
+    overflow-wrap: anywhere;
 }
 </style>

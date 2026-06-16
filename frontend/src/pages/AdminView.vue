@@ -10,7 +10,7 @@
             <article class="admin-panel">
                 <div>
                     <h2>Données</h2>
-                    <p>Exporter les données applicatives au format JSON natif.</p>
+                    <p>Crée un export complet au format JSON natif de l'application.</p>
                 </div>
 
                 <button
@@ -18,7 +18,7 @@
                     type="button"
                     @click="exportGlobalJson"
                 >
-                    {{ exporting ? 'Export en cours...' : 'Exporter JSON global' }}
+                    {{ exporting ? 'Export en cours...' : 'Exporter toutes les données' }}
                 </button>
 
                 <p
@@ -31,8 +31,9 @@
                 <div class="panel-divider"></div>
 
                 <div>
-                    <h3>Import JSON natif</h3>
-                    <p>Import non destructif : les items sont ajoutés, rien n’est remplacé.</p>
+                    <h3>Import de données</h3>
+                    <p>Importe un export natif de l'application au format JSON.</p>
+                    <p>Mode non destructif : les items sont ajoutés, rien n’est remplacé.</p>
                     <p>Les fichiers médias physiques ne sont pas restaurés dans ce lot.</p>
                 </div>
 
@@ -50,7 +51,7 @@
                     type="button"
                     @click="importJson"
                 >
-                    {{ importing ? 'Import en cours...' : 'Importer JSON' }}
+                    {{ importing ? 'Import en cours...' : 'Importer des données' }}
                 </button>
 
                 <p
@@ -131,8 +132,8 @@
             <article class="admin-panel">
                 <div>
                     <h2>Sauvegarde</h2>
-                    <p>Télécharger une archive complète avec base SQLite, médias physiques, export JSON et manifeste.</p>
-                    <p>Cette archive contient la base complète et doit être conservée en lieu sûr.</p>
+                    <p>Archive ZIP contenant la base de données, les médias et les données nécessaires à une restauration future.</p>
+                    <p>Cette sauvegarde contient la base complète et doit être conservée en lieu sûr.</p>
                 </div>
 
                 <button
@@ -140,7 +141,7 @@
                     type="button"
                     @click="downloadBackup"
                 >
-                    {{ backupDownloading ? 'Préparation...' : 'Télécharger sauvegarde ZIP' }}
+                    {{ backupDownloading ? 'Préparation...' : 'Télécharger la sauvegarde' }}
                 </button>
 
                 <p
@@ -905,16 +906,18 @@ h4 {
 
 .admin-grid {
     display: grid;
-    gap: 16px;
+    gap: 18px;
 }
 
 .admin-panel {
+    align-content: start;
     background: #ffffff;
     border: 1px solid #d8dee8;
     border-radius: 8px;
     display: grid;
-    gap: 18px;
-    padding: 24px;
+    gap: 16px;
+    min-height: 220px;
+    padding: 22px;
 }
 
 .admin-panel p {
@@ -951,6 +954,7 @@ button {
     font: inherit;
     font-weight: 600;
     justify-self: start;
+    min-height: 42px;
     padding: 10px 14px;
 }
 
@@ -1052,7 +1056,7 @@ dd {
 
 @media (min-width: 820px) {
     .admin-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 </style>
