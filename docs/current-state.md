@@ -133,7 +133,7 @@ Frontend :
 - Login
 - Layout global pour les routes authentifiées
 - Barre supérieure persistante avec marque `CollectionMgnt` cliquable vers Collections
-- Menu utilisateur avec avatar initiale, accès Administration, entrée Mon compte à venir et déconnexion
+- Menu utilisateur avec avatar avec initiale, accès Administration, entrée Mon compte à venir et déconnexion
 - Redirection de `/dashboard` vers `/collections`
 - Authentification JWT
 - Restauration de session
@@ -847,7 +847,7 @@ Variables disponibles :
 
 - Layout global appliqué aux routes authentifiées
 - Barre supérieure persistante avec marque `CollectionMgnt` cliquable vers Collections
-- Menu utilisateur avec avatar initiale, entrée Administration, entrée `Mon compte` marquée à venir et déconnexion
+- Menu utilisateur avec avatar avec initiale, entrée Administration, entrée `Mon compte` marquée à venir et déconnexion
 - Login sans redirect explicite redirigé vers `/collections`
 - Route `/dashboard` conservée comme compatibilité et redirigée vers `/collections`
 - Dashboard retiré du parcours utilisateur comme écran intermédiaire

@@ -389,7 +389,7 @@ Version actuelle : v0.12-lot10.0.1.
 
 - Layout global pour les pages authentifiées
 - Barre supérieure persistante avec marque `CollectionMgnt` cliquable vers Collections
-- Menu utilisateur avec avatar initiale, Administration, `Mon compte` à venir et Déconnexion
+- Menu utilisateur avec avatar avec initiale, Administration, `Mon compte` à venir et Déconnexion
 - Login sans redirect explicite vers `/collections`
 - Route `/dashboard` conservée en compatibilité et redirigée vers `/collections`
 - Dashboard supprimé comme écran intermédiaire du parcours utilisateur
