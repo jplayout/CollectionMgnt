@@ -6,7 +6,8 @@
         <ol>
             <li
                 v-for="(item, index) in items"
-                :key="`${index}-${item.label}`"
+                :key="getBreadcrumbItemKey(item, index)"
+                :aria-current="isLastItem(index) ? 'page' : undefined"
             >
                 <RouterLink
                     v-if="item.to"
@@ -24,7 +25,8 @@
 </template>
 
 <script setup>
-defineProps({
+const props =
+    defineProps({
     items: {
         required:
             true,
@@ -32,6 +34,77 @@ defineProps({
             Array
     }
 });
+
+function isLastItem(index) {
+
+    return index === props.items.length - 1;
+
+}
+
+function getBreadcrumbItemKey(
+    item,
+    index
+) {
+
+    return item.key ??
+        getRouteTargetKey(
+            item.to
+        ) ??
+        `${index}-${item.label}`;
+
+}
+
+function getRouteTargetKey(to) {
+
+    if (
+        !to
+    ) {
+
+        return null;
+
+    }
+
+    if (
+        typeof to === 'string'
+    ) {
+
+        return to;
+
+    }
+
+    if (
+        typeof to === 'object'
+    ) {
+
+        if (
+            to.name
+        ) {
+
+            return [
+                to.name,
+                JSON.stringify(
+                    to.params ?? {}
+                ),
+                JSON.stringify(
+                    to.query ?? {}
+                )
+            ].join(':');
+
+        }
+
+        if (
+            to.path
+        ) {
+
+            return to.path;
+
+        }
+
+    }
+
+    return null;
+
+}
 </script>
 
 <style scoped>

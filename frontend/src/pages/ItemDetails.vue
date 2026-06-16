@@ -167,6 +167,11 @@ import {
     isEmptyMetadataValue
 } from '../utils/metadata-formatters.js';
 
+import {
+    getStringQueryParam,
+    isValidReturnTo
+} from '../utils/route-query.js';
+
 const route =
     useRoute();
 
@@ -689,36 +694,6 @@ async function deleteCurrentItem() {
             false;
 
     }
-
-}
-
-function getStringQueryParam(
-    value
-) {
-
-    if (
-        Array.isArray(
-            value
-        )
-    ) {
-
-        return value[0] ?? '';
-
-    }
-
-    return typeof value === 'string'
-        ? value
-        : '';
-
-}
-
-function isValidReturnTo(
-    value
-) {
-
-    return value.startsWith(
-        '/collections/'
-    );
 
 }
 
