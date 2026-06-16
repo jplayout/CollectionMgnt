@@ -1,12 +1,7 @@
 <template>
     <main class="item-details-page">
         <header class="item-header">
-            <RouterLink
-                class="back-link"
-                :to="backTarget"
-            >
-                {{ backLabel }}
-            </RouterLink>
+            <BreadcrumbTrail :items="breadcrumbItems" />
 
             <div class="header-row">
                 <div>
@@ -20,7 +15,7 @@
                 >
                     <RouterLink
                         class="edit-link"
-                        :to="{ name: 'item-edit', params: { id: itemId } }"
+                        :to="editTarget"
                     >
                         Modifier
                     </RouterLink>
@@ -150,6 +145,9 @@ import {
 import MediaGallery
 from '../components/media/MediaGallery.vue';
 
+import BreadcrumbTrail
+from '../components/navigation/BreadcrumbTrail.vue';
+
 import {
     ApiError
 } from '../services/api.js';
@@ -209,8 +207,9 @@ const itemTitle =
 const pluginLabel =
     computed(
         () => item.value?.plugin_display_name ??
+            schema.value?.plugin?.name ??
             item.value?.plugin ??
-            'Item details'
+            'Collection'
     );
 
 const validReturnTo =
@@ -231,7 +230,7 @@ const validReturnTo =
         }
     );
 
-const backTarget =
+const collectionBreadcrumbTarget =
     computed(
         () => {
 
@@ -266,9 +265,65 @@ const backTarget =
         }
     );
 
-const backLabel =
+const editTarget =
     computed(
-        () => 'Retour à la liste'
+        () => {
+
+            const target = {
+                name:
+                    'item-edit',
+                params: {
+                    id:
+                        itemId.value
+                }
+            };
+
+            if (
+                validReturnTo.value
+            ) {
+
+                target.query = {
+                    returnTo:
+                        validReturnTo.value
+                };
+
+            }
+
+            return target;
+
+        }
+    );
+
+const breadcrumbItems =
+    computed(
+        () => [
+            {
+                label:
+                    'Dashboard',
+                to: {
+                    name:
+                        'dashboard'
+                }
+            },
+            {
+                label:
+                    'Collections',
+                to: {
+                    name:
+                        'collections'
+                }
+            },
+            {
+                label:
+                    pluginLabel.value,
+                to:
+                    collectionBreadcrumbTarget.value
+            },
+            {
+                label:
+                    itemTitle.value
+            }
+        ]
     );
 
 const schemaFields =
@@ -743,16 +798,6 @@ function formatDate(
     align-items: center;
     display: flex;
     gap: 10px;
-}
-
-.back-link {
-    color: #1f6feb;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.back-link:hover {
-    text-decoration: underline;
 }
 
 .edit-link,

@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.11-lot9.0.4
+Version : v0.11-lot9.0.4.1
 
 ## État du projet
 
@@ -48,7 +48,7 @@ Frontend :
 - Tri configurable de `GET /api/items` via `sort` et `direction`
 - Tri disponible sur `title`, `created_at`, `updated_at` et les champs metadata supportés du plugin courant
 - Export métier JSON global
-- Export métier JSON par collection
+- Export métier JSON par collection disponible via API
 - Export CSV simple par collection
 
 ### Médias
@@ -140,7 +140,7 @@ Frontend :
 - Proxy Nginx `/api` vers le backend Docker
 - Support `FormData` dans le service API frontend
 - Support des réponses `Blob` dans le service API frontend
-- Téléchargement d'exports collection JSON et CSV depuis la liste d'une collection
+- Téléchargement d'export CSV utilisateur depuis la liste d'une collection
 - Page détail item enrichie
 - Page détail item pilotée par le schéma plugin pour les labels de métadonnées
 - Page détail item pilotée par les préférences d'affichage backend pour l'ordre et le masquage des métadonnées
@@ -176,6 +176,7 @@ Frontend :
 - Page Administration MVP avec sections Données, Sauvegarde, Médias et Système
 - Import JSON natif CollectionMgnt depuis la section Données de l'Administration
 - Téléchargement de sauvegarde ZIP complète depuis l'Administration
+- Export/import natif JSON et sauvegarde ZIP réservés à l'Administration
 - Preview et exécution confirmée du cleanup média manuel guidé depuis la section Médias de l'Administration
 - Routes frontend protégées :
   - `/dashboard`
@@ -732,7 +733,7 @@ Variables disponibles :
 - Valeurs metadata vides affichées `—`
 - Recherche, filtres, tri et pagination conservés en vue liste
 - Préférences d'affichage existantes réutilisées sans nouvelle préférence `table.columns`
-- Pas de vue de données avancée : aucun tri par header, redimensionnement de colonnes, édition inline, export CSV ou configuration dédiée des colonnes
+- Pas de vue de données avancée : aucun tri par header, redimensionnement de colonnes, édition inline, sélection de colonnes CSV ou configuration dédiée des colonnes
 - Aucun changement backend, API, schéma SQLite, plugins ou thumbnails en liste dans ce lot
 
 ### Lot 5.16.1 - Navigation retour et contexte de liste
@@ -829,6 +830,14 @@ Variables disponibles :
 - Le ZIP est sensible car il contient la DB complète, incluant les utilisateurs et `password_hash`
 - Aucun changement du schéma SQLite
 - Aucune restauration ZIP, aucun cloud, aucun stockage distant, aucune planification automatique, aucune sauvegarde incrémentale et aucun historique/rétention dans ce lot
+
+### Lot 9.0.4.1 - Rationalisation des exports collection
+
+- Interface collection rationalisée autour d'une action unique `Export CSV`
+- Export CSV utilisateur conservé depuis la liste d'une collection
+- Export JSON collection conservé côté API via `GET /api/exports/collections/:pluginId.json`, mais non exposé dans l'interface collection
+- Séparation clarifiée : Administration pour l'export/import natif JSON et la sauvegarde ZIP, Collection pour l'export CSV utilisateur
+- Aucun changement backend, API, SQLite ou Administration
 
 ### Lots suivants
 

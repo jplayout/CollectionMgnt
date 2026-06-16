@@ -12,7 +12,7 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État courant
 
-Version actuelle : v0.11-lot9.0.4.
+Version actuelle : v0.11-lot9.0.4.1.
 
 ### Lot 5.6 - Livré
 
@@ -286,7 +286,7 @@ Version actuelle : v0.11-lot9.0.4.
 - Valeurs metadata vides affichées `—`
 - Recherche, filtres, tri et pagination compatibles avec la vue liste
 - Préférences d'affichage existantes réutilisées sans nouvelle préférence `table.columns`
-- Pas de vue de données avancée : aucun tri par clic header, redimensionnement de colonnes, édition inline, export CSV ou configuration dédiée des colonnes
+- Pas de vue de données avancée : aucun tri par clic header, redimensionnement de colonnes, édition inline, sélection de colonnes CSV ou configuration dédiée des colonnes
 - Aucun changement backend, API, schéma SQLite, plugins ou thumbnails en liste dans ce lot
 
 ### Lot 5.16.1 - Livré
@@ -309,7 +309,8 @@ Version actuelle : v0.11-lot9.0.4.
 - Export des plugins, schémas plugin, settings applicatifs non sensibles, items et métadonnées média
 - Médias référencés sans fichiers physiques, avec `includes_media_files=false`
 - CSV collection basé sur les colonnes système puis les champs metadata `field.name` dans l'ordre du schéma plugin
-- Téléchargement frontend JSON et CSV disponible depuis la liste d'une collection
+- Téléchargement frontend CSV disponible depuis la liste d'une collection
+- Export JSON collection conservé via API, sans exposition dans l'interface collection depuis le Lot 9.0.4.1
 - Aucun import, aucune restauration, aucun ZIP, aucun dump SQLite, aucun changement de schéma SQLite ou de plugins
 
 ### Lot 8.1.1 - Livré
@@ -374,6 +375,15 @@ Version actuelle : v0.11-lot9.0.4.
 - Manifest `collectionmgnt.full-backup`, `format_version=1`, sans chemins absolus et avec compteurs, tailles et warnings
 - ZIP traité comme sensible car il contient la DB complète, incluant les utilisateurs et `password_hash`
 - Aucun changement de schéma SQLite, aucune restauration ZIP, aucun cloud, aucun stockage distant, aucune planification, aucun incrémental et aucun historique/rétention
+
+### Lot 9.0.4.1 - Livré
+
+- Option `Export JSON` retirée de l'interface collection
+- Menu d'export collection remplacé par une action unique `Export CSV`
+- Téléchargement CSV collection existant conservé
+- Export JSON collection conservé via `GET /api/exports/collections/:pluginId.json`
+- Administration inchangée : export/import natif JSON et sauvegarde ZIP restent dans l'Administration
+- Aucun changement backend, API, SQLite ou Administration
 
 ### Prochaine étape
 

@@ -1,6 +1,6 @@
 # Export System
 
-État courant : v0.11-lot9.0.4.
+État courant : v0.11-lot9.0.4.1.
 
 ## Objectif
 
@@ -10,6 +10,8 @@ Il ne s'agit pas d'une sauvegarde technique complète.
 Il fournit aussi un import JSON natif non destructif depuis le Lot 9.0.2.
 Depuis le Lot 9.0.4, la sauvegarde ZIP complète existe comme fonctionnalité distincte.
 L'export JSON natif reste un export métier et ne devient pas une sauvegarde technique.
+Depuis le Lot 9.0.4.1, l'interface Collection expose uniquement l'export CSV utilisateur.
+L'export JSON collection reste disponible via API, mais n'est plus présenté dans l'interface Collection.
 
 ## Routes
 
@@ -20,6 +22,21 @@ Toutes les routes d'export sont protégées par JWT.
 - `GET /api/exports/collections/:pluginId.csv`
 
 Les routes collection retournent 404 si le plugin demandé est inconnu.
+
+## Surfaces d'Interface
+
+Administration :
+
+- export JSON natif applicatif via `GET /api/exports/application.json`
+- import JSON natif CollectionMgnt via `POST /api/admin/imports/native-json`
+- sauvegarde ZIP complète via `GET /api/admin/backup.zip`
+
+Collection :
+
+- export CSV utilisateur via `GET /api/exports/collections/:pluginId.csv`
+
+L'export JSON collection `GET /api/exports/collections/:pluginId.json` reste une route API supportée.
+Il n'est plus exposé dans l'interface Collection afin de réserver les flux JSON natifs aux usages d'administration et d'interopérabilité API.
 
 ## Format JSON Natif
 
@@ -60,6 +77,9 @@ Les utilisateurs, `password_hash`, secrets, tokens, credentials et variables d'e
 - une seule entrée dans `collections`
 - uniquement le plugin et le schéma concernés
 - pas de settings globaux
+
+Cette route reste disponible pour les intégrations API.
+Elle n'est plus exposée dans l'interface Collection depuis le Lot 9.0.4.1.
 
 ## Items Exportés
 
@@ -122,6 +142,7 @@ Il ne contient pas `.env`, variables d'environnement, `JWT_SECRET`, secrets runt
 ## CSV Collection
 
 `GET /api/exports/collections/:pluginId.csv` produit un CSV simple.
+Il s'agit du seul export exposé dans l'interface Collection.
 
 Colonnes :
 
@@ -159,6 +180,9 @@ Les noms de fichiers sont contrôlés côté serveur :
 - `collectionmgnt-export-YYYY-MM-DD.json`
 - `collectionmgnt-<plugin>-YYYY-MM-DD.json`
 - `collectionmgnt-<plugin>-YYYY-MM-DD.csv`
+
+Côté interface, l'Administration expose les flux natifs JSON et la sauvegarde ZIP.
+La vue Collection expose uniquement le téléchargement CSV utilisateur.
 
 ## Import JSON Natif
 

@@ -1,12 +1,7 @@
 <template>
     <main class="item-edit-page">
         <header class="page-header">
-            <RouterLink
-                class="back-link"
-                :to="{ name: 'item-details', params: { id: itemId } }"
-            >
-                Détail item
-            </RouterLink>
+            <BreadcrumbTrail :items="breadcrumbItems" />
 
             <div>
                 <p class="eyebrow">{{ pluginName }}</p>
@@ -61,6 +56,9 @@ import {
 
 import DynamicForm
 from '../components/forms/DynamicForm.vue';
+
+import BreadcrumbTrail
+from '../components/navigation/BreadcrumbTrail.vue';
 
 import {
     ApiError
@@ -140,6 +138,126 @@ const initialValue =
             : null
     );
 
+const validReturnTo =
+    computed(
+        () => {
+
+            const returnTo =
+                getStringQueryParam(
+                    route.query.returnTo
+                );
+
+            return isValidReturnTo(
+                returnTo
+            )
+                ? returnTo
+                : '';
+
+        }
+    );
+
+const collectionBreadcrumbTarget =
+    computed(
+        () => {
+
+            if (
+                validReturnTo.value
+            ) {
+
+                return validReturnTo.value;
+
+            }
+
+            if (
+                pluginId.value
+            ) {
+
+                return {
+                    name:
+                        'collection-items',
+                    params: {
+                        pluginId:
+                            pluginId.value
+                    }
+                };
+
+            }
+
+            return {
+                name:
+                    'collections'
+            };
+
+        }
+    );
+
+const itemDetailsTarget =
+    computed(
+        () => {
+
+            const target = {
+                name:
+                    'item-details',
+                params: {
+                    id:
+                        itemId.value
+                }
+            };
+
+            if (
+                validReturnTo.value
+            ) {
+
+                target.query = {
+                    returnTo:
+                        validReturnTo.value
+                };
+
+            }
+
+            return target;
+
+        }
+    );
+
+const breadcrumbItems =
+    computed(
+        () => [
+            {
+                label:
+                    'Dashboard',
+                to: {
+                    name:
+                        'dashboard'
+                }
+            },
+            {
+                label:
+                    'Collections',
+                to: {
+                    name:
+                        'collections'
+                }
+            },
+            {
+                label:
+                    pluginName.value,
+                to:
+                    collectionBreadcrumbTarget.value
+            },
+            {
+                label:
+                    itemTitle.value,
+                to:
+                    itemDetailsTarget.value
+            },
+            {
+                label:
+                    'Modifier'
+            }
+        ]
+    );
+
 onMounted(
     loadPage
 );
@@ -215,12 +333,7 @@ async function submitItem(
         );
 
         await router.push({
-            name:
-                'item-details',
-            params: {
-                id:
-                    itemId.value
-            }
+            ...itemDetailsTarget.value
         });
 
     } catch (error) {
@@ -236,6 +349,36 @@ async function submitItem(
             false;
 
     }
+
+}
+
+function getStringQueryParam(
+    value
+) {
+
+    if (
+        Array.isArray(
+            value
+        )
+    ) {
+
+        return value[0] ?? '';
+
+    }
+
+    return typeof value === 'string'
+        ? value
+        : '';
+
+}
+
+function isValidReturnTo(
+    value
+) {
+
+    return value.startsWith(
+        '/collections/'
+    );
 
 }
 </script>
@@ -258,16 +401,6 @@ async function submitItem(
     display: grid;
     gap: 14px;
     margin-bottom: 24px;
-}
-
-.back-link {
-    color: #1f6feb;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.back-link:hover {
-    text-decoration: underline;
 }
 
 .eyebrow {
