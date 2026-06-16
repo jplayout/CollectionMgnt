@@ -73,7 +73,7 @@ export function isValidReturnTo(
     }
 
     // Keep return targets constrained to safe internal collection routes.
-    return !decodedPath
+    return !decodedPath.includes('\\') && !decodedPath
         .split('/')
         .some(
             segment => segment === '..'
