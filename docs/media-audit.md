@@ -1,6 +1,6 @@
 # Audit Média
 
-État courant : v0.11-lot9.0.3.
+État courant : v0.12-lot10.0.1.
 
 ## Objectif
 
@@ -140,4 +140,4 @@ Elle ne reçoit jamais de chemin libre depuis le frontend.
 
 ## Suite Prévue
 
-Les suites possibles concernent la sauvegarde ZIP, l'amélioration des rapports admin ou la régénération guidée des thumbnails/images dans un lot distinct.
+Les suites possibles concernent l'amélioration des rapports admin, la restauration ZIP guidée ou la régénération guidée des thumbnails/images dans un lot distinct.

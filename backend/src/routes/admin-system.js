@@ -1,5 +1,5 @@
 const APPLICATION_VERSION =
-    'v0.11-lot9.0.4';
+    'v0.12-lot10.0.1';
 
 export default async function (
     fastify

@@ -1,6 +1,6 @@
 # Export System
 
-État courant : v0.11-lot9.0.4.1.
+État courant : v0.12-lot10.0.1.
 
 ## Objectif
 

@@ -1,6 +1,6 @@
 # Sauvegarde ZIP
 
-État courant : v0.11-lot9.0.4.
+État courant : v0.12-lot10.0.1.
 
 ## Objectif
 
@@ -60,7 +60,7 @@ Exemple :
   "format": "collectionmgnt.full-backup",
   "format_version": 1,
   "created_at": "2026-06-09T00:00:00.000Z",
-  "application_version": "v0.11-lot9.0.4",
+  "application_version": "v0.12-lot10.0.1",
   "includes_database": true,
   "includes_media_files": true,
   "includes_native_export": true,

@@ -326,8 +326,8 @@ Version actuelle : v0.12-lot10.0.1.
 ### Lot 9.0.1 - Livré
 
 - Fondation Administration via une page frontend protégée `/admin`
-- Accès Administration ajouté depuis le Dashboard sans refonte de la navigation globale
-- Section Données avec export JSON applicatif global via `GET /api/exports/application.json`
+- Accès Administration ajouté dans l'ancienne navigation d'accueil sans refonte de la navigation globale
+- Section Données avec action `Exporter toutes les données` via `GET /api/exports/application.json`
 - Section Médias avec lancement manuel de l'audit média lecture seule via `GET /api/admin/media-audit`
 - Affichage du résumé du dernier audit média exécuté dans la session de page
 - Section Système avec version application et compteurs plugins, plugins actifs, items et médias
@@ -337,7 +337,7 @@ Version actuelle : v0.12-lot10.0.1.
 
 ### Lot 9.0.2 - Livré
 
-- Import JSON natif CollectionMgnt depuis la section Données de la page Administration
+- Action `Importer des données` depuis la section Données de la page Administration
 - Route protégée `POST /api/admin/imports/native-json`
 - Upload multipart avec champ `file` et limite MVP de 10 MB
 - Validation du format `collectionmgnt.native-export`, `format_version=1` et `scope=application|collection`
@@ -393,7 +393,8 @@ Version actuelle : v0.12-lot10.0.1.
 - Login sans redirect explicite vers `/collections`
 - Route `/dashboard` conservée en compatibilité et redirigée vers `/collections`
 - Dashboard supprimé comme écran intermédiaire du parcours utilisateur
-- Breadcrumbs réalignés autour de Collections et Administration, sans niveau Dashboard
+- Pas de breadcrumb sur les pages racines Collections et Administration
+- Breadcrumbs conservés sur les pages hiérarchiques, sans niveau Dashboard
 - Aucun changement backend, API, SQLite, rôles utilisateur ou page profil fonctionnelle
 
 ### Prochaine étape

@@ -13,7 +13,7 @@ import {
 } from './export-service.js';
 
 const APPLICATION_VERSION =
-    'v0.11-lot9.0.4';
+    'v0.12-lot10.0.1';
 
 const BACKUP_FORMAT =
     'collectionmgnt.full-backup';

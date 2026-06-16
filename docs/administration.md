@@ -14,7 +14,9 @@ La route frontend est protégée comme les autres routes authentifiées.
 
 - Page frontend : `/admin`
 - Accès depuis le menu utilisateur
+- Barre supérieure globale avec marque `CollectionMgnt` cliquable vers `/collections`
 - La route `/dashboard` redirige vers `/collections`
+- Aucun breadcrumb n'est affiché sur la page racine Administration
 
 Il n'existe pas encore de rôles utilisateurs.
 Tout utilisateur authentifié accède donc à la page Administration dans ce lot.
@@ -25,8 +27,8 @@ Tout utilisateur authentifié accède donc à la page Administration dans ce lot
 
 La section Données propose :
 
-- Export JSON global
-- Import JSON natif CollectionMgnt
+- Exporter toutes les données
+- Importer des données
 
 L'export utilise la route existante :
 
@@ -57,7 +59,7 @@ Après import, la page affiche un rapport avec collections traitées, items cré
 
 La section Sauvegarde propose :
 
-- Télécharger sauvegarde ZIP
+- Télécharger la sauvegarde
 
 La route utilisée est :
 
