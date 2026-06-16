@@ -54,7 +54,7 @@ Version actuelle : **v0.12-lot10.0.1**
 
 Le projet est utilisable pour des collections réelles, mais reste en développement actif. Certaines fonctions avancées sont encore prévues, notamment la restauration ZIP guidée, les imports CSV avancés, la gestion utilisateur plus fine et l'amélioration des rapports d'administration.
 
-Après connexion, l'utilisateur arrive directement sur `/collections`. Les routes authentifiées utilisent un layout global avec une barre supérieure persistante, la marque `CollectionMgnt` cliquable vers Collections et un menu utilisateur donnant accès à Administration, Mon compte à venir et Déconnexion. La route `/dashboard` reste disponible uniquement comme compatibilité et redirige vers `/collections`.
+Après connexion, l'utilisateur arrive directement sur `/collections`. Les routes authentifiées utilisent un layout global avec une barre supérieure persistante, la marque `CollectionMgnt` cliquable vers Collections et un menu utilisateur donnant accès à Administration, Mon compte (à venir) et Déconnexion. La route `/dashboard` reste disponible uniquement comme compatibilité et redirige vers `/collections`.
 
 ## Captures d'écran
 
@@ -144,7 +144,7 @@ npm run dev
 
 Un déploiement local Docker/Podman est documenté dans `docs/deployment-docker.md`.
 
-Des images prébuildées peuvent être publiées sur GitHub Container Registry :
+Des images prébuildées sont publiées sur GitHub Container Registry :
 
 - `ghcr.io/jplayout/collectionmgnt-backend:latest`
 - `ghcr.io/jplayout/collectionmgnt-frontend:latest`
@@ -390,7 +390,7 @@ npm run dev
 
 Local Docker/Podman deployment is documented in `docs/deployment-docker.md`.
 
-Prebuilt images may be published on GitHub Container Registry:
+Prebuilt images are published on GitHub Container Registry:
 
 - `ghcr.io/jplayout/collectionmgnt-backend:latest`
 - `ghcr.io/jplayout/collectionmgnt-frontend:latest`
