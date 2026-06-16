@@ -58,17 +58,21 @@ Après connexion, l'utilisateur arrive directement sur `/collections`. Les route
 
 ## Captures d'écran
 
-Aucune capture officielle n'est encore disponible.
+### Collections
 
-Emplacement prévu :
+![Vue Collections](docs/screenshots/collections.png)
 
-```text
-docs/screenshots/
-├── collections.png
-├── item-list.png
-├── item-detail.png
-└── admin.png
-```
+### Collection Jeux Vidéo
+
+![Liste de la collection Jeux Vidéo](docs/screenshots/collection-games.png)
+
+### Détail d'un item
+
+![Détail d'un item](docs/screenshots/item-details.png)
+
+### Administration
+
+![Vue Administration](docs/screenshots/administration.png)
 
 ## Installation
 
@@ -300,17 +304,21 @@ After login, users land directly on `/collections`. Authenticated routes use a g
 
 ## Screenshots
 
-No official screenshots are available yet.
+### Collections
 
-Planned location:
+![Collections view](docs/screenshots/collections.png)
 
-```text
-docs/screenshots/
-├── collections.png
-├── item-list.png
-├── item-detail.png
-└── admin.png
-```
+### Video Games Collection
+
+![Video Games collection list](docs/screenshots/collection-games.png)
+
+### Item Details
+
+![Item details](docs/screenshots/item-details.png)
+
+### Administration
+
+![Administration view](docs/screenshots/administration.png)
 
 ## Installation
 
