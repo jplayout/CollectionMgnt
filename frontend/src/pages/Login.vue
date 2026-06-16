@@ -125,7 +125,10 @@ function getRedirectPath() {
 
     }
 
-    return '/dashboard';
+    return {
+        name:
+            'collections'
+    };
 
 }
 </script>

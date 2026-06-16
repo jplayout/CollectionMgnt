@@ -1,6 +1,6 @@
 # Administration
 
-État courant : v0.11-lot9.0.4.
+État courant : v0.12-lot10.0.1.
 
 ## Objectif
 
@@ -13,8 +13,8 @@ La route frontend est protégée comme les autres routes authentifiées.
 ## Accès
 
 - Page frontend : `/admin`
-- Accès depuis le Dashboard
-- Retour vers le Dashboard depuis la page Administration
+- Accès depuis le menu utilisateur
+- La route `/dashboard` redirige vers `/collections`
 
 Il n'existe pas encore de rôles utilisateurs.
 Tout utilisateur authentifié accède donc à la page Administration dans ce lot.
@@ -139,7 +139,7 @@ Exemple :
 
 ```json
 {
-  "version": "v0.11-lot9.0.4",
+  "version": "v0.12-lot10.0.1",
   "counts": {
     "plugins": 0,
     "enabledPlugins": 0,

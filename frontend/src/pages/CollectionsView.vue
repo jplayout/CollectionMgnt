@@ -1,8 +1,6 @@
 <template>
     <main class="collections-page">
         <header class="page-header">
-            <BreadcrumbTrail :items="breadcrumbItems" />
-
             <div>
                 <h1>Collections</h1>
             </div>
@@ -59,9 +57,6 @@ import {
     getPlugins
 } from '../services/plugin-api.js';
 
-import BreadcrumbTrail
-from '../components/navigation/BreadcrumbTrail.vue';
-
 import CollectionCard
 from '../components/collections/CollectionCard.vue';
 
@@ -80,22 +75,6 @@ const enabledPlugins =
             plugin => plugin.enabled
         )
     );
-
-const breadcrumbItems =
-    [
-        {
-            label:
-                'Dashboard',
-            to: {
-                name:
-                    'dashboard'
-            }
-        },
-        {
-            label:
-                'Collections'
-        }
-    ];
 
 onMounted(
     loadPlugins
@@ -132,13 +111,6 @@ async function loadPlugins() {
 </script>
 
 <style scoped>
-.collections-page {
-    background: #f5f7fa;
-    color: #172033;
-    min-height: 100vh;
-    padding: 32px;
-}
-
 .page-header,
 .content-panel {
     margin: 0 auto;

@@ -1,8 +1,6 @@
 <template>
     <main class="admin-page">
         <header class="page-header">
-            <BreadcrumbTrail :items="breadcrumbItems" />
-
             <div>
                 <h1>Administration</h1>
             </div>
@@ -440,9 +438,6 @@ import {
     ApiError
 } from '../services/api.js';
 
-import BreadcrumbTrail
-from '../components/navigation/BreadcrumbTrail.vue';
-
 import {
     downloadApplicationExport
 } from '../services/export-api.js';
@@ -455,22 +450,6 @@ import {
     previewMediaCleanup,
     runMediaAudit
 } from '../services/admin-api.js';
-
-const breadcrumbItems =
-    [
-        {
-            label:
-                'Dashboard',
-            to: {
-                name:
-                    'dashboard'
-            }
-        },
-        {
-            label:
-                'Administration'
-        }
-    ];
 
 const exporting =
     ref(false);
@@ -892,13 +871,6 @@ function formatBytes(bytes) {
 </script>
 
 <style scoped>
-.admin-page {
-    background: #f5f7fa;
-    color: #172033;
-    min-height: 100vh;
-    padding: 32px;
-}
-
 .page-header,
 .admin-grid {
     margin: 0 auto;

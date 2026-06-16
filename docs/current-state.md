@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.11-lot9.0.4.1
+Version : v0.12-lot10.0.1
 
 ## État du projet
 
@@ -9,7 +9,7 @@ Backend : opérationnel
 Frontend :
 
 - Authentification : opérationnelle
-- Dashboard : minimal
+- Layout global authentifié : disponible
 - Administration : fondation MVP disponible
 - Collections : navigation minimale disponible
 - Création item : formulaire dynamique frontend disponible
@@ -75,7 +75,7 @@ Frontend :
 ### Administration
 
 - Page frontend protégée `/admin`
-- Accès depuis le Dashboard
+- Accès depuis le menu utilisateur
 - Export JSON global présenté côté Administration via `GET /api/exports/application.json`
 - Import JSON natif CollectionMgnt depuis l'Administration via `POST /api/admin/imports/native-json`
 - Import JSON natif en mode `add_only`, sans remplacement, sans suppression et sans restauration des IDs d'origine
@@ -131,7 +131,10 @@ Frontend :
 - Pinia
 - Vue Router
 - Login
-- Dashboard
+- Layout global pour les routes authentifiées
+- Barre supérieure persistante avec marque `CollectionMgnt` cliquable vers Collections
+- Menu utilisateur avec avatar initiale, accès Administration, entrée Mon compte à venir et déconnexion
+- Redirection de `/dashboard` vers `/collections`
 - Authentification JWT
 - Restauration de session
 - Logout
@@ -174,12 +177,13 @@ Frontend :
   - redirection vers `/items/:id` après création ou édition
 - Galerie médias frontend minimale
 - Page Administration MVP avec sections Données, Sauvegarde, Médias et Système
+- Accès Administration depuis le menu utilisateur
 - Import JSON natif CollectionMgnt depuis la section Données de l'Administration
 - Téléchargement de sauvegarde ZIP complète depuis l'Administration
 - Export/import natif JSON et sauvegarde ZIP réservés à l'Administration
 - Preview et exécution confirmée du cleanup média manuel guidé depuis la section Médias de l'Administration
-- Routes frontend protégées :
-  - `/dashboard`
+- Routes frontend protégées et redirections :
+  - `/dashboard` redirige vers `/collections`
   - `/admin`
   - `/collections`
   - `/collections/:pluginId/items`
@@ -204,7 +208,7 @@ Frontend :
 - Restauration de session via `GET /api/auth/me`
 - Guard Vue Router
 - Login frontend
-- Dashboard protégé avec logout
+- Logout depuis le menu utilisateur du layout global
 
 ### Disponible mais non encore intégré
 
@@ -838,6 +842,17 @@ Variables disponibles :
 - Export JSON collection conservé côté API via `GET /api/exports/collections/:pluginId.json`, mais non exposé dans l'interface collection
 - Séparation clarifiée : Administration pour l'export/import natif JSON et la sauvegarde ZIP, Collection pour l'export CSV utilisateur
 - Aucun changement backend, API, SQLite ou Administration
+
+### Lot 10.0.1 - Layout global et navigation principale
+
+- Layout global appliqué aux routes authentifiées
+- Barre supérieure persistante avec marque `CollectionMgnt` cliquable vers Collections
+- Menu utilisateur avec avatar initiale, entrée Administration, entrée `Mon compte` marquée à venir et déconnexion
+- Login sans redirect explicite redirigé vers `/collections`
+- Route `/dashboard` conservée comme compatibilité et redirigée vers `/collections`
+- Dashboard retiré du parcours utilisateur comme écran intermédiaire
+- Breadcrumbs utilisateur réalignés sans niveau Dashboard
+- Aucun changement backend, API, SQLite, rôles utilisateur ou page profil fonctionnelle
 
 ### Lots suivants
 
