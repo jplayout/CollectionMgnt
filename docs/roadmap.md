@@ -12,7 +12,7 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État courant
 
-Version actuelle : v0.11-lot9.0.4.1.
+Version actuelle : v0.12-lot10.0.1.
 
 ### Lot 5.6 - Livré
 
@@ -385,6 +385,17 @@ Version actuelle : v0.11-lot9.0.4.1.
 - Administration inchangée : export/import natif JSON et sauvegarde ZIP restent dans l'Administration
 - Aucun changement backend, API, SQLite ou Administration
 
+### Lot 10.0.1 - Livré
+
+- Layout global pour les pages authentifiées
+- Barre supérieure persistante avec marque `CollectionMgnt` cliquable vers Collections
+- Menu utilisateur avec avatar avec initiale, Administration, `Mon compte` à venir et Déconnexion
+- Login sans redirect explicite vers `/collections`
+- Route `/dashboard` conservée en compatibilité et redirigée vers `/collections`
+- Dashboard supprimé comme écran intermédiaire du parcours utilisateur
+- Breadcrumbs réalignés autour de Collections et Administration, sans niveau Dashboard
+- Aucun changement backend, API, SQLite, rôles utilisateur ou page profil fonctionnelle
+
 ### Prochaine étape
 
 - Restauration ZIP guidée
@@ -675,3 +686,16 @@ Support multilingue.
 ### Import CSV externe
 
 - Importer un export CSV venant de l'application Icollect
+
+### Internationalisation / changement de langue
+  - option dans le menu utilisateur ou administration
+  - probablement FR / EN au départ
+  - préférence persistée côté utilisateur ou settings
+  - ne pas se limiter à traduire le README
+
+### Responsive / usage tablette-mobile
+  - top bar compacte
+  - cartes adaptées mobile
+  - listes avec scroll/colonnes simplifiées
+  - administration utilisable sur petit écran
+  - formulaires confortables au tactile

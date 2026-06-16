@@ -7,9 +7,6 @@ import {
     useAuthStore
 } from '../stores/auth.js';
 
-import Dashboard
-from '../pages/Dashboard.vue';
-
 import Login
 from '../pages/Login.vue';
 
@@ -40,7 +37,10 @@ const router =
                 path:
                     '/',
                 redirect:
-                    '/dashboard'
+                    {
+                        name:
+                            'collections'
+                    }
             },
             {
                 path:
@@ -59,11 +59,9 @@ const router =
                     '/dashboard',
                 name:
                     'dashboard',
-                component:
-                    Dashboard,
-                meta: {
-                    requiresAuth:
-                        true
+                redirect: {
+                    name:
+                        'collections'
                 }
             },
             {
@@ -178,7 +176,7 @@ router.beforeEach(
 
             return {
                 name:
-                    'dashboard'
+                    'collections'
             };
 
         }

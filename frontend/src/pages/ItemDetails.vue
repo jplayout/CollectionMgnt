@@ -304,14 +304,6 @@ const breadcrumbItems =
         () => [
             {
                 label:
-                    'Dashboard',
-                to: {
-                    name:
-                        'dashboard'
-                }
-            },
-            {
-                label:
                     'Collections',
                 to: {
                     name:
@@ -744,13 +736,6 @@ function formatDate(
 </script>
 
 <style scoped>
-.item-details-page {
-    background: #f5f7fa;
-    color: #172033;
-    min-height: 100vh;
-    padding: 32px;
-}
-
 .item-header,
 .details-panel {
     margin: 0 auto 24px;

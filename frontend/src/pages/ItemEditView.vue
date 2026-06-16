@@ -230,14 +230,6 @@ const breadcrumbItems =
         () => [
             {
                 label:
-                    'Dashboard',
-                to: {
-                    name:
-                        'dashboard'
-                }
-            },
-            {
-                label:
                     'Collections',
                 to: {
                     name:
@@ -360,13 +352,6 @@ async function submitItem(
 </script>
 
 <style scoped>
-.item-edit-page {
-    background: #f5f7fa;
-    color: #172033;
-    min-height: 100vh;
-    padding: 32px;
-}
-
 .page-header,
 .content-panel {
     margin: 0 auto;
