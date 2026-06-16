@@ -40,8 +40,9 @@ Cas d'usage :
 - Vue liste dense.
 - Gestion média : upload d'images, fichier original, image optimisée WebP, miniature WebP, image principale et galerie.
 - Administration protégée : données, sauvegarde, médias et système.
-- Export JSON natif applicatif ou par collection.
-- Export CSV par collection.
+- Export JSON natif applicatif côté Administration.
+- Export JSON natif par collection disponible via API.
+- Export CSV utilisateur par collection.
 - Import JSON natif non destructif en mode `add_only`.
 - Audit média global en lecture seule.
 - Nettoyage média manuel guidé des candidats disque sûrs.
@@ -49,9 +50,11 @@ Cas d'usage :
 
 ## État du projet
 
-Version actuelle : **v0.11-lot9.0.4**
+Version actuelle : **v0.12-lot10.0.1**
 
 Le projet est utilisable pour des collections réelles, mais reste en développement actif. Certaines fonctions avancées sont encore prévues, notamment la restauration ZIP guidée, les imports CSV avancés, la gestion utilisateur plus fine et l'amélioration des rapports d'administration.
+
+Après connexion, l'utilisateur arrive directement sur `/collections`. Les routes authentifiées utilisent un layout global avec une barre supérieure persistante, la marque `CollectionMgnt` cliquable vers Collections et un menu utilisateur donnant accès à Administration, Mon compte à venir et Déconnexion. La route `/dashboard` reste disponible uniquement comme compatibilité et redirige vers `/collections`.
 
 ## Captures d'écran
 
@@ -61,7 +64,6 @@ Emplacement prévu :
 
 ```text
 docs/screenshots/
-├── dashboard.png
 ├── collections.png
 ├── item-list.png
 ├── item-detail.png
@@ -151,7 +153,7 @@ Des images prébuildées peuvent être publiées sur GitHub Container Registry :
 - Vue Router
 - Pinia
 - Vite
-- Interface authentifiée avec pages dashboard, collections, items, médias et administration
+- Interface authentifiée avec layout global, collections, items, médias et administration
 
 ### Backend
 
@@ -200,7 +202,7 @@ Elle contient :
 - `media/uploads/items/...` si des médias existent ;
 - `plugins/...` si le dossier plugins est disponible.
 
-La copie SQLite est créée de façon cohérente avant archivage. La sauvegarde ZIP ne fournit pas encore de restauration dans `v0.11-lot9.0.4`.
+La copie SQLite est créée de façon cohérente avant archivage. La sauvegarde ZIP ne fournit pas encore de restauration dans `v0.12-lot10.0.1`.
 
 ## Données locales et sécurité
 
@@ -280,8 +282,9 @@ Use cases:
 - Dense list view.
 - Media management: image upload, original file, optimized WebP image, WebP thumbnail, primary image and gallery.
 - Protected administration page: data, backup, media and system sections.
-- Native JSON export for the whole application or one collection.
-- CSV export per collection.
+- Native JSON export for the whole application from Administration.
+- Native JSON export per collection available through the API.
+- User CSV export per collection.
 - Non-destructive native JSON import in `add_only` mode.
 - Read-only global media audit.
 - Guided manual media cleanup for safe filesystem candidates.
@@ -289,9 +292,11 @@ Use cases:
 
 ## Project Status
 
-Current version: **v0.11-lot9.0.4**
+Current version: **v0.12-lot10.0.1**
 
 The project is usable for real collections, but it is still under active development. Planned areas include guided ZIP restore, advanced CSV imports, finer user management and improved administration reports.
+
+After login, users land directly on `/collections`. Authenticated routes use a global layout with a persistent top bar, the `CollectionMgnt` brand linking to Collections, and a user menu with Administration, a coming-soon account entry and sign out. The `/dashboard` route remains only as a compatibility redirect to `/collections`.
 
 ## Screenshots
 
@@ -301,7 +306,6 @@ Planned location:
 
 ```text
 docs/screenshots/
-├── dashboard.png
 ├── collections.png
 ├── item-list.png
 ├── item-detail.png
@@ -391,7 +395,7 @@ Prebuilt images may be published on GitHub Container Registry:
 - Vue Router
 - Pinia
 - Vite
-- Authenticated interface with dashboard, collections, items, media and administration pages
+- Authenticated interface with global layout, collections, items, media and administration pages
 
 ### Backend
 
@@ -440,7 +444,7 @@ It contains:
 - `media/uploads/items/...` when media files exist;
 - `plugins/...` when the plugins directory is available.
 
-The SQLite copy is created consistently before archiving. ZIP restore is not implemented yet in `v0.11-lot9.0.4`.
+The SQLite copy is created consistently before archiving. ZIP restore is not implemented yet in `v0.12-lot10.0.1`.
 
 ## Local Data and Security
 

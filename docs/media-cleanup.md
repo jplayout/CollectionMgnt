@@ -1,6 +1,6 @@
 # Cleanup Média
 
-État courant : v0.11-lot9.0.3.
+État courant : v0.12-lot10.0.1.
 
 ## Objectif
 
@@ -138,4 +138,4 @@ Le Lot 9.0.3 ne fournit pas :
 - régénération de fichiers
 - restauration de médias physiques
 - historique persistant des nettoyages
-- sauvegarde ZIP
+- restauration ZIP

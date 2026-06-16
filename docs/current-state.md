@@ -76,8 +76,8 @@ Frontend :
 
 - Page frontend protégée `/admin`
 - Accès depuis le menu utilisateur
-- Export JSON global présenté côté Administration via `GET /api/exports/application.json`
-- Import JSON natif CollectionMgnt depuis l'Administration via `POST /api/admin/imports/native-json`
+- Action `Exporter toutes les données` côté Administration via `GET /api/exports/application.json`
+- Action `Importer des données` côté Administration via `POST /api/admin/imports/native-json`
 - Import JSON natif en mode `add_only`, sans remplacement, sans suppression et sans restauration des IDs d'origine
 - Audit média lecture seule accessible côté Administration via `GET /api/admin/media-audit`
 - Cleanup média manuel guidé via preview obligatoire `POST /api/admin/media-cleanup/preview` puis exécution confirmée `POST /api/admin/media-cleanup/execute`
@@ -134,6 +134,7 @@ Frontend :
 - Layout global pour les routes authentifiées
 - Barre supérieure persistante avec marque `CollectionMgnt` cliquable vers Collections
 - Menu utilisateur avec avatar avec initiale, accès Administration, entrée Mon compte à venir et déconnexion
+- Arrivée authentifiée par défaut sur `/collections`
 - Redirection de `/dashboard` vers `/collections`
 - Authentification JWT
 - Restauration de session
@@ -178,9 +179,11 @@ Frontend :
 - Galerie médias frontend minimale
 - Page Administration MVP avec sections Données, Sauvegarde, Médias et Système
 - Accès Administration depuis le menu utilisateur
-- Import JSON natif CollectionMgnt depuis la section Données de l'Administration
+- Action `Importer des données` depuis la section Données de l'Administration
 - Téléchargement de sauvegarde ZIP complète depuis l'Administration
 - Export/import natif JSON et sauvegarde ZIP réservés à l'Administration
+- Aucun breadcrumb sur les pages racines Collections et Administration
+- Breadcrumbs conservés sur les pages hiérarchiques : collection, création, détail item et édition
 - Preview et exécution confirmée du cleanup média manuel guidé depuis la section Médias de l'Administration
 - Routes frontend protégées et redirections :
   - `/dashboard` redirige vers `/collections`
@@ -436,7 +439,7 @@ Variables disponibles :
 
 - Route protégée `/items/:id`
 - Page détail item minimale
-- Lien de test Dashboard vers `/items/1`
+- Lien de test temporaire vers `/items/1`
 - Galerie d'images pour un item
 - Upload image depuis le frontend
 - Chargement des thumbnails via `fetch` authentifié et `Blob`
@@ -452,7 +455,7 @@ Variables disponibles :
 - Route protégée `/collections`
 - Route protégée `/collections/:pluginId/items`
 - Liste des collections basée sur les plugins activés
-- Navigation Dashboard vers collections
+- Navigation initiale vers collections
 - Navigation collection vers liste items
 - Navigation item vers fiche item
 - Recherche simple par titre dans une collection
@@ -778,7 +781,7 @@ Variables disponibles :
 ### Lot 9.0.1 - Fondation Administration
 
 - Route frontend protégée `/admin`
-- Lien `Administration` depuis le Dashboard, sans refonte de la navigation globale
+- Lien `Administration` ajouté dans l'ancienne navigation d'accueil, sans refonte de la navigation globale
 - Section Données avec export JSON global via `GET /api/exports/application.json`
 - Section Médias avec lancement manuel de l'audit média lecture seule via `GET /api/admin/media-audit`
 - Résumé du dernier audit média exécuté dans la session de page
@@ -851,7 +854,8 @@ Variables disponibles :
 - Login sans redirect explicite redirigé vers `/collections`
 - Route `/dashboard` conservée comme compatibilité et redirigée vers `/collections`
 - Dashboard retiré du parcours utilisateur comme écran intermédiaire
-- Breadcrumbs utilisateur réalignés sans niveau Dashboard
+- Pas de breadcrumb sur les pages racines Collections et Administration
+- Breadcrumbs utilisateur conservés uniquement pour les pages hiérarchiques, sans niveau Dashboard
 - Aucun changement backend, API, SQLite, rôles utilisateur ou page profil fonctionnelle
 
 ### Lots suivants

@@ -1,6 +1,6 @@
 # Import JSON Natif
 
-État courant : v0.11-lot9.0.2.
+État courant : v0.12-lot10.0.1.
 
 ## Objectif
 
