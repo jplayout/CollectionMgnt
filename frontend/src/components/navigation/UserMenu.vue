@@ -3,6 +3,7 @@
         <button
             aria-haspopup="menu"
             :aria-expanded="isOpen"
+            aria-label="Menu utilisateur"
             class="user-menu-trigger"
             type="button"
             @click="toggleMenu"
