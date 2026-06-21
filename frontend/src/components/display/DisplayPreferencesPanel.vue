@@ -744,6 +744,7 @@ button {
     cursor: pointer;
     font: inherit;
     font-weight: 600;
+    min-height: 44px;
     padding: 8px 10px;
 }
 
@@ -774,7 +775,7 @@ button:disabled {
     gap: 10px;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 899px) {
     .panel-grid {
         grid-template-columns: 1fr;
     }
@@ -792,6 +793,19 @@ button:disabled {
     .order-actions,
     .primary-actions {
         flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 639px) {
+    .order-actions,
+    .panel-actions,
+    .primary-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    button {
+        width: 100%;
     }
 }
 </style>

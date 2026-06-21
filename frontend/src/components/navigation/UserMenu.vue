@@ -121,6 +121,7 @@ async function logout() {
 
 <style scoped>
 .user-menu {
+    display: flex;
     justify-self: end;
     position: relative;
 }
@@ -135,6 +136,8 @@ async function logout() {
     display: flex;
     font: inherit;
     font-weight: 700;
+    min-height: 42px;
+    min-width: 42px;
     padding: 4px;
 }
 
@@ -160,6 +163,7 @@ async function logout() {
     box-shadow: 0 12px 24px rgb(23 32 51 / 0.14);
     display: grid;
     gap: 4px;
+    max-width: calc(100vw - 32px);
     min-width: 190px;
     padding: 8px;
     position: absolute;
@@ -189,6 +193,7 @@ async function logout() {
     display: flex;
     font: inherit;
     justify-content: space-between;
+    min-height: 42px;
     padding: 9px 10px;
     text-align: left;
     text-decoration: none;
@@ -208,14 +213,10 @@ async function logout() {
     font-size: 0.8rem;
 }
 
-@media (max-width: 640px) {
-    .user-menu {
-        justify-self: start;
-    }
-
+@media (max-width: 639px) {
     .user-menu-panel {
-        left: 0;
-        right: auto;
+        max-width: calc(100vw - 24px);
+        min-width: min(220px, calc(100vw - 24px));
     }
 }
 </style>

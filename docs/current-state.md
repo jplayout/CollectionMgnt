@@ -184,6 +184,14 @@ Frontend :
 - Export/import natif JSON et sauvegarde ZIP réservés à l'Administration
 - Aucun breadcrumb sur les pages racines Collections et Administration
 - Breadcrumbs conservés sur les pages hiérarchiques : collection, création, détail item et édition
+- Fondations responsive frontend pour tablette/mobile :
+  - convention CSS documentée dans le layout : mobile jusqu'à 639px, tablette de 640px à 899px, desktop à partir de 900px
+  - paddings globaux ajustés par breakpoint
+  - menu utilisateur borné sur petit écran
+  - toolbar de liste items renforcée sur tablette/mobile
+  - formulaires dynamiques plus confortables au tactile
+  - Administration limitée à deux colonnes uniquement en desktop
+  - vue Liste responsive : table conservée sur desktop/tablette large, lignes compactes verticales sur mobile
 - Preview et exécution confirmée du cleanup média manuel guidé depuis la section Médias de l'Administration
 - Routes frontend protégées et redirections :
   - `/dashboard` redirige vers `/collections`
@@ -233,6 +241,7 @@ Frontend :
 - Pas encore de filtres range (`rating_min`, `rating_max`, `date_from`, `date_to`)
 - Pas encore d'édition des métadonnées de types non supportés
 - Certains types déclarés dans `docs/plugin-api.md` ne sont pas encore validés par le backend
+- Pas de refonte mobile complète : les fondations responsive sont en place, mais certains écrans avancés restent à affiner progressivement
 
 ---
 

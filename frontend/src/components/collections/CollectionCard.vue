@@ -61,4 +61,15 @@ h2 {
     margin: 0;
     overflow-wrap: anywhere;
 }
+
+@media (max-width: 639px) {
+    .collection-card {
+        min-height: 132px;
+        padding: 16px;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+    }
+}
 </style>

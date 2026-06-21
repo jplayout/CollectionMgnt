@@ -314,6 +314,7 @@ h2 {
     cursor: pointer;
     font: inherit;
     font-weight: 600;
+    min-height: 44px;
     padding: 10px 14px;
 }
 
@@ -346,7 +347,7 @@ button:disabled {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
 
-@media (max-width: 640px) {
+@media (max-width: 639px) {
     .media-gallery {
         padding: 18px;
     }
@@ -354,6 +355,10 @@ button:disabled {
     .gallery-header {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .gallery-header button {
+        width: 100%;
     }
 }
 </style>

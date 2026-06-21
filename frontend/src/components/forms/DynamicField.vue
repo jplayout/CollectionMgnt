@@ -328,6 +328,7 @@ textarea {
     border-radius: 6px;
     color: #172033;
     font: inherit;
+    min-height: 44px;
     padding: 10px 12px;
 }
 
@@ -340,7 +341,7 @@ textarea {
     border: 1px solid #b8c2d1;
     border-radius: 6px;
     display: flex;
-    min-height: 40px;
+    min-height: 44px;
     padding: 0 12px;
 }
 

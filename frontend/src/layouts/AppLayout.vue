@@ -24,9 +24,16 @@ from '../components/navigation/TopNavigation.vue';
     padding: 32px;
 }
 
-@media (max-width: 640px) {
+/* Responsive convention: mobile <= 639px, tablet 640px-899px, desktop >= 900px. */
+@media (max-width: 899px) {
     .app-content {
-        padding: 20px;
+        padding: 28px 24px;
+    }
+}
+
+@media (max-width: 639px) {
+    .app-content {
+        padding: 20px 16px;
     }
 }
 </style>

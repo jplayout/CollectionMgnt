@@ -942,6 +942,7 @@ input[type="file"] {
     border: 1px solid #b8c2d1;
     border-radius: 6px;
     font: inherit;
+    min-height: 44px;
     padding: 10px 12px;
 }
 
@@ -954,7 +955,7 @@ button {
     font: inherit;
     font-weight: 600;
     justify-self: start;
-    min-height: 42px;
+    min-height: 44px;
     padding: 10px 14px;
 }
 
@@ -993,6 +994,7 @@ dt {
 dd {
     font-weight: 700;
     margin: 0;
+    overflow-wrap: anywhere;
 }
 
 .state-text {
@@ -1014,6 +1016,7 @@ dd {
     display: grid;
     gap: 6px;
     margin: 0;
+    overflow-wrap: anywhere;
     padding-left: 18px;
 }
 
@@ -1054,9 +1057,30 @@ dd {
     overflow-wrap: anywhere;
 }
 
-@media (min-width: 820px) {
+@media (min-width: 900px) {
     .admin-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 639px) {
+    .admin-panel {
+        gap: 14px;
+        padding: 18px;
+    }
+
+    button {
+        justify-self: stretch;
+        width: 100%;
+    }
+
+    .button-row {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .candidate-row {
+        gap: 8px;
     }
 }
 </style>
