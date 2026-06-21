@@ -140,6 +140,29 @@ cd frontend
 npm run dev
 ```
 
+### Vérifications locales
+
+Backend :
+
+```bash
+cd backend
+npm run check:syntax
+npm test
+```
+
+Frontend :
+
+```bash
+cd frontend
+npm exec vite build
+```
+
+Qualité Git :
+
+```bash
+git diff --check
+```
+
 ### Docker et images
 
 Un déploiement local Docker/Podman est documenté dans `docs/deployment-docker.md`.
