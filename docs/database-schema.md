@@ -1,72 +1,90 @@
 # Database Schema
 
+Etat courant : v0.12-lot10.0.1.
+
+La source de verite SQL est `backend/src/database/schema.sql`.
+Ce document explique le modele pour comprendre la base sans ouvrir le fichier
+SQL.
+
 ## Philosophie
 
-Le moteur est entièrement générique.
+Le moteur est generique : aucun plugin ne cree de table dediee.
 
-Aucun plugin ne crée de table spécifique.
+Les collections sont representees par :
 
-Toutes les données métier sont stockées dans :
+- `plugins` pour les plugins installes ;
+- `items` pour les objets de collection ;
+- `items.metadata` pour les champs propres au plugin ;
+- `media` pour les metadonnees d'images ;
+- le filesystem sous `DATA_DIR/uploads/items` pour les fichiers physiques.
 
-- plugins
-- items
-- media
-- tags
-- loans
+SQLite est utilise avec `PRAGMA foreign_keys = ON`.
 
-Les données spécifiques à un plugin sont stockées dans le champ JSON `metadata`.
+## Relations Principales
 
----
+```text
+plugins 1 --- n items 1 --- n media
+                  |
+                  n
+               item_tags n --- 1 tags
 
-# Tables
+items 1 --- n loans
+users 1 --- n audit_logs
+settings : cle/valeur applicative
+schema_info : version de schema
+```
 
-## users
+## Tables
+
+### users
 
 Utilisateurs de l'application.
 
-| Champ | Type | Description |
-|---------|---------|---------|
-| id | INTEGER | Clé primaire |
-| username | TEXT | Nom utilisateur |
-| password_hash | TEXT | Mot de passe hashé |
-| preferred_language | TEXT | Langue |
-| created_at | DATETIME | Création |
-| updated_at | DATETIME | Modification |
+| Champ | Type | Contraintes | Description |
+| --- | --- | --- | --- |
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | Identifiant interne |
+| username | TEXT | NOT NULL UNIQUE | Nom utilisateur |
+| password_hash | TEXT | NOT NULL | Hash du mot de passe |
+| preferred_language | TEXT | DEFAULT 'fr' | Langue preferee |
+| created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | Date de creation |
+| updated_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | Date de modification |
 
----
+Le premier administrateur est cree automatiquement au bootstrap si la table est
+vide.
 
-## plugins
+### plugins
 
-Plugins installés.
+Plugins installes et synchronises depuis `PLUGINS_DIR`.
 
-| Champ | Type |
-|---------|---------|
-| id | INTEGER |
-| code | TEXT |
-| display_name | TEXT |
-| version | TEXT |
-| enabled | INTEGER |
-| supports_images | INTEGER |
-| supports_loans | INTEGER |
-| installed_at | DATETIME |
+| Champ | Type | Contraintes | Description |
+| --- | --- | --- | --- |
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | Identifiant interne |
+| code | TEXT | NOT NULL UNIQUE | Identifiant technique du plugin |
+| display_name | TEXT | NOT NULL | Nom affiche |
+| version | TEXT | NOT NULL | Version du plugin |
+| enabled | INTEGER | NOT NULL DEFAULT 1 | Plugin actif ou non |
+| supports_images | INTEGER | NOT NULL DEFAULT 1 | Capacite images |
+| supports_loans | INTEGER | NOT NULL DEFAULT 0 | Capacite prets |
+| installed_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | Date de synchronisation |
 
----
+`plugins.code` correspond a `manifest.id`.
 
-## items
+### items
 
 Objets de collection.
 
-| Champ | Type |
-|---------|---------|
-| id | INTEGER |
-| plugin_id | INTEGER |
-| title | TEXT |
-| description | TEXT |
-| metadata | JSON |
-| created_at | DATETIME |
-| updated_at | DATETIME |
+| Champ | Type | Contraintes | Description |
+| --- | --- | --- | --- |
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | Identifiant interne |
+| plugin_id | INTEGER | NOT NULL, FK plugins(id) | Plugin proprietaire |
+| title | TEXT | NOT NULL | Titre commun a tous les items |
+| description | TEXT | nullable | Description commune |
+| metadata | TEXT | NOT NULL DEFAULT '{}', CHECK(json_valid(metadata)) | Donnees propres au plugin |
+| created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | Date de creation |
+| updated_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | Date de modification |
 
-Le champ metadata contient les données spécifiques du plugin.
+`metadata` stocke un objet JSON valide. Les champs autorises et leur validation
+viennent du schema plugin charge par le backend.
 
 Exemple :
 
@@ -77,115 +95,148 @@ Exemple :
 }
 ```
 
----
+### media
 
-## media
+Metadonnees des images associees aux items.
 
-Images et documents.
+| Champ | Type | Contraintes | Description |
+| --- | --- | --- | --- |
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | Identifiant media |
+| item_id | INTEGER | NOT NULL, FK items(id) ON DELETE CASCADE | Item associe |
+| filename | TEXT | NOT NULL | Nom du fichier original |
+| mime_type | TEXT | NOT NULL | Type MIME original |
+| size | INTEGER | NOT NULL | Taille en octets |
+| is_primary | INTEGER | NOT NULL DEFAULT 0 | Image principale |
+| created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | Date d'ajout |
 
-| Champ | Type |
-|---------|---------|
-| id | INTEGER |
-| item_id | INTEGER |
-| filename | TEXT |
-| mime_type | TEXT |
-| size | INTEGER |
-| is_primary | INTEGER |
-| created_at | DATETIME |
+La cascade supprime les lignes `media` quand un item est supprime. Le nettoyage
+des fichiers physiques reste gere par le backend.
 
----
-
-## tags
+### tags
 
 Tags globaux.
 
-| Champ | Type |
-|---------|---------|
-| id | INTEGER |
-| name | TEXT |
+| Champ | Type | Contraintes | Description |
+| --- | --- | --- | --- |
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | Identifiant tag |
+| name | TEXT | NOT NULL UNIQUE | Nom du tag |
 
----
+### item_tags
 
-## item_tags
+Association plusieurs-a-plusieurs entre items et tags.
 
-Association N-N.
+| Champ | Type | Contraintes | Description |
+| --- | --- | --- | --- |
+| item_id | INTEGER | NOT NULL, FK items(id) ON DELETE CASCADE | Item |
+| tag_id | INTEGER | NOT NULL, FK tags(id) ON DELETE CASCADE | Tag |
 
-| Champ | Type |
-|---------|---------|
-| item_id | INTEGER |
-| tag_id | INTEGER |
+La cle primaire est composee de `(item_id, tag_id)`.
 
----
+### loans
 
-## loans
+Prets associes a un item.
 
-Gestion des prêts.
+| Champ | Type | Contraintes | Description |
+| --- | --- | --- | --- |
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | Identifiant pret |
+| item_id | INTEGER | NOT NULL, FK items(id) ON DELETE CASCADE | Item prete |
+| borrower | TEXT | NOT NULL | Emprunteur |
+| loan_date | DATETIME | NOT NULL | Date de pret |
+| return_date | DATETIME | nullable | Date de retour |
 
-| Champ | Type |
-|---------|---------|
-| id | INTEGER |
-| item_id | INTEGER |
-| borrower | TEXT |
-| loan_date | DATETIME |
-| return_date | DATETIME |
+### settings
 
----
+Cle/valeur applicative.
 
-## settings
+| Champ | Type | Contraintes | Description |
+| --- | --- | --- | --- |
+| key | TEXT | PRIMARY KEY | Cle technique |
+| value | TEXT | NOT NULL | Valeur, souvent JSON |
+| updated_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | Date de modification |
 
-Configuration globale.
+Utilisations connues :
 
-| Champ | Type |
-|---------|---------|
-| key | TEXT |
-| value | TEXT |
-| updated_at | DATETIME |
+- preferences d'affichage par plugin avec `displayPreferences.<pluginId>`.
 
-Exemples :
+Les settings sont exportes dans l'export JSON applicatif uniquement si leur cle
+n'est pas consideree sensible.
 
-- default_language
-- backup_frequency
-- retention_days
-- displayPreferences.games
+### audit_logs
 
-Les préférences d'affichage par plugin sont stockées dans cette table avec des clés `displayPreferences.<pluginId>`.
-La valeur est un document JSON contenant les préférences de liste et de fiche détail.
+Journal d'audit prevu pour evolutions futures.
 
----
+| Champ | Type | Contraintes | Description |
+| --- | --- | --- | --- |
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | Identifiant log |
+| user_id | INTEGER | FK users(id) ON DELETE SET NULL | Utilisateur associe |
+| action | TEXT | NOT NULL | Action |
+| entity_type | TEXT | NOT NULL | Type d'entite |
+| entity_id | INTEGER | nullable | Identifiant cible |
+| payload | TEXT | nullable | Donnees complementaires |
+| created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | Date du log |
 
-# Export Métier Et Sauvegarde Technique
+Cette table existe dans le schema mais n'est pas encore au coeur des flux
+fonctionnels.
 
-Le Lot 8.0.1 ajoute un export métier sans modifier le schéma SQLite.
+### schema_info
 
-L'export métier JSON/CSV lit les tables applicatives existantes et produit un format transportable :
+Version du schema SQLite.
 
-- plugins
-- schémas plugins chargés par l'application
-- settings applicatifs non sensibles
-- items avec `metadata` parsé
-- métadonnées `media`
+| Champ | Type | Contraintes | Description |
+| --- | --- | --- | --- |
+| version | INTEGER | NOT NULL | Version de schema |
 
-Les utilisateurs, `password_hash`, secrets et variables d'environnement ne font pas partie de l'export métier.
+Valeur initiale :
 
-Les fichiers médias physiques stockés sous `DATA_DIR/uploads/items/{itemId}` ne sont pas inclus dans le Lot 8.0.1.
-Les exports JSON référencent uniquement les métadonnées média et les URLs API.
+```sql
+INSERT INTO schema_info(version)
+VALUES (1);
+```
 
-Une sauvegarde complète technique reste distincte de l'export métier.
-Depuis le Lot 9.0.4, elle couvre SQLite et les fichiers médias physiques via une archive ZIP.
+Il n'existe pas encore de systeme de migrations versionnees complet.
 
-La sauvegarde ZIP inclut la DB complète sous `database/collection-manager.db`.
-Elle contient donc aussi les tables techniques comme `users`, y compris `password_hash`, et doit être conservée comme un fichier sensible.
+## Index Principaux
 
-La sauvegarde ZIP n'inclut pas `.env`, variables d'environnement, `JWT_SECRET`, secrets runtime, tokens ou credentials externes.
-Elle ne modifie pas le schéma SQLite et ne fournit pas de restauration dans le Lot 9.0.4.
+Index declares :
 
----
+- `idx_items_plugin_id` sur `items(plugin_id)` ;
+- `idx_item_tags_tag_id` sur `item_tags(tag_id)` ;
+- `idx_media_item_id` sur `media(item_id)` ;
+- `idx_loans_item_id` sur `loans(item_id)` ;
+- `idx_tags_name` sur `tags(name)` ;
+- `idx_audit_logs_created_at` sur `audit_logs(created_at)` ;
+- `idx_audit_logs_entity` sur `audit_logs(entity_type, entity_id)` ;
+- `idx_audit_logs_user` sur `audit_logs(user_id)` ;
+- `idx_items_title` sur `items(title)`.
 
-# Audit Média
+Ces index soutiennent les listes par plugin, les medias par item, les prets, les
+tags et les futurs audits applicatifs.
 
-Le Lot 8.1.1 ajoute un audit média lecture seule sans modifier le schéma SQLite.
+## Contraintes Importantes
 
-L'audit lit les tables existantes `items` et `media`, puis compare ces données aux fichiers présents sous `DATA_DIR/uploads/items`.
+- Les cles etrangeres SQLite sont activees.
+- `users.username` est unique.
+- `plugins.code` est unique.
+- `items.metadata` doit toujours etre du JSON valide.
+- Supprimer un item cascade vers `media`, `item_tags` et `loans`.
+- Supprimer un utilisateur conserve les logs en mettant `audit_logs.user_id` a
+  `NULL`.
+- Les fichiers media physiques ne sont pas garantis par SQLite ; audit et cleanup
+  comparent la DB et le disque.
 
-Aucune table, colonne, index ou contrainte n'est ajouté pour ce lot.
-L'audit ne supprime aucun fichier et ne modifie aucune ligne SQLite.
+## Export, Backup Et Sensibilite
+
+L'export JSON natif est un export metier :
+
+- il exclut les utilisateurs et `password_hash` ;
+- il exclut les secrets ;
+- il ne contient pas les fichiers media physiques.
+
+La sauvegarde ZIP est un instantane technique :
+
+- elle inclut `database/collection-manager.db` ;
+- elle inclut donc les utilisateurs et `password_hash` ;
+- elle doit etre traitee comme un fichier sensible.
+
+Voir `docs/export-system.md`, `docs/backup-zip.md` et
+`docs/backup-restore.md`.
