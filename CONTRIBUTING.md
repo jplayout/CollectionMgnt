@@ -54,12 +54,15 @@ feat: add native JSON import
 Backend :
 
 ```bash
-node --check <fichier>
+cd backend
+npm run check:syntax
+npm test
 ```
 
 Frontend :
 
 ```bash
+cd frontend
 npm exec vite build
 ```
 
@@ -69,7 +72,7 @@ Git :
 git diff --check
 ```
 
-Adaptez ces commandes au dossier concerné. Par exemple, lancez le build frontend depuis `frontend/`.
+La CI de Pull Request exécute les tests backend d'intégration avec le Node Test Runner natif, le build frontend Vite et la vérification whitespace. Les tests backend utilisent une base SQLite et un `DATA_DIR` temporaires.
 
 ## Documentation
 
@@ -173,12 +176,15 @@ feat: add native JSON import
 Backend:
 
 ```bash
-node --check <file>
+cd backend
+npm run check:syntax
+npm test
 ```
 
 Frontend:
 
 ```bash
+cd frontend
 npm exec vite build
 ```
 
@@ -188,7 +194,7 @@ Git:
 git diff --check
 ```
 
-Run these commands from the relevant directory. For example, run the frontend build from `frontend/`.
+The Pull Request CI runs backend integration tests with the native Node Test Runner, the Vite frontend build and the whitespace check. Backend tests use a temporary SQLite database and `DATA_DIR`.
 
 ## Documentation
 

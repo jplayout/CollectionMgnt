@@ -2,7 +2,9 @@
  "name": "collection-manager-backend",
  "type": "module",
  "scripts": {
-  "dev": "node src/server.js"
+  "check:syntax": "node scripts/check-syntax.js",
+  "dev": "node src/server.js",
+  "test": "node --test --test-concurrency=1 test/integration/*.test.js"
  },
  "dependencies": {
   "@fastify/cors": "^10",

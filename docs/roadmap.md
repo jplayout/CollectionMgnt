@@ -411,6 +411,17 @@ Version actuelle : v0.12-lot10.0.1.
 - Administration rendue plus lisible sur tablette/mobile, avec grille deux colonnes réservée au desktop
 - Aucun changement backend, API, SQLite, métier, captures README ou framework UI
 
+### Lot 10.1.1 - Livré
+
+- Fondation de tests automatisés backend avec le Node Test Runner natif
+- Helper de test Fastify avec DB SQLite temporaire, `DATA_DIR` temporaire, secret JWT de test, admin de test et plugins synchronisés
+- Tests d'intégration backend via Fastify `inject`
+- Couverture MVP : auth login succès/échec, route protégée sans token, résumé système admin, export JSON applicatif, import natif invalide, backup ZIP smoke test, audit média, cleanup média preview/execute et bootstrap app
+- Scripts backend `npm run check:syntax` et `npm test`
+- CI GitHub Actions renforcée : syntax backend, tests backend, build frontend, `git diff --check` et build Docker conservé
+- Documentation des commandes locales et du workflow PR
+- Aucun changement backend fonctionnel, API, SQLite métier, UX, Playwright, Vitest frontend, Cypress, Sonar, Codecov ou couverture de code
+
 ### Prochaine étape
 
 - Restauration ZIP guidée

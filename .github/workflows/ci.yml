@@ -26,7 +26,11 @@ jobs:
 
       - name: Check JavaScript syntax
         working-directory: backend
-        run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
+        run: npm run check:syntax
+
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test
 
   frontend:
     name: Frontend
@@ -51,12 +55,24 @@ jobs:
         working-directory: frontend
         run: npm exec vite build
 
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check whitespace
+        run: git diff --check
+
   docker:
     name: Docker
     runs-on: ubuntu-latest
     needs:
       - backend
       - frontend
+      - quality
 
     steps:
       - name: Checkout

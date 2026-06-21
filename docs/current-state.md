@@ -367,11 +367,15 @@ Variables disponibles :
 - Workflow GitHub Actions `.github/workflows/ci.yml`
 - Déclenchement sur push et pull request
 - Node 22 utilisé pour les vérifications backend et frontend
-- Backend : `npm ci` puis vérification syntaxique des fichiers JavaScript avec `node --check`
+- Backend : `npm ci`, `npm run check:syntax`, puis `npm test`
+- Tests backend d'intégration via le Node Test Runner natif et Fastify `inject`
+- Tests backend exécutés avec une base SQLite temporaire, un `DATA_DIR` temporaire, un secret JWT de test et un admin de test
+- Couverture MVP backend : auth login succès/échec, route protégée sans token, résumé système, export JSON applicatif, import natif invalide, backup ZIP smoke test, audit média et cleanup média smoke tests
 - Frontend : `npm ci` puis `npm exec vite build`
+- Qualité : `git diff --check`
 - Docker : build des images backend et frontend après succès des jobs Node
 - Aucune publication d'image par le workflow CI
-- Aucun test applicatif n'est lancé actuellement, faute de script `test` existant
+- Pas de Vitest frontend, Playwright, Cypress, couverture de code, Sonar ou Codecov dans ce lot
 - Workflow GitHub Actions `.github/workflows/publish.yml`
 - Publication GHCR automatique sur push `main`, tags `v*` et déclenchement manuel
 - Images publiées :
