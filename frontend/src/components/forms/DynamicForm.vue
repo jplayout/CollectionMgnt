@@ -735,6 +735,7 @@ textarea {
     border-radius: 6px;
     color: #172033;
     font: inherit;
+    min-height: 44px;
     padding: 10px 12px;
 }
 
@@ -778,6 +779,7 @@ button {
     cursor: pointer;
     font: inherit;
     font-weight: 600;
+    min-height: 44px;
     padding: 10px 14px;
 }
 
@@ -786,9 +788,24 @@ button:disabled {
     opacity: 0.7;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 899px) {
     .form-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 639px) {
+    .dynamic-form {
+        gap: 20px;
+        padding: 18px;
+    }
+
+    .actions {
+        display: grid;
+    }
+
+    button {
+        width: 100%;
     }
 }
 </style>

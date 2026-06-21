@@ -754,8 +754,13 @@ function formatDate(
     justify-content: space-between;
 }
 
+.header-row > div:first-child {
+    min-width: 0;
+}
+
 .header-actions {
     align-items: center;
+    flex-shrink: 0;
     display: flex;
     gap: 10px;
 }
@@ -799,6 +804,10 @@ function formatDate(
 h1,
 h2 {
     margin: 0;
+}
+
+h1 {
+    overflow-wrap: anywhere;
 }
 
 h2 {
@@ -886,10 +895,17 @@ dd {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
 
-@media (max-width: 720px) {
+@media (max-width: 899px) {
     .header-row {
         align-items: start;
         display: grid;
+    }
+}
+
+@media (max-width: 639px) {
+    .item-summary,
+    .state-panel {
+        padding: 18px;
     }
 
     .header-actions {

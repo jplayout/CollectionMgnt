@@ -246,6 +246,7 @@ async function submitItem(
 
 h1 {
     margin: 0;
+    overflow-wrap: anywhere;
 }
 
 .state-panel {
@@ -263,5 +264,11 @@ h1 {
 
 .state-panel.error {
     color: #b42318;
+}
+
+@media (max-width: 639px) {
+    .state-panel {
+        padding: 20px;
+    }
 }
 </style>

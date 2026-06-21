@@ -33,6 +33,9 @@ from './UserMenu.vue';
     color: #172033;
     font-size: 1.05rem;
     font-weight: 800;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     text-decoration: none;
     white-space: nowrap;
 }
@@ -41,10 +44,16 @@ from './UserMenu.vue';
     flex: 1;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 899px) {
+    .top-navigation {
+        padding: 0 24px;
+    }
+}
+
+@media (max-width: 639px) {
     .top-navigation {
         gap: 12px;
-        padding: 14px 20px;
+        padding: 14px 16px;
     }
 }
 </style>

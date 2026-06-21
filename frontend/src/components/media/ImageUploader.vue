@@ -205,6 +205,7 @@ input[type="file"] {
     border: 1px solid #b8c2d1;
     border-radius: 6px;
     font: inherit;
+    min-height: 44px;
     padding: 8px;
 }
 
@@ -212,7 +213,7 @@ input[type="file"] {
     align-items: center;
     display: flex;
     gap: 8px;
-    min-height: 38px;
+    min-height: 44px;
 }
 
 button {
@@ -224,6 +225,7 @@ button {
     font: inherit;
     font-weight: 600;
     justify-self: start;
+    min-height: 44px;
     padding: 10px 14px;
 }
 
@@ -237,9 +239,14 @@ button:disabled {
     margin: 0;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 639px) {
     .field-row {
         grid-template-columns: 1fr;
+    }
+
+    button {
+        justify-self: stretch;
+        width: 100%;
     }
 }
 </style>

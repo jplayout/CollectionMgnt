@@ -397,6 +397,20 @@ Version actuelle : v0.12-lot10.0.1.
 - Breadcrumbs conservés sur les pages hiérarchiques, sans niveau Dashboard
 - Aucun changement backend, API, SQLite, rôles utilisateur ou page profil fonctionnelle
 
+### Lot 10.1.0 - Livré
+
+- Fondations responsive frontend posées sans refonte mobile complète
+- Convention de breakpoints clarifiée autour de mobile jusqu'à 639px, tablette de 640px à 899px et desktop à partir de 900px
+- Paddings globaux du layout et de la top bar ajustés pour desktop, tablette et mobile
+- Menu utilisateur conservé dans le viewport mobile avec dropdown utilisable sur petit écran
+- Grille Collections légèrement assouplie sur mobile pour éviter des cartes trop massives
+- Toolbar des listes items renforcée pour tablette/mobile : recherche pleine largeur, contrôles en grille adaptée et boutons tactiles
+- Mode liste items conservé en table sur desktop/tablette large et rendu en lignes compactes verticales sur mobile
+- Panneau de préférences d'affichage et formulaires dynamiques améliorés pour les actions tactiles
+- Header de fiche item sécurisé contre les titres longs qui compriment les actions
+- Administration rendue plus lisible sur tablette/mobile, avec grille deux colonnes réservée au desktop
+- Aucun changement backend, API, SQLite, métier, captures README ou framework UI
+
 ### Prochaine étape
 
 - Restauration ZIP guidée

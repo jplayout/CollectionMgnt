@@ -149,4 +149,11 @@ h1 {
 .state-panel.error {
     color: #b42318;
 }
+
+@media (max-width: 639px) {
+    .collections-grid {
+        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+}
 </style>
