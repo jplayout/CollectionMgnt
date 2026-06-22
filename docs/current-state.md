@@ -406,6 +406,7 @@ Variables disponibles :
 - Workflow GitHub Actions `.github/workflows/ci.yml`
 - Déclenchement sur push et pull request
 - Workflow CodeQL `.github/workflows/codeql.yml` pour l'analyse JavaScript
+- Workflow Trivy `.github/workflows/trivy.yml` pour les scans de sécurité non bloquants
 - Dependabot configuré dans `.github/dependabot.yml` pour backend npm, frontend npm et GitHub Actions
 - Dette sécurité `@fastify/jwt` / `fast-jwt` traitée par migration vers `@fastify/jwt` `10.1.0`
 - Node 22 utilisé pour les vérifications backend et frontend
@@ -418,8 +419,8 @@ Variables disponibles :
 - E2E Chromium uniquement, avec dataset de démonstration et `DATA_DIR` temporaire pour éviter toute dépendance à une base locale existante
 - Qualité : `git diff --check`
 - Docker : build des images backend et frontend après succès des jobs Node
+- Trivy : scans dépendances backend/frontend et images conteneur en mode non bloquant, avec rapports visibles dans GitHub Actions
 - Aucune publication d'image par le workflow CI
-- Trivy non intégré dans ce lot pour éviter de fragiliser la CI
 - Pas de Vitest frontend, Cypress, couverture de code, Sonar, Codecov ou E2E exhaustifs dans ce lot
 - Workflow GitHub Actions `.github/workflows/publish.yml`
 - Publication GHCR automatique sur push `main`, tags `v*` et déclenchement manuel
