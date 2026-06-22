@@ -696,6 +696,40 @@ Support multilingue.
 - Gestion utilisateurs
 - Permissions fines
 
+## Sécurité - Travaux futurs
+
+### Priorité élevée
+
+- Revue et mise à jour de la dépendance JWT / fast-jwt.
+- Validation stricte de `JWT_SECRET` avec longueur minimale.
+- Journalisation des événements sensibles :
+  - connexion réussie
+  - connexion échouée
+  - téléchargement backup
+  - import
+  - media cleanup
+
+### Priorité moyenne
+
+- Renforcement des en-têtes HTTP avec Helmet ou équivalent.
+- Rate limiting complémentaire :
+  - backup
+  - import
+  - upload
+- Politique minimale de mot de passe.
+
+### Tooling / CI sécurité
+
+- Dependabot.
+- CodeQL.
+- `npm audit` en CI.
+- Scan de sécurité des images conteneur, par exemple Trivy.
+
+### Infrastructure
+
+- Docker hardening avec utilisateur non privilégié.
+- Monitoring basique des événements sensibles.
+
 ## Distribution
 
 - Installation plugins ZIP
