@@ -40,6 +40,18 @@ manuel.
 Le workflow CodeQL `.github/workflows/codeql.yml` analyse le code JavaScript sur
 push `main`, pull request et declenchement manuel.
 
+Le workflow Trivy `.github/workflows/trivy.yml` execute des scans de securite
+non bloquants sur push `main`, pull request et declenchement manuel :
+
+- scan des dependances backend npm ;
+- scan des dependances frontend npm ;
+- build des images backend et frontend ;
+- scan des images conteneur construites localement.
+
+Les scans Trivy publient un rapport lisible dans les logs GitHub Actions. Le
+mode initial est volontairement observatoire : `exit-code=0` et
+`continue-on-error`, sans blocage de CI sur vulnerabilite.
+
 Dependabot est configure dans `.github/dependabot.yml` pour verifier chaque
 semaine :
 
@@ -80,6 +92,17 @@ E2E Playwright :
 cd frontend
 npm run e2e:install
 npm run e2e
+```
+
+Trivy local, si le binaire est installe :
+
+```bash
+trivy fs --scanners vuln --vuln-type library backend
+trivy fs --scanners vuln --vuln-type library frontend
+docker build -t collectionmgnt-backend:trivy ./backend
+docker build -t collectionmgnt-frontend:trivy ./frontend
+trivy image --scanners vuln --vuln-type os,library collectionmgnt-backend:trivy
+trivy image --scanners vuln --vuln-type os,library collectionmgnt-frontend:trivy
 ```
 
 Qualite Git :
