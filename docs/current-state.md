@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot10.2.0
+Version : v0.12-lot10.2.1
 
 ## État du projet
 
@@ -30,12 +30,14 @@ Frontend :
 - API backend de préférences d'affichage par plugin via la table `settings`
 - Préférences d'affichage stockées avec les clés `displayPreferences.<pluginId>`
 - Préférences d'affichage sans modification des fichiers `fields.json`
-- Plugins standards enrichis pour préparer un futur dataset de démonstration :
+- Plugins standards enrichis pour supporter le dataset de démonstration :
   - `books`
   - `movies`
   - `consoles`
   - `others`
 - Aucun champ ISBN, EAN, UPC ou code-barres dans les plugins standards à ce stade
+- Dataset officiel de démonstration disponible dans `demo/datasets/collectionmgnt-demo-v1.json`
+- Dataset de démonstration importable via l'import JSON natif existant
 
 ### Collections
 
@@ -57,6 +59,7 @@ Frontend :
 - Export métier JSON par collection disponible via API
 - Export CSV simple par collection
 - Neutralisation des cellules CSV commencant par `=`, `+`, `-` ou `@` pour limiter l'interpretation comme formule par les tableurs
+- Dataset de démonstration : 5 collections, 94 items et tableaux `media` vides
 
 ### Médias
 
@@ -86,6 +89,7 @@ Frontend :
 - Action `Exporter toutes les données` côté Administration via `GET /api/exports/application.json`
 - Action `Importer des données` côté Administration via `POST /api/admin/imports/native-json`
 - Import JSON natif en mode `add_only`, sans remplacement, sans suppression et sans restauration des IDs d'origine
+- Dataset officiel de démonstration importable depuis Administration > Importer des données
 - Audit média lecture seule accessible côté Administration via `GET /api/admin/media-audit`
 - Cleanup média manuel guidé via preview obligatoire `POST /api/admin/media-cleanup/preview` puis exécution confirmée `POST /api/admin/media-cleanup/execute`
 - Cleanup limité aux fichiers orphelins, fichiers inattendus, dossiers item sans item DB et dossiers item réellement vides
@@ -98,6 +102,7 @@ Frontend :
 - Accès admin réservé aux utilisateurs `role=admin`
 - Réponse `401` si le JWT est absent ou invalide, `403` si l'utilisateur authentifié n'est pas admin
 - Aucun écran de gestion utilisateurs, aucun import CSV, aucune restauration ZIP, aucun cloud, aucune planification automatique et aucune sauvegarde incrémentale dans ce lot
+- Le dataset de démonstration ne contient aucun fichier média physique et sa réimportation crée de nouveaux items
 
 ### Authentification
 

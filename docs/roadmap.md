@@ -8,14 +8,15 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot10.2.0.
-- Dernier lot livré : Lot 10.2.0 - Plugin Metadata Enrichment.
+- Version actuelle : v0.12-lot10.2.1.
+- Dernier lot livré : Lot 10.2.1 - Demo Dataset.
 
 Capacités disponibles :
 
 - Authentification JWT avec modèle de rôles minimal `admin` / `user`.
 - Collections dynamiques pilotées par plugins déclaratifs.
-- Plugins standards enrichis pour préparer un futur dataset de démonstration.
+- Plugins standards enrichis pour supporter le dataset de démonstration.
+- Dataset officiel de démonstration importable via l'import JSON natif.
 - CRUD items, validation dynamique, recherche, filtres, pagination, tri et vues cartes/liste.
 - Préférences d'affichage par collection/plugin.
 - Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
@@ -682,6 +683,30 @@ Priorité moyenne :
 - Utilisation uniquement des types plugin déjà supportés : text, select, date, checkbox et rating
 - Aucun champ ISBN, EAN, UPC ou code-barres ajouté
 - Aucun changement backend, API, SQLite, frontend, média de démonstration ou dataset de démonstration dans ce lot
+
+#### Lot 10.2.1 - Demo Dataset - Livré
+
+- Dataset officiel de démonstration disponible dans `demo/datasets/collectionmgnt-demo-v1.json`
+- Documentation d'import disponible dans `demo/README.md`
+- Dataset au format JSON natif CollectionMgnt `collectionmgnt.native-export`, `format_version=1`
+- Scope applicatif `application` avec `includes_media_files=false`
+- 5 plugins existants inclus : `games`, `books`, `movies`, `consoles` et `others`
+- 5 schémas plugin inclus pour documenter les champs exportés
+- 5 collections incluses : jeux vidéo, livres, films, consoles et objets divers
+- 94 items au total :
+  - 36 jeux vidéo
+  - 18 livres
+  - 18 films
+  - 12 consoles
+  - 10 objets divers
+- Données prévues pour tester recherche, filtres, tri, pagination, vues cartes/liste, export CSV, export JSON, import JSON, backup et responsive
+- Cas de test inclus avec accents, apostrophes, guillemets, virgules, retours à la ligne, titres longs et caractères spéciaux
+- Quelques métadonnées commencent volontairement par `=`, `+`, `-` ou `@` pour vérifier la neutralisation CSV Formula Injection
+- Aucun média physique inclus
+- Tableaux `media` vides
+- Aucun script générateur ajouté au dépôt
+- Aucun dataset multiple ajouté
+- Aucun changement backend, frontend, API, SQLite, plugins, format export/import ou média dans ce lot
 
 ### Sécurité
 
