@@ -1,4 +1,6 @@
-import archiver from 'archiver';
+import {
+    ZipArchive
+} from 'archiver';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
@@ -124,15 +126,12 @@ export class BackupService {
             });
 
         const archive =
-            archiver(
-                'zip',
-                {
-                    zlib: {
-                        level:
-                            9
-                    }
+            new ZipArchive({
+                zlib: {
+                    level:
+                        9
                 }
-            );
+            });
 
         archive.append(
             JSON.stringify(
