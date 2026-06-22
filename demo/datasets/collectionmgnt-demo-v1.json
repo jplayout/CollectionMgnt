@@ -1,0 +1,1842 @@
+{
+  "format": "collectionmgnt.native-export",
+  "format_version": 1,
+  "exported_at": "2026-06-22T00:00:00.000Z",
+  "scope": "application",
+  "includes_media_files": false,
+  "plugins": [
+    {
+      "source_id": 1,
+      "code": "games",
+      "display_name": "Jeux Vidéo",
+      "version": "1.0.0",
+      "enabled": true,
+      "supports_images": true,
+      "supports_loans": true,
+      "installed_at": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "source_id": 2,
+      "code": "books",
+      "display_name": "Livres",
+      "version": "1.0.0",
+      "enabled": true,
+      "supports_images": true,
+      "supports_loans": false,
+      "installed_at": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "source_id": 3,
+      "code": "movies",
+      "display_name": "Films",
+      "version": "1.0.0",
+      "enabled": true,
+      "supports_images": true,
+      "supports_loans": false,
+      "installed_at": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "source_id": 4,
+      "code": "consoles",
+      "display_name": "Consoles",
+      "version": "1.0.0",
+      "enabled": true,
+      "supports_images": true,
+      "supports_loans": false,
+      "installed_at": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "source_id": 5,
+      "code": "others",
+      "display_name": "Autre",
+      "version": "1.0.0",
+      "enabled": true,
+      "supports_images": true,
+      "supports_loans": false,
+      "installed_at": "2026-06-22T00:00:00.000Z"
+    }
+  ],
+  "schemas": [
+    {
+      "plugin": "games",
+      "plugin_name": "Jeux Vidéo",
+      "version": "1.0.0",
+      "fields": [
+        {
+          "name": "platform",
+          "label": "Plateforme",
+          "type": "select",
+          "required": true,
+          "searchable": true,
+          "filterable": true,
+          "faceted": true
+        },
+        {
+          "name": "genre",
+          "label": "Genre",
+          "type": "text",
+          "searchable": true,
+          "filterable": true
+        },
+        {
+          "name": "publisher",
+          "label": "Éditeur",
+          "type": "text",
+          "searchable": true
+        },
+        {
+          "name": "developer",
+          "label": "Développeur",
+          "type": "text",
+          "searchable": true
+        },
+        {
+          "name": "release_date",
+          "label": "Date de sortie",
+          "type": "date",
+          "searchable": false,
+          "filterable": true
+        },
+        {
+          "name": "completed",
+          "label": "Terminé",
+          "type": "checkbox",
+          "searchable": false,
+          "filterable": true
+        },
+        {
+          "name": "rating",
+          "label": "Note",
+          "type": "rating",
+          "searchable": false,
+          "filterable": true
+        }
+      ]
+    },
+    {
+      "plugin": "books",
+      "plugin_name": "Livres",
+      "version": "1.0.0",
+      "fields": [
+        {
+          "name": "author",
+          "label": "Auteur",
+          "type": "text",
+          "required": false,
+          "searchable": true,
+          "filterable": true
+        },
+        {
+          "name": "genre",
+          "label": "Genre",
+          "type": "text",
+          "required": false,
+          "searchable": true,
+          "filterable": true,
+          "faceted": true
+        },
+        {
+          "name": "publisher",
+          "label": "Éditeur",
+          "type": "text",
+          "required": false,
+          "searchable": true,
+          "filterable": false
+        },
+        {
+          "name": "publication_date",
+          "label": "Date de publication",
+          "type": "date",
+          "required": false,
+          "searchable": false,
+          "filterable": true
+        },
+        {
+          "name": "read",
+          "label": "Lu",
+          "type": "checkbox",
+          "required": false,
+          "searchable": false,
+          "filterable": true
+        },
+        {
+          "name": "rating",
+          "label": "Note",
+          "type": "rating",
+          "required": false,
+          "searchable": false,
+          "filterable": true
+        }
+      ]
+    },
+    {
+      "plugin": "movies",
+      "plugin_name": "Films",
+      "version": "1.0.0",
+      "fields": [
+        {
+          "name": "director",
+          "label": "Réalisateur",
+          "type": "text",
+          "required": false,
+          "searchable": true,
+          "filterable": true
+        },
+        {
+          "name": "genre",
+          "label": "Genre",
+          "type": "text",
+          "required": false,
+          "searchable": true,
+          "filterable": true,
+          "faceted": true
+        },
+        {
+          "name": "format",
+          "label": "Format",
+          "type": "select",
+          "required": false,
+          "searchable": true,
+          "filterable": true,
+          "faceted": true,
+          "options": [
+            "DVD",
+            "Blu-ray",
+            "4K UHD",
+            "Digital",
+            "Cinema"
+          ]
+        },
+        {
+          "name": "release_date",
+          "label": "Date de sortie",
+          "type": "date",
+          "required": false,
+          "searchable": false,
+          "filterable": true
+        },
+        {
+          "name": "watched",
+          "label": "Vu",
+          "type": "checkbox",
+          "required": false,
+          "searchable": false,
+          "filterable": true
+        },
+        {
+          "name": "rating",
+          "label": "Note",
+          "type": "rating",
+          "required": false,
+          "searchable": false,
+          "filterable": true
+        }
+      ]
+    },
+    {
+      "plugin": "consoles",
+      "plugin_name": "Consoles",
+      "version": "1.0.0",
+      "fields": [
+        {
+          "name": "manufacturer",
+          "label": "Fabricant",
+          "type": "text",
+          "required": false,
+          "searchable": true,
+          "filterable": true,
+          "faceted": true
+        },
+        {
+          "name": "type",
+          "label": "Type",
+          "type": "select",
+          "required": false,
+          "searchable": true,
+          "filterable": true,
+          "faceted": true,
+          "options": [
+            "Home console",
+            "Handheld",
+            "Hybrid",
+            "Mini console",
+            "Computer"
+          ]
+        },
+        {
+          "name": "region",
+          "label": "Région",
+          "type": "select",
+          "required": false,
+          "searchable": true,
+          "filterable": true,
+          "faceted": true,
+          "options": [
+            "PAL",
+            "NTSC-J",
+            "NTSC-U",
+            "Region free"
+          ]
+        },
+        {
+          "name": "release_date",
+          "label": "Date de sortie",
+          "type": "date",
+          "required": false,
+          "searchable": false,
+          "filterable": true
+        },
+        {
+          "name": "condition",
+          "label": "État",
+          "type": "select",
+          "required": false,
+          "searchable": true,
+          "filterable": true,
+          "faceted": false,
+          "options": [
+            "Loose",
+            "Boxed",
+            "Complete",
+            "New"
+          ]
+        }
+      ]
+    },
+    {
+      "plugin": "others",
+      "plugin_name": "Autre",
+      "version": "1.0.0",
+      "fields": [
+        {
+          "name": "category",
+          "label": "Catégorie",
+          "type": "text",
+          "required": false,
+          "searchable": true,
+          "filterable": true,
+          "faceted": true
+        },
+        {
+          "name": "maker",
+          "label": "Fabricant / Créateur",
+          "type": "text",
+          "required": false,
+          "searchable": true,
+          "filterable": true
+        },
+        {
+          "name": "acquired_date",
+          "label": "Date d’acquisition",
+          "type": "date",
+          "required": false,
+          "searchable": false,
+          "filterable": true
+        },
+        {
+          "name": "condition",
+          "label": "État",
+          "type": "select",
+          "required": false,
+          "searchable": true,
+          "filterable": true,
+          "faceted": false,
+          "options": [
+            "New",
+            "Good",
+            "Used",
+            "Damaged"
+          ]
+        },
+        {
+          "name": "location",
+          "label": "Emplacement",
+          "type": "text",
+          "required": false,
+          "searchable": true,
+          "filterable": true
+        },
+        {
+          "name": "favorite",
+          "label": "Favori",
+          "type": "checkbox",
+          "required": false,
+          "searchable": false,
+          "filterable": true
+        }
+      ]
+    }
+  ],
+  "settings": [],
+  "collections": [
+    {
+      "plugin": "games",
+      "plugin_name": "Jeux Vidéo",
+      "items": [
+        {
+          "source_id": 1001,
+          "title": "Chroniques de Lumen",
+          "description": "Jeu de démonstration rpg pour tester recherche, tri et filtres sur PC.",
+          "metadata": {
+            "platform": "PC",
+            "genre": "RPG",
+            "publisher": "Square Enix",
+            "developer": "Square Enix",
+            "release_date": "2016-02-18",
+            "completed": true,
+            "rating": 18
+          },
+          "created_at": "2026-01-01T10:00:00.000Z",
+          "updated_at": "2026-02-01T15:30:00.000Z"
+        },
+        {
+          "source_id": 1002,
+          "title": "Circuit Neon: Turbo",
+          "description": "Jeu de démonstration racing pour tester recherche, tri et filtres sur Switch.",
+          "metadata": {
+            "platform": "Switch",
+            "genre": "Racing",
+            "publisher": "Nintendo",
+            "developer": "Nintendo",
+            "release_date": "2020-06-12",
+            "completed": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-02T10:00:00.000Z",
+          "updated_at": "2026-02-02T15:30:00.000Z"
+        },
+        {
+          "source_id": 1003,
+          "title": "Terres d’Émeraude",
+          "description": "Jeu de démonstration adventure pour tester recherche, tri et filtres sur PlayStation 5.",
+          "metadata": {
+            "platform": "PlayStation 5",
+            "genre": "Adventure",
+            "publisher": "Ubisoft",
+            "developer": "Ubisoft",
+            "release_date": "2021-11-05",
+            "completed": false,
+            "rating": 13
+          },
+          "created_at": "2026-01-03T10:00:00.000Z",
+          "updated_at": "2026-02-03T15:30:00.000Z"
+        },
+        {
+          "source_id": 1004,
+          "title": "Mecha Atelier",
+          "description": "Jeu de démonstration simulation pour tester recherche, tri et filtres sur Xbox Series.",
+          "metadata": {
+            "platform": "Xbox Series",
+            "genre": "Simulation",
+            "publisher": "Capcom",
+            "developer": "Capcom",
+            "release_date": "2019-04-20",
+            "completed": false,
+            "rating": 10
+          },
+          "created_at": "2026-01-04T10:00:00.000Z",
+          "updated_at": "2026-02-04T15:30:00.000Z"
+        },
+        {
+          "source_id": 1005,
+          "title": "Pixel Harbor",
+          "description": "Jeu de démonstration platformer pour tester recherche, tri et filtres sur Nintendo DS.",
+          "metadata": {
+            "platform": "Nintendo DS",
+            "genre": "Platformer",
+            "publisher": "Nintendo",
+            "developer": "Nintendo",
+            "release_date": "2008-09-26",
+            "completed": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-05T10:00:00.000Z",
+          "updated_at": "2026-02-05T15:30:00.000Z"
+        },
+        {
+          "source_id": 1006,
+          "title": "Station Minuit",
+          "description": "Jeu de démonstration puzzle pour tester recherche, tri et filtres sur Steam Deck.",
+          "metadata": {
+            "platform": "Steam Deck",
+            "genre": "Puzzle",
+            "publisher": "Valve",
+            "developer": "Valve",
+            "release_date": "2022-03-01",
+            "completed": false,
+            "rating": 13
+          },
+          "created_at": "2026-01-06T10:00:00.000Z",
+          "updated_at": "2026-02-06T15:30:00.000Z"
+        },
+        {
+          "source_id": 1007,
+          "title": "Les Ruines d’Opale",
+          "description": "Jeu de démonstration rpg pour tester recherche, tri et filtres sur Retro.",
+          "metadata": {
+            "platform": "Retro",
+            "genre": "RPG",
+            "publisher": "Square Enix",
+            "developer": "Square Enix",
+            "release_date": "1998-12-11",
+            "completed": true,
+            "rating": 20
+          },
+          "created_at": "2026-01-07T10:00:00.000Z",
+          "updated_at": "2026-02-07T15:30:00.000Z"
+        },
+        {
+          "source_id": 1008,
+          "title": "Wild Runner 2049",
+          "description": "Jeu de démonstration action pour tester recherche, tri et filtres sur PC.",
+          "metadata": {
+            "platform": "PC",
+            "genre": "Action",
+            "publisher": "Ubisoft",
+            "developer": "Ubisoft",
+            "release_date": "2018-07-13",
+            "completed": false,
+            "rating": 7
+          },
+          "created_at": "2026-01-08T10:00:00.000Z",
+          "updated_at": "2026-02-08T15:30:00.000Z"
+        },
+        {
+          "source_id": 1009,
+          "title": "Forêt Mécanique",
+          "description": "Jeu de démonstration strategy pour tester recherche, tri et filtres sur Switch.",
+          "metadata": {
+            "platform": "Switch",
+            "genre": "Strategy",
+            "publisher": "Nintendo",
+            "developer": "Nintendo",
+            "release_date": "2023-05-19",
+            "completed": true,
+            "rating": 18
+          },
+          "created_at": "2026-01-09T10:00:00.000Z",
+          "updated_at": "2026-02-09T15:30:00.000Z"
+        },
+        {
+          "source_id": 1010,
+          "title": "Portail Gamma",
+          "description": "Jeu de démonstration puzzle pour tester recherche, tri et filtres sur PC.",
+          "metadata": {
+            "platform": "PC",
+            "genre": "Puzzle",
+            "publisher": "Valve",
+            "developer": "Valve",
+            "release_date": "2007-10-10",
+            "completed": true,
+            "rating": 20
+          },
+          "created_at": "2026-01-10T10:00:00.000Z",
+          "updated_at": "2026-02-10T15:30:00.000Z"
+        },
+        {
+          "source_id": 1011,
+          "title": "Dragon & Acier",
+          "description": "Jeu de démonstration rpg pour tester recherche, tri et filtres sur PlayStation 5.",
+          "metadata": {
+            "platform": "PlayStation 5",
+            "genre": "RPG",
+            "publisher": "Capcom",
+            "developer": "Capcom",
+            "release_date": "2024-01-26",
+            "completed": false,
+            "rating": 16
+          },
+          "created_at": "2026-01-11T10:00:00.000Z",
+          "updated_at": "2026-02-11T15:30:00.000Z"
+        },
+        {
+          "source_id": 1012,
+          "title": "Cobalt Rally",
+          "description": "Jeu de démonstration racing pour tester recherche, tri et filtres sur Xbox Series.",
+          "metadata": {
+            "platform": "Xbox Series",
+            "genre": "Racing",
+            "publisher": "Ubisoft",
+            "developer": "Ubisoft",
+            "release_date": "2020-10-02",
+            "completed": true,
+            "rating": 13
+          },
+          "created_at": "2026-01-12T10:00:00.000Z",
+          "updated_at": "2026-02-12T15:30:00.000Z"
+        },
+        {
+          "source_id": 1013,
+          "title": "L’Île des Nuages",
+          "description": "Jeu de démonstration adventure pour tester recherche, tri et filtres sur Switch.",
+          "metadata": {
+            "platform": "Switch",
+            "genre": "Adventure",
+            "publisher": "Nintendo",
+            "developer": "Nintendo",
+            "release_date": "2017-03-03",
+            "completed": true,
+            "rating": 20
+          },
+          "created_at": "2026-01-13T10:00:00.000Z",
+          "updated_at": "2026-02-13T15:30:00.000Z"
+        },
+        {
+          "source_id": 1014,
+          "title": "Mars Colony Manager",
+          "description": "Jeu de démonstration simulation pour tester recherche, tri et filtres sur PC.",
+          "metadata": {
+            "platform": "PC",
+            "genre": "Simulation",
+            "publisher": "Valve",
+            "developer": "Valve",
+            "release_date": "2021-08-17",
+            "completed": false,
+            "rating": 10
+          },
+          "created_at": "2026-01-14T10:00:00.000Z",
+          "updated_at": "2026-02-14T15:30:00.000Z"
+        },
+        {
+          "source_id": 1015,
+          "title": "Pocket Quest DX",
+          "description": "Jeu de démonstration rpg pour tester recherche, tri et filtres sur Nintendo DS.",
+          "metadata": {
+            "platform": "Nintendo DS",
+            "genre": "RPG",
+            "publisher": "Nintendo",
+            "developer": "Nintendo",
+            "release_date": "2006-04-21",
+            "completed": true,
+            "rating": 13
+          },
+          "created_at": "2026-01-15T10:00:00.000Z",
+          "updated_at": "2026-02-15T15:30:00.000Z"
+        },
+        {
+          "source_id": 1016,
+          "title": "Shadow Line",
+          "description": "Jeu de démonstration action pour tester recherche, tri et filtres sur PlayStation 5.",
+          "metadata": {
+            "platform": "PlayStation 5",
+            "genre": "Action",
+            "publisher": "Capcom",
+            "developer": "Capcom",
+            "release_date": "2022-10-28",
+            "completed": false,
+            "rating": 16
+          },
+          "created_at": "2026-01-16T10:00:00.000Z",
+          "updated_at": "2026-02-16T15:30:00.000Z"
+        },
+        {
+          "source_id": 1017,
+          "title": "Archives Zéro",
+          "description": "Jeu de démonstration strategy pour tester recherche, tri et filtres sur Steam Deck.",
+          "metadata": {
+            "platform": "Steam Deck",
+            "genre": "Strategy",
+            "publisher": "Square Enix",
+            "developer": "Square Enix",
+            "release_date": "2015-01-30",
+            "completed": false,
+            "rating": 7
+          },
+          "created_at": "2026-01-17T10:00:00.000Z",
+          "updated_at": "2026-02-17T15:30:00.000Z"
+        },
+        {
+          "source_id": 1018,
+          "title": "Retro Galaxy 88",
+          "description": "Jeu de démonstration platformer pour tester recherche, tri et filtres sur Retro.",
+          "metadata": {
+            "platform": "Retro",
+            "genre": "Platformer",
+            "publisher": "Nintendo",
+            "developer": "Nintendo",
+            "release_date": "1988-05-12",
+            "completed": true,
+            "rating": 18
+          },
+          "created_at": "2026-01-18T10:00:00.000Z",
+          "updated_at": "2026-02-18T15:30:00.000Z"
+        },
+        {
+          "source_id": 1019,
+          "title": "Hydra Protocol",
+          "description": "Jeu de démonstration action pour tester recherche, tri et filtres sur PC.",
+          "metadata": {
+            "platform": "PC",
+            "genre": "Action",
+            "publisher": "Capcom",
+            "developer": "Capcom",
+            "release_date": "2014-09-09",
+            "completed": false,
+            "rating": 13
+          },
+          "created_at": "2026-01-19T10:00:00.000Z",
+          "updated_at": "2026-02-19T15:30:00.000Z"
+        },
+        {
+          "source_id": 1020,
+          "title": "Cité Fractale",
+          "description": "Jeu de démonstration puzzle pour tester recherche, tri et filtres sur Switch.",
+          "metadata": {
+            "platform": "Switch",
+            "genre": "Puzzle",
+            "publisher": "Valve",
+            "developer": "Valve",
+            "release_date": "2019-12-03",
+            "completed": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-20T10:00:00.000Z",
+          "updated_at": "2026-02-20T15:30:00.000Z"
+        },
+        {
+          "source_id": 1021,
+          "title": "Vallée des Échos",
+          "description": "Jeu de démonstration adventure pour tester recherche, tri et filtres sur PlayStation 5.",
+          "metadata": {
+            "platform": "PlayStation 5",
+            "genre": "Adventure",
+            "publisher": "Ubisoft",
+            "developer": "Ubisoft",
+            "release_date": "2023-09-14",
+            "completed": false,
+            "rating": 13
+          },
+          "created_at": "2026-01-21T10:00:00.000Z",
+          "updated_at": "2026-02-21T15:30:00.000Z"
+        },
+        {
+          "source_id": 1022,
+          "title": "Dungeon Bistro",
+          "description": "Jeu de démonstration simulation pour tester recherche, tri et filtres sur PC.",
+          "metadata": {
+            "platform": "PC",
+            "genre": "Simulation",
+            "publisher": "Square Enix",
+            "developer": "Square Enix",
+            "release_date": "2020-02-29",
+            "completed": true,
+            "rating": 10
+          },
+          "created_at": "2026-01-22T10:00:00.000Z",
+          "updated_at": "2026-02-22T15:30:00.000Z"
+        },
+        {
+          "source_id": 1023,
+          "title": "Star Courier",
+          "description": "Jeu de démonstration strategy pour tester recherche, tri et filtres sur Xbox Series.",
+          "metadata": {
+            "platform": "Xbox Series",
+            "genre": "Strategy",
+            "publisher": "Valve",
+            "developer": "Valve",
+            "release_date": "2021-06-25",
+            "completed": false,
+            "rating": 7
+          },
+          "created_at": "2026-01-23T10:00:00.000Z",
+          "updated_at": "2026-02-23T15:30:00.000Z"
+        },
+        {
+          "source_id": 1024,
+          "title": "Mini Kart Avenue",
+          "description": "Jeu de démonstration racing pour tester recherche, tri et filtres sur Switch.",
+          "metadata": {
+            "platform": "Switch",
+            "genre": "Racing",
+            "publisher": "Nintendo",
+            "developer": "Nintendo",
+            "release_date": "2018-04-27",
+            "completed": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-24T10:00:00.000Z",
+          "updated_at": "2026-02-24T15:30:00.000Z"
+        },
+        {
+          "source_id": 1025,
+          "title": "Le Dernier Rempart",
+          "description": "Jeu de démonstration rpg pour tester recherche, tri et filtres sur PlayStation 5.",
+          "metadata": {
+            "platform": "PlayStation 5",
+            "genre": "RPG",
+            "publisher": "Ubisoft",
+            "developer": "Ubisoft",
+            "release_date": "2022-02-18",
+            "completed": false,
+            "rating": 18
+          },
+          "created_at": "2026-01-25T10:00:00.000Z",
+          "updated_at": "2026-02-25T15:30:00.000Z"
+        },
+        {
+          "source_id": 1026,
+          "title": "Astro Forge",
+          "description": "Jeu de démonstration simulation pour tester recherche, tri et filtres sur Steam Deck.",
+          "metadata": {
+            "platform": "Steam Deck",
+            "genre": "Simulation",
+            "publisher": "Valve",
+            "developer": "Valve",
+            "release_date": "2022-12-08",
+            "completed": false,
+            "rating": 13
+          },
+          "created_at": "2026-01-26T10:00:00.000Z",
+          "updated_at": "2026-02-26T15:30:00.000Z"
+        },
+        {
+          "source_id": 1027,
+          "title": "Sable Rouge",
+          "description": "Jeu de démonstration adventure pour tester recherche, tri et filtres sur PC.",
+          "metadata": {
+            "platform": "PC",
+            "genre": "Adventure",
+            "publisher": "Capcom",
+            "developer": "Capcom",
+            "release_date": "2013-11-22",
+            "completed": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-27T10:00:00.000Z",
+          "updated_at": "2026-02-27T15:30:00.000Z"
+        },
+        {
+          "source_id": 1028,
+          "title": "Orbital Chef",
+          "description": "Jeu de démonstration puzzle pour tester recherche, tri et filtres sur Switch.",
+          "metadata": {
+            "platform": "Switch",
+            "genre": "Puzzle",
+            "publisher": "Nintendo",
+            "developer": "Nintendo",
+            "release_date": "2021-03-15",
+            "completed": false,
+            "rating": 7
+          },
+          "created_at": "2026-01-28T10:00:00.000Z",
+          "updated_at": "2026-02-28T15:30:00.000Z"
+        },
+        {
+          "source_id": 1029,
+          "title": "Castle Byte",
+          "description": "Jeu de démonstration platformer pour tester recherche, tri et filtres sur Retro.",
+          "metadata": {
+            "platform": "Retro",
+            "genre": "Platformer",
+            "publisher": "Capcom",
+            "developer": "Capcom",
+            "release_date": "1994-06-03",
+            "completed": true,
+            "rating": 13
+          },
+          "created_at": "2026-01-01T10:00:00.000Z",
+          "updated_at": "2026-02-01T15:30:00.000Z"
+        },
+        {
+          "source_id": 1030,
+          "title": "Northwind Tactics",
+          "description": "Jeu de démonstration strategy pour tester recherche, tri et filtres sur PC.",
+          "metadata": {
+            "platform": "PC",
+            "genre": "Strategy",
+            "publisher": "Ubisoft",
+            "developer": "Ubisoft",
+            "release_date": "2016-10-07",
+            "completed": false,
+            "rating": 10
+          },
+          "created_at": "2026-01-02T10:00:00.000Z",
+          "updated_at": "2026-02-02T15:30:00.000Z"
+        },
+        {
+          "source_id": 1031,
+          "title": "Éclipse Finale",
+          "description": "Jeu de démonstration action pour tester recherche, tri et filtres sur Xbox Series.",
+          "metadata": {
+            "platform": "Xbox Series",
+            "genre": "Action",
+            "publisher": "Square Enix",
+            "developer": "Square Enix",
+            "release_date": "2023-04-04",
+            "completed": true,
+            "rating": 18
+          },
+          "created_at": "2026-01-03T10:00:00.000Z",
+          "updated_at": "2026-02-03T15:30:00.000Z"
+        },
+        {
+          "source_id": 1032,
+          "title": "Puzzle Café",
+          "description": "Jeu de démonstration puzzle pour tester recherche, tri et filtres sur Nintendo DS.",
+          "metadata": {
+            "platform": "Nintendo DS",
+            "genre": "Puzzle",
+            "publisher": "Nintendo",
+            "developer": "Nintendo",
+            "release_date": "2009-02-13",
+            "completed": false,
+            "rating": 4
+          },
+          "created_at": "2026-01-04T10:00:00.000Z",
+          "updated_at": "2026-02-04T15:30:00.000Z"
+        },
+        {
+          "source_id": 1033,
+          "title": "Steam Orchard",
+          "description": "Jeu de démonstration simulation pour tester recherche, tri et filtres sur Steam Deck.",
+          "metadata": {
+            "platform": "Steam Deck",
+            "genre": "Simulation",
+            "publisher": "Valve",
+            "developer": "@Studio Demo",
+            "release_date": "2024-03-22",
+            "completed": false,
+            "rating": 13
+          },
+          "created_at": "2026-01-05T10:00:00.000Z",
+          "updated_at": "2026-02-05T15:30:00.000Z"
+        },
+        {
+          "source_id": 1034,
+          "title": "La \"Dernière\" Cartouche",
+          "description": "Jeu de démonstration action pour tester recherche, tri et filtres sur Retro.",
+          "metadata": {
+            "platform": "Retro",
+            "genre": "Action",
+            "publisher": "Capcom",
+            "developer": "Capcom",
+            "release_date": "1991-09-20",
+            "completed": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-06T10:00:00.000Z",
+          "updated_at": "2026-02-06T15:30:00.000Z"
+        },
+        {
+          "source_id": 1035,
+          "title": "Paris, Minuit",
+          "description": "Jeu de démonstration adventure pour tester recherche, tri et filtres sur PC.",
+          "metadata": {
+            "platform": "PC",
+            "genre": "Adventure",
+            "publisher": "Ubisoft",
+            "developer": "Ubisoft",
+            "release_date": "2017-12-01",
+            "completed": false,
+            "rating": 10
+          },
+          "created_at": "2026-01-07T10:00:00.000Z",
+          "updated_at": "2026-02-07T15:30:00.000Z"
+        },
+        {
+          "source_id": 1036,
+          "title": "Voyage Très Long au-delà des Archives Perdues (édition complète)",
+          "description": "Un titre volontairement long pour vérifier les cartes, la liste et les retours à la ligne dans les exports.\nLa seconde ligne contient des virgules, des guillemets \"démo\" et des accents.",
+          "metadata": {
+            "platform": "Switch",
+            "genre": "RPG",
+            "publisher": "Square Enix",
+            "developer": "Square Enix",
+            "release_date": "2024-05-10",
+            "completed": false,
+            "rating": 18
+          },
+          "created_at": "2026-01-08T10:00:00.000Z",
+          "updated_at": "2026-02-08T15:30:00.000Z"
+        }
+      ],
+      "media": []
+    },
+    {
+      "plugin": "books",
+      "plugin_name": "Livres",
+      "items": [
+        {
+          "source_id": 2001,
+          "title": "Les Jardins d’Orion",
+          "description": "Livre de démonstration classé en Science-fiction pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Amélie N’Guessan",
+            "genre": "Science-fiction",
+            "publisher": "Gallimard",
+            "publication_date": "1968-03-12",
+            "read": true,
+            "rating": 18
+          },
+          "created_at": "2026-01-01T10:00:00.000Z",
+          "updated_at": "2026-02-01T15:30:00.000Z"
+        },
+        {
+          "source_id": 2002,
+          "title": "La Ville sous la pluie",
+          "description": "Livre de démonstration classé en Roman pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Julien Darras",
+            "genre": "Roman",
+            "publisher": "Folio",
+            "publication_date": "1984-09-02",
+            "read": true,
+            "rating": 13
+          },
+          "created_at": "2026-01-02T10:00:00.000Z",
+          "updated_at": "2026-02-02T15:30:00.000Z"
+        },
+        {
+          "source_id": 2003,
+          "title": "Traité des collections modestes",
+          "description": "Livre de démonstration classé en Essai pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Élodie Martin",
+            "genre": "Essai",
+            "publisher": "Actes Sud",
+            "publication_date": "2021-01-15",
+            "read": false,
+            "rating": 10
+          },
+          "created_at": "2026-01-03T10:00:00.000Z",
+          "updated_at": "2026-02-03T15:30:00.000Z"
+        },
+        {
+          "source_id": 2004,
+          "title": "Minuit, boulevard des ombres",
+          "description": "Livre de démonstration classé en Polar pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Marc Lenoir",
+            "genre": "Polar",
+            "publisher": "Pocket",
+            "publication_date": "2004-10-08",
+            "read": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-04T10:00:00.000Z",
+          "updated_at": "2026-02-04T15:30:00.000Z"
+        },
+        {
+          "source_id": 2005,
+          "title": "Le Royaume des Lignes",
+          "description": "Livre de démonstration classé en Fantasy pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Sofia d’Ambre",
+            "genre": "Fantasy",
+            "publisher": "Penguin",
+            "publication_date": "1999-06-18",
+            "read": true,
+            "rating": 20
+          },
+          "created_at": "2026-01-05T10:00:00.000Z",
+          "updated_at": "2026-02-05T15:30:00.000Z"
+        },
+        {
+          "source_id": 2006,
+          "title": "Carnets de la Lune rousse",
+          "description": "Livre de démonstration classé en Science-fiction pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Claire O’Neil",
+            "genre": "Science-fiction",
+            "publisher": "Folio",
+            "publication_date": "1977-05-22",
+            "read": false,
+            "rating": 13
+          },
+          "created_at": "2026-01-06T10:00:00.000Z",
+          "updated_at": "2026-02-06T15:30:00.000Z"
+        },
+        {
+          "source_id": 2007,
+          "title": "Un été à Montréal",
+          "description": "Livre de démonstration classé en Roman pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Nadia Bélanger",
+            "genre": "Roman",
+            "publisher": "Gallimard",
+            "publication_date": "2016-08-30",
+            "read": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-07T10:00:00.000Z",
+          "updated_at": "2026-02-07T15:30:00.000Z"
+        },
+        {
+          "source_id": 2008,
+          "title": "Bulles & Sortilèges",
+          "description": "Livre de démonstration classé en Bande dessinée pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Hugo Pérez",
+            "genre": "Bande dessinée",
+            "publisher": "Actes Sud",
+            "publication_date": "2020-11-06",
+            "read": true,
+            "rating": 13
+          },
+          "created_at": "2026-01-08T10:00:00.000Z",
+          "updated_at": "2026-02-08T15:30:00.000Z"
+        },
+        {
+          "source_id": 2009,
+          "title": "L’Horloge et le Dragon",
+          "description": "Livre de démonstration classé en Fantasy pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Anaïs Keravec",
+            "genre": "Fantasy",
+            "publisher": "Pocket",
+            "publication_date": "1956-02-14",
+            "read": false,
+            "rating": 18
+          },
+          "created_at": "2026-01-09T10:00:00.000Z",
+          "updated_at": "2026-02-09T15:30:00.000Z"
+        },
+        {
+          "source_id": 2010,
+          "title": "Le Bureau des choses perdues",
+          "description": "Livre de démonstration classé en Roman pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Mathieu Ricard",
+            "genre": "Roman",
+            "publisher": "Folio",
+            "publication_date": "2011-04-09",
+            "read": true,
+            "rating": 10
+          },
+          "created_at": "2026-01-10T10:00:00.000Z",
+          "updated_at": "2026-02-10T15:30:00.000Z"
+        },
+        {
+          "source_id": 2011,
+          "title": "Archives du futur proche",
+          "description": "Livre de démonstration classé en Science-fiction pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Léa Garnier",
+            "genre": "Science-fiction",
+            "publisher": "Penguin",
+            "publication_date": "2024-02-20",
+            "read": false,
+            "rating": 16
+          },
+          "created_at": "2026-01-11T10:00:00.000Z",
+          "updated_at": "2026-02-11T15:30:00.000Z"
+        },
+        {
+          "source_id": 2012,
+          "title": "Le Dossier \"Aurore\"",
+          "description": "Livre de démonstration classé en Polar pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Inès Moreau",
+            "genre": "Polar",
+            "publisher": "Gallimard",
+            "publication_date": "1992-12-01",
+            "read": true,
+            "rating": 13
+          },
+          "created_at": "2026-01-12T10:00:00.000Z",
+          "updated_at": "2026-02-12T15:30:00.000Z"
+        },
+        {
+          "source_id": 2013,
+          "title": "Petite histoire du pixel",
+          "description": "Livre de démonstration classé en Essai pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Étienne Faure",
+            "genre": "Essai",
+            "publisher": "=Publisher Test",
+            "publication_date": "2018-07-07",
+            "read": true,
+            "rating": 10
+          },
+          "created_at": "2026-01-13T10:00:00.000Z",
+          "updated_at": "2026-02-13T15:30:00.000Z"
+        },
+        {
+          "source_id": 2014,
+          "title": "Ligne claire, nuit noire",
+          "description": "Livre de démonstration classé en Bande dessinée pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Noémie Girard",
+            "genre": "Bande dessinée",
+            "publisher": "Actes Sud",
+            "publication_date": "2009-03-03",
+            "read": true,
+            "rating": 7
+          },
+          "created_at": "2026-01-14T10:00:00.000Z",
+          "updated_at": "2026-02-14T15:30:00.000Z"
+        },
+        {
+          "source_id": 2015,
+          "title": "La Maison aux virgules, et autres récits",
+          "description": "Livre de démonstration classé en Roman pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Sarah Benali",
+            "genre": "Roman",
+            "publisher": "Pocket",
+            "publication_date": "1972-01-19",
+            "read": false,
+            "rating": 13
+          },
+          "created_at": "2026-01-15T10:00:00.000Z",
+          "updated_at": "2026-02-15T15:30:00.000Z"
+        },
+        {
+          "source_id": 2016,
+          "title": "Forêt d’acier",
+          "description": "Livre de démonstration classé en Fantasy pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Malo Kerouac",
+            "genre": "Fantasy",
+            "publisher": "Penguin",
+            "publication_date": "1988-05-25",
+            "read": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-16T10:00:00.000Z",
+          "updated_at": "2026-02-16T15:30:00.000Z"
+        },
+        {
+          "source_id": 2017,
+          "title": "Éloge du rangement imparfait",
+          "description": "Livre de démonstration classé en Essai pour tester recherche auteur, éditeur et filtres.",
+          "metadata": {
+            "author": "Pauline Dufour",
+            "genre": "Essai",
+            "publisher": "Folio",
+            "publication_date": "2023-09-14",
+            "read": false,
+            "rating": 4
+          },
+          "created_at": "2026-01-17T10:00:00.000Z",
+          "updated_at": "2026-02-17T15:30:00.000Z"
+        },
+        {
+          "source_id": 2018,
+          "title": "Chroniques très complètes d’une bibliothèque minuscule (édition annotée)",
+          "description": "Description longue avec accents, apostrophes et ponctuation : une étagère, trois carnets, puis une surprise.\nCette seconde ligne sert aussi à vérifier les exports CSV et JSON.",
+          "metadata": {
+            "author": "Zoé d’Artois",
+            "genre": "Bande dessinée",
+            "publisher": "Gallimard",
+            "publication_date": "2024-04-05",
+            "read": true,
+            "rating": 18
+          },
+          "created_at": "2026-01-18T10:00:00.000Z",
+          "updated_at": "2026-02-18T15:30:00.000Z"
+        }
+      ],
+      "media": []
+    },
+    {
+      "plugin": "movies",
+      "plugin_name": "Films",
+      "items": [
+        {
+          "source_id": 3001,
+          "title": "Nébuleuse 17",
+          "description": "Film de démonstration en format 4K UHD, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Luc Bessonnet",
+            "genre": "Science-fiction",
+            "format": "4K UHD",
+            "release_date": "1982-06-11",
+            "watched": true,
+            "rating": 18
+          },
+          "created_at": "2026-01-01T10:00:00.000Z",
+          "updated_at": "2026-02-01T15:30:00.000Z"
+        },
+        {
+          "source_id": 3002,
+          "title": "Le Café des adieux",
+          "description": "Film de démonstration en format Blu-ray, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Marion Lefèvre",
+            "genre": "Drama",
+            "format": "Blu-ray",
+            "release_date": "1995-03-24",
+            "watched": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-02T10:00:00.000Z",
+          "updated_at": "2026-02-02T15:30:00.000Z"
+        },
+        {
+          "source_id": 3003,
+          "title": "Rires en coulisses",
+          "description": "Film de démonstration en format DVD, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Tom Alvarez",
+            "genre": "Comedy",
+            "format": "DVD",
+            "release_date": "2008-07-18",
+            "watched": true,
+            "rating": 13
+          },
+          "created_at": "2026-01-03T10:00:00.000Z",
+          "updated_at": "2026-02-03T15:30:00.000Z"
+        },
+        {
+          "source_id": 3004,
+          "title": "Les Petits Robots",
+          "description": "Film de démonstration en format Digital, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Émilie Bernard",
+            "genre": "Animation",
+            "format": "Digital",
+            "release_date": "2019-12-04",
+            "watched": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-04T10:00:00.000Z",
+          "updated_at": "2026-02-04T15:30:00.000Z"
+        },
+        {
+          "source_id": 3005,
+          "title": "Dossier Nuit Blanche",
+          "description": "Film de démonstration en format Blu-ray, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Karim O’Malley",
+            "genre": "Thriller",
+            "format": "Blu-ray",
+            "release_date": "2001-10-19",
+            "watched": false,
+            "rating": 13
+          },
+          "created_at": "2026-01-05T10:00:00.000Z",
+          "updated_at": "2026-02-05T15:30:00.000Z"
+        },
+        {
+          "source_id": 3006,
+          "title": "Planète Textile",
+          "description": "Film de démonstration en format Cinema, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Agnès Laurent",
+            "genre": "Documentary",
+            "format": "Cinema",
+            "release_date": "2024-01-12",
+            "watched": true,
+            "rating": 10
+          },
+          "created_at": "2026-01-06T10:00:00.000Z",
+          "updated_at": "2026-02-06T15:30:00.000Z"
+        },
+        {
+          "source_id": 3007,
+          "title": "Station Mirabelle",
+          "description": "Film de démonstration en format Digital, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Sonia Gómez",
+            "genre": "Science-fiction",
+            "format": "Digital",
+            "release_date": "2016-05-06",
+            "watched": true,
+            "rating": 18
+          },
+          "created_at": "2026-01-07T10:00:00.000Z",
+          "updated_at": "2026-02-07T15:30:00.000Z"
+        },
+        {
+          "source_id": 3008,
+          "title": "La Route des silences",
+          "description": "Film de démonstration en format DVD, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "François Delmas",
+            "genre": "Drama",
+            "format": "DVD",
+            "release_date": "1979-09-21",
+            "watched": true,
+            "rating": 20
+          },
+          "created_at": "2026-01-08T10:00:00.000Z",
+          "updated_at": "2026-02-08T15:30:00.000Z"
+        },
+        {
+          "source_id": 3009,
+          "title": "Vacances à contretemps",
+          "description": "Film de démonstration en format Blu-ray, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Julie Moreau",
+            "genre": "Comedy",
+            "format": "Blu-ray",
+            "release_date": "2012-04-13",
+            "watched": false,
+            "rating": 7
+          },
+          "created_at": "2026-01-09T10:00:00.000Z",
+          "updated_at": "2026-02-09T15:30:00.000Z"
+        },
+        {
+          "source_id": 3010,
+          "title": "Atlas Miniature",
+          "description": "Film de démonstration en format 4K UHD, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Nora Saïd",
+            "genre": "Animation",
+            "format": "4K UHD",
+            "release_date": "2020-11-20",
+            "watched": true,
+            "rating": 16
+          },
+          "created_at": "2026-01-10T10:00:00.000Z",
+          "updated_at": "2026-02-10T15:30:00.000Z"
+        },
+        {
+          "source_id": 3011,
+          "title": "Angle Mort",
+          "description": "Film de démonstration en format Digital, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "+Director Test",
+            "genre": "Thriller",
+            "format": "Digital",
+            "release_date": "2018-02-02",
+            "watched": false,
+            "rating": 13
+          },
+          "created_at": "2026-01-11T10:00:00.000Z",
+          "updated_at": "2026-02-11T15:30:00.000Z"
+        },
+        {
+          "source_id": 3012,
+          "title": "Archives de verre",
+          "description": "Film de démonstration en format DVD, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Pierre d’Orsay",
+            "genre": "Documentary",
+            "format": "DVD",
+            "release_date": "2005-06-30",
+            "watched": true,
+            "rating": 10
+          },
+          "created_at": "2026-01-12T10:00:00.000Z",
+          "updated_at": "2026-02-12T15:30:00.000Z"
+        },
+        {
+          "source_id": 3013,
+          "title": "L’Étoile, le train & la mer",
+          "description": "Film de démonstration en format Cinema, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Mina Kovač",
+            "genre": "Drama",
+            "format": "Cinema",
+            "release_date": "1964-08-14",
+            "watched": true,
+            "rating": 18
+          },
+          "created_at": "2026-01-13T10:00:00.000Z",
+          "updated_at": "2026-02-13T15:30:00.000Z"
+        },
+        {
+          "source_id": 3014,
+          "title": "Comédie des erreurs (version longue)",
+          "description": "Film de démonstration en format Digital, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Alex Martin",
+            "genre": "Comedy",
+            "format": "Digital",
+            "release_date": "2021-09-03",
+            "watched": true,
+            "rating": 13
+          },
+          "created_at": "2026-01-14T10:00:00.000Z",
+          "updated_at": "2026-02-14T15:30:00.000Z"
+        },
+        {
+          "source_id": 3015,
+          "title": "Prototype Zéro",
+          "description": "Film de démonstration en format Blu-ray, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Hélène Dubois",
+            "genre": "Science-fiction",
+            "format": "Blu-ray",
+            "release_date": "1999-12-31",
+            "watched": false,
+            "rating": 16
+          },
+          "created_at": "2026-01-15T10:00:00.000Z",
+          "updated_at": "2026-02-15T15:30:00.000Z"
+        },
+        {
+          "source_id": 3016,
+          "title": "Chambre 42",
+          "description": "Film de démonstration en format 4K UHD, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Olivier Perez",
+            "genre": "Thriller",
+            "format": "4K UHD",
+            "release_date": "2015-10-23",
+            "watched": true,
+            "rating": 13
+          },
+          "created_at": "2026-01-16T10:00:00.000Z",
+          "updated_at": "2026-02-16T15:30:00.000Z"
+        },
+        {
+          "source_id": 3017,
+          "title": "Le Monde en cartons",
+          "description": "Film de démonstration en format Digital, utile pour tester filtres, facettes et recherche.",
+          "metadata": {
+            "director": "Clara Nguyen",
+            "genre": "Documentary",
+            "format": "Digital",
+            "release_date": "2023-03-17",
+            "watched": false,
+            "rating": 7
+          },
+          "created_at": "2026-01-17T10:00:00.000Z",
+          "updated_at": "2026-02-17T15:30:00.000Z"
+        },
+        {
+          "source_id": 3018,
+          "title": "Un film au titre volontairement très long, avec virgules, parenthèses et surprises",
+          "description": "Film de démonstration avec description longue.\nContient des guillemets \"projection\", une virgule, un point-virgule ; et des caractères spéciaux : / & !.",
+          "metadata": {
+            "director": "Ana Ribeiro",
+            "genre": "Animation",
+            "format": "Cinema",
+            "release_date": "2024-05-24",
+            "watched": true,
+            "rating": 18
+          },
+          "created_at": "2026-01-18T10:00:00.000Z",
+          "updated_at": "2026-02-18T15:30:00.000Z"
+        }
+      ],
+      "media": []
+    },
+    {
+      "plugin": "consoles",
+      "plugin_name": "Consoles",
+      "items": [
+        {
+          "source_id": 4001,
+          "title": "Famicom AV",
+          "description": "Console de démonstration Nintendo pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Nintendo",
+            "type": "Home console",
+            "region": "NTSC-J",
+            "release_date": "1983-07-15",
+            "condition": "Complete"
+          },
+          "created_at": "2026-01-01T10:00:00.000Z",
+          "updated_at": "2026-02-01T15:30:00.000Z"
+        },
+        {
+          "source_id": 4002,
+          "title": "Mega Drive II",
+          "description": "Console de démonstration Sega pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Sega",
+            "type": "Home console",
+            "region": "PAL",
+            "release_date": "1993-04-23",
+            "condition": "Boxed"
+          },
+          "created_at": "2026-01-02T10:00:00.000Z",
+          "updated_at": "2026-02-02T15:30:00.000Z"
+        },
+        {
+          "source_id": 4003,
+          "title": "PlayStation 2 Slim",
+          "description": "Console de démonstration Sony pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Sony",
+            "type": "Home console",
+            "region": "PAL",
+            "release_date": "2004-10-29",
+            "condition": "Complete"
+          },
+          "created_at": "2026-01-03T10:00:00.000Z",
+          "updated_at": "2026-02-03T15:30:00.000Z"
+        },
+        {
+          "source_id": 4004,
+          "title": "Xbox Series S",
+          "description": "Console de démonstration Microsoft pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Microsoft",
+            "type": "Home console",
+            "region": "Region free",
+            "release_date": "2020-11-10",
+            "condition": "New"
+          },
+          "created_at": "2026-01-04T10:00:00.000Z",
+          "updated_at": "2026-02-04T15:30:00.000Z"
+        },
+        {
+          "source_id": 4005,
+          "title": "Nintendo DS Lite",
+          "description": "Console de démonstration Nintendo pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Nintendo",
+            "type": "Handheld",
+            "region": "PAL",
+            "release_date": "2006-06-23",
+            "condition": "Loose"
+          },
+          "created_at": "2026-01-05T10:00:00.000Z",
+          "updated_at": "2026-02-05T15:30:00.000Z"
+        },
+        {
+          "source_id": 4006,
+          "title": "Steam Deck OLED",
+          "description": "Console de démonstration Valve pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Valve",
+            "type": "Handheld",
+            "region": "Region free",
+            "release_date": "2023-11-16",
+            "condition": "Complete"
+          },
+          "created_at": "2026-01-06T10:00:00.000Z",
+          "updated_at": "2026-02-06T15:30:00.000Z"
+        },
+        {
+          "source_id": 4007,
+          "title": "Atari 800XL",
+          "description": "Console de démonstration Atari pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Atari",
+            "type": "Computer",
+            "region": "NTSC-U",
+            "release_date": "1983-03-01",
+            "condition": "Boxed"
+          },
+          "created_at": "2026-01-07T10:00:00.000Z",
+          "updated_at": "2026-02-07T15:30:00.000Z"
+        },
+        {
+          "source_id": 4008,
+          "title": "Nintendo Switch",
+          "description": "Console de démonstration Nintendo pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Nintendo",
+            "type": "Hybrid",
+            "region": "Region free",
+            "release_date": "2017-03-03",
+            "condition": "Complete"
+          },
+          "created_at": "2026-01-08T10:00:00.000Z",
+          "updated_at": "2026-02-08T15:30:00.000Z"
+        },
+        {
+          "source_id": 4009,
+          "title": "PlayStation Classic",
+          "description": "Console de démonstration Sony pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Sony",
+            "type": "Mini console",
+            "region": "PAL",
+            "release_date": "2018-12-03",
+            "condition": "New"
+          },
+          "created_at": "2026-01-09T10:00:00.000Z",
+          "updated_at": "2026-02-09T15:30:00.000Z"
+        },
+        {
+          "source_id": 4010,
+          "title": "Sega Saturn",
+          "description": "Console de démonstration Sega pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Sega",
+            "type": "Home console",
+            "region": "NTSC-J",
+            "release_date": "1994-11-22",
+            "condition": "Loose"
+          },
+          "created_at": "2026-01-10T10:00:00.000Z",
+          "updated_at": "2026-02-10T15:30:00.000Z"
+        },
+        {
+          "source_id": 4011,
+          "title": "Xbox One X",
+          "description": "Console de démonstration Microsoft pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Microsoft",
+            "type": "Home console",
+            "region": "PAL",
+            "release_date": "2017-11-07",
+            "condition": "Boxed"
+          },
+          "created_at": "2026-01-11T10:00:00.000Z",
+          "updated_at": "2026-02-11T15:30:00.000Z"
+        },
+        {
+          "source_id": 4012,
+          "title": "Atari Flashback Mini",
+          "description": "Console de démonstration Atari pour tester les filtres fabricant, type, région et état.",
+          "metadata": {
+            "manufacturer": "Atari",
+            "type": "Mini console",
+            "region": "Region free",
+            "release_date": "2020-09-10",
+            "condition": "Complete"
+          },
+          "created_at": "2026-01-12T10:00:00.000Z",
+          "updated_at": "2026-02-12T15:30:00.000Z"
+        }
+      ],
+      "media": []
+    },
+    {
+      "plugin": "others",
+      "plugin_name": "Autre",
+      "items": [
+        {
+          "source_id": 5001,
+          "title": "Artbook Éclipse",
+          "description": "Objet de démonstration catégorie Artbook situé dans Salon.",
+          "metadata": {
+            "category": "Artbook",
+            "maker": "Atelier Nova",
+            "acquired_date": "2021-02-10",
+            "condition": "Good",
+            "location": "Salon",
+            "favorite": true
+          },
+          "created_at": "2026-01-01T10:00:00.000Z",
+          "updated_at": "2026-02-01T15:30:00.000Z"
+        },
+        {
+          "source_id": 5002,
+          "title": "Figurine Capitaine Pixel",
+          "description": "Objet de démonstration catégorie Figurine situé dans Vitrine.",
+          "metadata": {
+            "category": "Figurine",
+            "maker": "MiniWorks",
+            "acquired_date": "2020-12-24",
+            "condition": "New",
+            "location": "Vitrine",
+            "favorite": true
+          },
+          "created_at": "2026-01-02T10:00:00.000Z",
+          "updated_at": "2026-02-02T15:30:00.000Z"
+        },
+        {
+          "source_id": 5003,
+          "title": "Poster \"Arcade Night\"",
+          "description": "Objet de démonstration catégorie Poster situé dans Bureau.",
+          "metadata": {
+            "category": "Poster",
+            "maker": "PrintLab",
+            "acquired_date": "2019-06-06",
+            "condition": "Used",
+            "location": "Bureau",
+            "favorite": false
+          },
+          "created_at": "2026-01-03T10:00:00.000Z",
+          "updated_at": "2026-02-03T15:30:00.000Z"
+        },
+        {
+          "source_id": 5004,
+          "title": "Manette transparente",
+          "description": "Objet de démonstration catégorie Accessoire situé dans Étagère A.",
+          "metadata": {
+            "category": "Accessoire",
+            "maker": "RetroParts",
+            "acquired_date": "2018-03-15",
+            "condition": "Good",
+            "location": "Étagère A",
+            "favorite": false
+          },
+          "created_at": "2026-01-04T10:00:00.000Z",
+          "updated_at": "2026-02-04T15:30:00.000Z"
+        },
+        {
+          "source_id": 5005,
+          "title": "Coffret Collector Argent",
+          "description": "Objet de démonstration catégorie Collector situé dans Vitrine.",
+          "metadata": {
+            "category": "Collector",
+            "maker": "Limited House",
+            "acquired_date": "2022-09-09",
+            "condition": "New",
+            "location": "Vitrine",
+            "favorite": true
+          },
+          "created_at": "2026-01-05T10:00:00.000Z",
+          "updated_at": "2026-02-05T15:30:00.000Z"
+        },
+        {
+          "source_id": 5006,
+          "title": "Badge Démo : / & !",
+          "description": "Objet de démonstration catégorie Goodie situé dans Carton archive.",
+          "metadata": {
+            "category": "Goodie",
+            "maker": "Event Studio",
+            "acquired_date": "2023-01-12",
+            "condition": "Good",
+            "location": "Carton archive",
+            "favorite": false
+          },
+          "created_at": "2026-01-06T10:00:00.000Z",
+          "updated_at": "2026-02-06T15:30:00.000Z"
+        },
+        {
+          "source_id": 5007,
+          "title": "Affiche pliée, édition salon",
+          "description": "Objet de démonstration catégorie Poster situé dans -Archive Shelf.",
+          "metadata": {
+            "category": "Poster",
+            "maker": "PrintLab",
+            "acquired_date": "2017-11-30",
+            "condition": "Damaged",
+            "location": "-Archive Shelf",
+            "favorite": false
+          },
+          "created_at": "2026-01-07T10:00:00.000Z",
+          "updated_at": "2026-02-07T15:30:00.000Z"
+        },
+        {
+          "source_id": 5008,
+          "title": "Carnet de croquis",
+          "description": "Objet de démonstration catégorie Artbook situé dans Bureau.",
+          "metadata": {
+            "category": "Artbook",
+            "maker": "Atelier Nova",
+            "acquired_date": "2024-05-01",
+            "condition": "Good",
+            "location": "Bureau",
+            "favorite": false
+          },
+          "created_at": "2026-01-08T10:00:00.000Z",
+          "updated_at": "2026-02-08T15:30:00.000Z"
+        },
+        {
+          "source_id": 5009,
+          "title": "Mini borne de table",
+          "description": "Objet de démonstration catégorie Collector situé dans Salon.",
+          "metadata": {
+            "category": "Collector",
+            "maker": "RetroParts",
+            "acquired_date": "2021-07-18",
+            "condition": "Used",
+            "location": "Salon",
+            "favorite": false
+          },
+          "created_at": "2026-01-09T10:00:00.000Z",
+          "updated_at": "2026-02-09T15:30:00.000Z"
+        },
+        {
+          "source_id": 5010,
+          "title": "Goodie au titre volontairement très long pour tester les cartes compactes",
+          "description": "Objet divers avec description longue, accents et retour à la ligne.\nPermet de contrôler l’affichage mobile et les exports.",
+          "metadata": {
+            "category": "Goodie",
+            "maker": "Event Studio",
+            "acquired_date": "2024-04-04",
+            "condition": "Good",
+            "location": "Étagère A",
+            "favorite": false
+          },
+          "created_at": "2026-01-10T10:00:00.000Z",
+          "updated_at": "2026-02-10T15:30:00.000Z"
+        }
+      ],
+      "media": []
+    }
+  ]
+}
