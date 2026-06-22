@@ -98,6 +98,51 @@ Priorité moyenne :
 - Docker hardening avec utilisateur non privilégié.
 - Monitoring basique des événements sensibles.
 
+#### HTTPS / TLS et accès distant sécurisé
+
+Objectif :
+
+- Permettre un déploiement sécurisé de CollectionMgnt accessible depuis smartphone, tablette et postes distants.
+
+Contexte :
+
+- Les usages mobiles deviennent une cible importante du produit.
+- Les futures fonctionnalités d’acquisition assistée reposeront potentiellement sur l’utilisation de l’appareil photo.
+- Les accès distants deviennent plus fréquents à mesure que le produit mûrit.
+
+Travaux envisagés :
+
+- Documentation officielle de déploiement HTTPS.
+- Guides de configuration pour :
+  - Caddy
+  - Traefik
+  - Nginx
+- Documentation reverse proxy.
+- Validation du fonctionnement derrière un reverse proxy TLS.
+- Vérification correcte des en-têtes proxy.
+- Recommandations TLS modernes.
+- Documentation des scénarios d’accès distant :
+  - VPN
+  - Tailscale
+  - reverse proxy exposé sur Internet
+- Validation des usages smartphone et tablette via HTTPS.
+- Vérification de compatibilité des futures fonctionnalités caméra dans un contexte sécurisé.
+
+Principes :
+
+- CollectionMgnt ne prévoit pas d’embarquer directement la gestion TLS dans l’application.
+- Le déploiement recommandé repose sur un reverse proxy externe.
+- Les fonctionnalités mobiles doivent fonctionner correctement dans un contexte HTTPS standard.
+
+Priorité :
+
+- Moyenne à court terme.
+- Élevée avant la livraison des fonctionnalités de scan mobile / acquisition assistée.
+
+Lien roadmap :
+
+- Voir aussi `Backlog produit > Acquisition assistée`, car HTTPS devient un prérequis pratique pour certaines fonctionnalités mobiles.
+
 ## Dette technique
 
 ### Backend
