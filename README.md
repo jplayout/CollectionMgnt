@@ -275,9 +275,13 @@ Les contributions passent par Pull Request. Voir [CONTRIBUTING.md](CONTRIBUTING.
 
 ## Licence
 
-La licence du projet est une licence personnalisée non commerciale.
+CollectionMgnt est distribué sous licence GNU Affero General Public License v3.0 (AGPL-3.0).
 
-Consultez [LICENSE](LICENSE) pour le texte complet. L'usage commercial, la revente, l'offre en service hébergé ou l'intégration dans un produit commercial sont interdits sans autorisation écrite préalable.
+Cela signifie que vous êtes libre d'utiliser, d'étudier, de modifier et de redistribuer le logiciel, y compris à des fins commerciales, à condition que les modifications apportées au logiciel restent disponibles sous la même licence.
+
+L'AGPL exige également que les versions modifiées diffusées sur un réseau donnent accès à leur code source.
+
+Consultez [LICENSE](LICENSE) pour le texte complet. 
 
 ---
 
@@ -527,6 +531,10 @@ Contributions go through Pull Requests. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-This project uses a custom non-commercial license.
+CollectionMgnt is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
 
-See [LICENSE](LICENSE) for the full text. Commercial use, resale, hosted-service offering or integration into a commercial product are prohibited without prior written permission.
+This means you are free to use, study, modify and redistribute the software, including for commercial purposes, provided that modifications to the software remain available under the same license.
+
+The AGPL additionally requires that modified versions made available over a network also provide access to their corresponding source code.
+
+See [LICENSE](LICENSE) for the full text.
