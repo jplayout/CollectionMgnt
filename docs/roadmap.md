@@ -8,12 +8,14 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot10.2.2.
-- Dernier lot livré : Lot 10.2.2 - Demo Media Pack.
+- Version actuelle : v0.12-lot10.3.0.
+- Dernier lot livré : Lot 10.3.0 - Security & CI Hardening.
 
 Capacités disponibles :
 
 - Authentification JWT avec modèle de rôles minimal `admin` / `user`.
+- Validation stricte de `JWT_SECRET` au démarrage.
+- En-têtes HTTP de sécurité via Helmet avec configuration prudente.
 - Collections dynamiques pilotées par plugins déclaratifs.
 - Plugins standards enrichis pour supporter le dataset de démonstration.
 - Dataset officiel de démonstration importable via l'import JSON natif.
@@ -24,7 +26,7 @@ Capacités disponibles :
 - Exports JSON natifs, export CSV collection et import JSON natif non destructif.
 - Administration MVP avec export global, import, backup ZIP, audit média, cleanup média et résumé système.
 - Layout authentifié, responsive de base et tests backend d'intégration.
-- CI GitHub Actions, publication GHCR et builds Docker/Podman documentés.
+- CI GitHub Actions, CodeQL, Dependabot, publication GHCR et builds Docker/Podman documentés.
 
 Limites majeures connues :
 
@@ -32,7 +34,7 @@ Limites majeures connues :
 - Import CSV CollectionMgnt et import CSV externe non livrés.
 - Support backend des types plugin avancés non livré : multiselect, url, email, barcode, isbn.
 - Gestion utilisateurs avancée, permissions fines et page profil non livrées.
-- Sécurité applicative avancée, audit CI sécurité et hardening Docker encore à traiter.
+- Audit sécurité conteneur, HTTPS de déploiement et hardening Docker encore à traiter.
 - Recherche globale multi-collections, FTS, normalisation Unicode et filtres range non livrés.
 - Tests frontend, E2E, couverture de code et tooling qualité avancé non livrés.
 
@@ -62,6 +64,7 @@ Limites majeures connues :
 ### Livré
 
 - Lot sécurité RBAC / rate limit / CSV livré.
+- Lot 10.3.0 Security & CI Hardening livré : CodeQL, Dependabot, Helmet et validation stricte de `JWT_SECRET`.
 - Détail complet conservé dans `Historique des lots livrés > Sécurité`.
 
 ### Travaux futurs prioritaires
@@ -69,7 +72,6 @@ Limites majeures connues :
 Priorité élevée :
 
 - Revue et mise à jour de la dépendance JWT / fast-jwt.
-- Validation stricte de `JWT_SECRET` avec longueur minimale.
 - Journalisation des événements sensibles :
   - connexion réussie
   - connexion échouée
@@ -79,7 +81,6 @@ Priorité élevée :
 
 Priorité moyenne :
 
-- Renforcement des en-têtes HTTP avec Helmet ou équivalent.
 - Rate limiting complémentaire :
   - backup
   - import
@@ -88,10 +89,10 @@ Priorité moyenne :
 
 ### Tooling / CI sécurité
 
-- Dependabot.
-- CodeQL.
+- Dependabot livré pour backend npm, frontend npm et GitHub Actions.
+- CodeQL livré pour l'analyse JavaScript.
 - `npm audit` en CI.
-- Scan de sécurité des images conteneur, par exemple Trivy.
+- Scan de sécurité des images conteneur, par exemple Trivy, reporté à un lot futur.
 
 ### Infrastructure sécurité
 
@@ -819,6 +820,22 @@ Contraintes :
 - Aucun scénario QA média orphelin dans ce lot
 - Aucune dépendance ajoutée
 - Aucun changement backend, frontend, API, SQLite, plugins, dataset JSON ou routes média dans ce lot
+
+#### Lot 10.3.0 - Security & CI Hardening - Livré
+
+- Workflow CodeQL ajouté dans `.github/workflows/codeql.yml`
+- Analyse CodeQL JavaScript sur push `main`, pull request et déclenchement manuel
+- Dependabot ajouté dans `.github/dependabot.yml`
+- Surveillance Dependabot hebdomadaire pour backend npm, frontend npm et GitHub Actions
+- Regroupement des mises à jour mineures et patch Dependabot pour limiter le bruit
+- Ajout de Helmet côté backend Fastify
+- CSP stricte volontairement non activée dans ce lot
+- En-têtes de sécurité HTTP activés avec configuration prudente : `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` et `Permissions-Policy`
+- Validation de `JWT_SECRET` au démarrage backend avec longueur minimale de 32 caractères
+- Message d'erreur explicite si `JWT_SECRET` est absent ou trop faible
+- Tests backend ajoutés pour les en-têtes de sécurité et la validation de `JWT_SECRET`
+- Trivy non intégré dans ce lot pour éviter de fragiliser la CI
+- Aucun changement métier, UX, API fonctionnelle, SQLite, OAuth, MFA, SSO, HTTPS embarqué, reverse proxy, monitoring, audit logs avancés ou CSP stricte
 
 ### Sécurité
 
