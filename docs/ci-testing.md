@@ -1,6 +1,6 @@
 # CI Et Tests
 
-Etat courant : v0.12-lot10.3.0.
+Etat courant : v0.12-lot10.4.0.
 
 Ce document decrit les validations automatisees disponibles pour les
 contributeurs. Le projet privilegie une base simple et rapide plutot qu'une
@@ -26,6 +26,10 @@ Jobs actuels :
   - construit l'application Vite.
 - `quality`
   - execute `git diff --check`.
+- `e2e`
+  - installe les dependances backend et frontend ;
+  - installe Chromium pour Playwright ;
+  - execute le parcours E2E MVP sur backend et frontend locaux.
 - `docker`
   - construit les images backend et frontend apres succes des autres jobs.
 
@@ -70,6 +74,14 @@ cd frontend
 npm exec vite build
 ```
 
+E2E Playwright :
+
+```bash
+cd frontend
+npm run e2e:install
+npm run e2e
+```
+
 Qualite Git :
 
 ```bash
@@ -108,6 +120,45 @@ Les tests d'integration sont dans :
 ```text
 backend/test/integration/
 ```
+
+## Tests E2E Playwright
+
+Les tests E2E MVP utilisent Playwright cote frontend avec Chromium uniquement.
+
+La configuration est :
+
+```text
+frontend/playwright.config.js
+```
+
+Elle lance :
+
+- le backend local sur `127.0.0.1:3100` ;
+- un serveur de sante local pour attendre le bootstrap backend ;
+- Vite sur `127.0.0.1:4173` ;
+- le proxy Vite `/api` vers le backend E2E.
+
+Le backend E2E utilise :
+
+- un `DATA_DIR` temporaire cree sous le repertoire temporaire systeme ;
+- les plugins locaux depuis `backend/plugins` ;
+- `JWT_SECRET` de test avec au moins 32 caracteres ;
+- `ADMIN_USERNAME=admin` ;
+- `ADMIN_PASSWORD=e2e-admin-password`.
+
+Les scenarios couverts sont volontairement limites :
+
+- login admin et arrivee sur Collections ;
+- acces Administration ;
+- import du dataset officiel `demo/datasets/collectionmgnt-demo-v1.json` ;
+- verification des 94 items crees ;
+- ouverture de la collection Jeux Video ;
+- ouverture d'une fiche item ;
+- retour sur Administration.
+
+Le media pack de demonstration, les exports, les backups, les filtres, la
+pagination detaillee, les screenshots E2E et les navigateurs multiples restent
+hors perimetre de ce MVP.
 
 ## Ce Qui Est Teste
 
@@ -157,9 +208,8 @@ Hors perimetre actuel :
 
 - tests unitaires frontend Vitest ;
 - tests composants Vue ;
-- Playwright ;
 - Cypress ;
-- tests E2E complets ;
+- tests E2E complets au-dela du MVP Playwright ;
 - couverture de code ;
 - Sonar ;
 - Codecov ;

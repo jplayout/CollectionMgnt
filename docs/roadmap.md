@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot10.3.0.
-- Dernier lot livré : Lot 10.3.0 - Security & CI Hardening.
+- Version actuelle : v0.12-lot10.4.0.
+- Dernier lot livré : Lot 10.4.0 - Playwright E2E MVP.
 
 Capacités disponibles :
 
@@ -26,6 +26,7 @@ Capacités disponibles :
 - Exports JSON natifs, export CSV collection et import JSON natif non destructif.
 - Administration MVP avec export global, import, backup ZIP, audit média, cleanup média et résumé système.
 - Layout authentifié, responsive de base et tests backend d'intégration.
+- Playwright E2E MVP côté frontend avec Chromium, dataset de démonstration et `DATA_DIR` temporaire.
 - CI GitHub Actions, CodeQL, Dependabot, publication GHCR et builds Docker/Podman documentés.
 
 Limites majeures connues :
@@ -36,7 +37,7 @@ Limites majeures connues :
 - Gestion utilisateurs avancée, permissions fines et page profil non livrées.
 - Audit sécurité conteneur, HTTPS de déploiement et hardening Docker encore à traiter.
 - Recherche globale multi-collections, FTS, normalisation Unicode et filtres range non livrés.
-- Tests frontend, E2E, couverture de code et tooling qualité avancé non livrés.
+- Tests frontend unitaires, E2E exhaustifs, couverture de code et tooling qualité avancé non livrés.
 
 ## Prochaines priorités
 
@@ -172,7 +173,7 @@ Lien roadmap :
 - Tests automatisés.
 - Tests unitaires frontend Vitest.
 - Tests composants Vue.
-- Playwright.
+- Extension de la couverture Playwright.
 - Cypress.
 - Tests E2E complets.
 - Couverture de code.
@@ -836,6 +837,29 @@ Contraintes :
 - Tests backend ajoutés pour les en-têtes de sécurité et la validation de `JWT_SECRET`
 - Trivy non intégré dans ce lot pour éviter de fragiliser la CI
 - Aucun changement métier, UX, API fonctionnelle, SQLite, OAuth, MFA, SSO, HTTPS embarqué, reverse proxy, monitoring, audit logs avancés ou CSP stricte
+
+#### Lot 10.4.0 - Playwright E2E MVP - Livré
+
+- Playwright ajouté côté frontend avec Chromium uniquement
+- Configuration E2E disponible dans `frontend/playwright.config.js`
+- Scénarios E2E MVP :
+  - login admin
+  - arrivée sur Collections
+  - accès Administration
+  - import du dataset officiel de démonstration
+  - vérification des 94 items créés
+  - ouverture de la collection Jeux Vidéo
+  - ouverture d'une fiche item
+  - retour sur Administration
+- Backend E2E lancé localement sur `127.0.0.1:3100`
+- Frontend Vite E2E lancé localement sur `127.0.0.1:4173`
+- `DATA_DIR` temporaire utilisé pour ne pas dépendre d'une base locale existante
+- `PLUGINS_DIR` configuré vers les plugins locaux du dépôt
+- Proxy Vite `/api` configuré vers le backend E2E via `VITE_PROXY_TARGET`
+- Job GitHub Actions `Playwright E2E` ajouté dans `.github/workflows/ci.yml`
+- Scripts frontend ajoutés : `e2e`, `e2e:ui` et `e2e:install`
+- Artefacts locaux Playwright ignorés par Git : `frontend/playwright-report/` et `frontend/test-results/`
+- Media pack, screenshots E2E, tests multi-navigateurs, filtres, pagination détaillée, export, backup et scénarios exhaustifs hors périmètre de ce MVP
 
 ### Sécurité
 
