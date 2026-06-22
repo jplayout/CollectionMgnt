@@ -1,4 +1,4 @@
-# Roadmap - Collection Manager
+# Roadmap - CollectionMgnt
 
 ## Vision
 
@@ -6,15 +6,246 @@ Collection Manager est une plateforme auto-hébergée de gestion de collections 
 
 L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel type de collection sans développement spécifique.
 
-Étape suivante : Restauration ZIP guidée, import CSV CollectionMgnt ou amélioration des rapports admin.
+## État actuel
 
----
+- Version actuelle : v0.12-lot10.0.1.
+- Dernier lot livré : Lot sécurité RBAC / rate limit / CSV.
 
-## État courant
+Capacités disponibles :
 
-Version actuelle : v0.12-lot10.0.1.
+- Authentification JWT avec modèle de rôles minimal `admin` / `user`.
+- Collections dynamiques pilotées par plugins déclaratifs.
+- CRUD items, validation dynamique, recherche, filtres, pagination, tri et vues cartes/liste.
+- Préférences d'affichage par collection/plugin.
+- Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
+- Exports JSON natifs, export CSV collection et import JSON natif non destructif.
+- Administration MVP avec export global, import, backup ZIP, audit média, cleanup média et résumé système.
+- Layout authentifié, responsive de base et tests backend d'intégration.
+- CI GitHub Actions, publication GHCR et builds Docker/Podman documentés.
 
-### Lot 5.6 - Livré
+Limites majeures connues :
+
+- Restauration ZIP complète non livrée.
+- Import CSV CollectionMgnt et import CSV externe non livrés.
+- Support backend des types plugin avancés non livré : multiselect, url, email, barcode, isbn.
+- Gestion utilisateurs avancée, permissions fines et page profil non livrées.
+- Sécurité applicative avancée, audit CI sécurité et hardening Docker encore à traiter.
+- Recherche globale multi-collections, FTS, normalisation Unicode et filtres range non livrés.
+- Tests frontend, E2E, couverture de code et tooling qualité avancé non livrés.
+
+## Prochaines priorités
+
+### Haute priorité
+
+- Restauration ZIP guidée.
+- Import CSV CollectionMgnt.
+- Amélioration des rapports et historiques d'administration.
+
+### Priorité moyenne
+
+- Import CSV externe depuis une autre application de gestion de collection.
+- Support backend des types plugin avancés : multiselect, url, email, barcode, isbn.
+- Gestion utilisateurs avancée et permissions fines.
+
+### Plus tard
+
+- API publique.
+- Installation plugins ZIP.
+- Catalogue de plugins.
+- Recherche globale multi-collections et recherche approximative.
+
+## Sécurité
+
+### Livré
+
+- Lot sécurité RBAC / rate limit / CSV livré.
+- Détail complet conservé dans `Historique des lots livrés > Sécurité`.
+
+### Travaux futurs prioritaires
+
+Priorité élevée :
+
+- Revue et mise à jour de la dépendance JWT / fast-jwt.
+- Validation stricte de `JWT_SECRET` avec longueur minimale.
+- Journalisation des événements sensibles :
+  - connexion réussie
+  - connexion échouée
+  - téléchargement backup
+  - import
+  - media cleanup
+
+Priorité moyenne :
+
+- Renforcement des en-têtes HTTP avec Helmet ou équivalent.
+- Rate limiting complémentaire :
+  - backup
+  - import
+  - upload
+- Politique minimale de mot de passe.
+
+### Tooling / CI sécurité
+
+- Dependabot.
+- CodeQL.
+- `npm audit` en CI.
+- Scan de sécurité des images conteneur, par exemple Trivy.
+
+### Infrastructure sécurité
+
+- Docker hardening avec utilisateur non privilégié.
+- Monitoring basique des événements sensibles.
+
+## Dette technique
+
+### Backend
+
+- Support backend des types plugin avancés : multiselect, url, email, barcode, isbn.
+- Optimisation SQLite.
+- Optimisation recherche.
+- SQLite FTS5.
+- Recherche approximative.
+- Pas encore de normalisation complète des accents ou de l'Unicode.
+- Pas encore de filtres range.
+- Pas de recherche metadata globale multi-plugins.
+
+### Frontend
+
+- Interface complète d'upload images.
+- Galerie médias avancée.
+- Interface collections avancée.
+- Gestion des plugins.
+- Page profil fonctionnelle.
+- Pas de refonte mobile complète.
+- Certains écrans avancés restent à affiner progressivement.
+
+### CI / Qualité
+
+- Tests automatisés.
+- Tests unitaires frontend Vitest.
+- Tests composants Vue.
+- Playwright.
+- Cypress.
+- Tests E2E complets.
+- Couverture de code.
+- Sonar.
+- Codecov.
+- Tests de performance.
+- Tests multi-navigateurs.
+
+### Documentation
+
+- Documentation complète.
+- Documentation de déploiement local dans `docs/deployment-docker.md`.
+- Documentation des commandes locales et du workflow PR.
+- Ne pas se limiter à traduire le README pour l'internationalisation.
+
+## Backlog produit
+
+### Collections et items
+
+- Configuration des champs et préférences d’affichage.
+- Définition d’échelles de notation configurables :
+  - note sur 5
+  - note sur 10
+  - note sur 20
+  - note sur 100
+  - pourcentage
+  - affichage en étoiles
+- Configuration des colonnes affichées dans les listes.
+- Choix des métadonnées mises en avant dans les cartes items.
+- Préférences d’affichage par collection/plugin.
+- Gestion des prêts.
+- Historique.
+- Tags globaux.
+
+### Import / export / sauvegarde
+
+- Restauration ZIP guidée.
+- Restauration ZIP complète.
+- Import CSV CollectionMgnt.
+- Import CSV externe depuis une autre application de gestion de collection.
+- Importer un export CSV venant de l'application Icollect.
+- Import CSV.
+- Export CSV.
+- Import JSON.
+- Export JSON.
+- Sauvegarde automatique.
+- Export complet.
+- Politique de rétention.
+
+### Médias
+
+- Outils d’audit et maintenance média.
+- Détection des fichiers orphelins sur disque.
+- Détection des entrées media sans fichier associé.
+- Rapport d’audit détaillé.
+- Mode dry-run.
+- Nettoyage manuel depuis l’interface d’administration.
+- Régénération éventuelle des miniatures et images optimisées.
+- OCR.
+- Lecture ISBN.
+- Lecture code-barres.
+
+### Administration
+
+- Amélioration des rapports et historiques d'administration.
+- Multi-utilisateurs avancé.
+- Gestion utilisateurs.
+- Permissions fines.
+- Paramètres système.
+- Sous-pages possibles : `/admin/data`, `/admin/media` et `/admin/system`.
+
+### Recherche
+
+- Recherche globale.
+- Recherche avancée.
+- Filtres automatiques.
+- Facettes.
+- Multi-collections.
+- Recherche configurable.
+- SQLite FTS5.
+- Recherche approximative.
+
+### Plugins
+
+- Support backend des types plugin avancés : multiselect, url, email, barcode, isbn.
+- Plugins officiels.
+- Installation plugins ZIP.
+- Catalogue de plugins.
+- Mangas.
+- Bandes dessinées.
+- Vinyles.
+- Figurines.
+- LEGO.
+- Cartes Pokémon.
+
+### Internationalisation
+
+- Support multilingue.
+- Français.
+- Anglais.
+- Changement de langue.
+- Préférences utilisateur.
+- Internationalisation / changement de langue :
+  - option dans le menu utilisateur ou administration
+  - probablement FR / EN au départ
+  - préférence persistée côté utilisateur ou settings
+  - ne pas se limiter à traduire le README
+
+### Responsive
+
+- Responsive / usage tablette-mobile :
+  - top bar compacte
+  - cartes adaptées mobile
+  - listes avec scroll/colonnes simplifiées
+  - administration utilisable sur petit écran
+  - formulaires confortables au tactile
+
+## Historique des lots livrés
+
+### Lot 5.x
+
+#### Lot 5.6 - Livré
 
 - Route protégée `/collections/:pluginId/items/new`
 - Création d'item frontend dynamique pilotée par `GET /api/plugins/:pluginId/schema`
@@ -37,7 +268,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Gestion des erreurs frontend et backend
 - Redirection vers `/items/:id` après création
 
-### Lot 5.7 - Livré
+#### Lot 5.7 - Livré
 
 - `GET /api/items/:id`
 - `PATCH /api/items/:id`
@@ -47,7 +278,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Conservation des métadonnées inconnues existantes
 - Retour de l'item avec `metadata` parsé, code plugin et nom d'affichage plugin
 
-### Lot 5.8 - Livré
+#### Lot 5.8 - Livré
 
 - Route protégée `/items/:id/edit`
 - Chargement d'un item via `GET /api/items/:id`
@@ -58,7 +289,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Bouton `Modifier` depuis la page détail
 - Galerie média conservée sur la page détail
 
-### Lot 5.8.1 - Correctif livré
+#### Lot 5.8.1 - Correctif livré
 
 - Bornage par défaut des champs `rating` à 0..20 côté backend
 - Attributs frontend par défaut `min=0`, `max=20` et `step=1` pour les champs `rating`
@@ -66,7 +297,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Conservation du comportement actuel des champs `number`, sans bornes par défaut
 - `step` reste une contrainte UI uniquement pour ce lot
 
-### Lot 5.9 - Livré
+#### Lot 5.9 - Livré
 
 - Suppression d'un item depuis sa fiche détail
 - Confirmation explicite avant suppression avec le titre réel de l'item
@@ -77,7 +308,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Suppression depuis la liste non intégrée dans ce lot
 - Limitation restante à ce stade du Lot 5.9 : les fichiers média associés à l'item n'étaient pas encore nettoyés sur disque
 
-### Lot 5.10 - Livré
+#### Lot 5.10 - Livré
 
 - `DELETE /api/items/:id` retourne 404 si l'item est absent
 - Suppression DB de l'item avant nettoyage disque
@@ -86,7 +317,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Suppression physique des sous-dossiers `originals`, `images` et `thumbs`
 - Erreurs de nettoyage disque logguées sans rollback de la suppression DB
 
-### Lot 5.11 - Livré
+#### Lot 5.11 - Livré
 
 - Recherche titre conservée dans la liste d'une collection
 - Filtres dynamiques frontend générés depuis les champs `filterable` du `fields.json`
@@ -104,7 +335,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Limitation restante : pas de tri
 - Limitation restante : certains filtres typés sont finalisés côté frontend en attendant un contrat backend plus strict
 
-### Lot 5.12 - Livré
+#### Lot 5.12 - Livré
 
 - Paramètre `search` sur `GET /api/items`
 - Recherche large dans `items.title` et `items.description`
@@ -115,7 +346,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Liste collection frontend basculée de la recherche titre vers la recherche large `search`
 - Pas de FTS, pas de tri configurable et pas de recherche metadata globale multi-plugins dans ce lot
 
-### Lot 5.12.1 - Correctif livré
+#### Lot 5.12.1 - Correctif livré
 
 - Recherche `search` explicitement insensible à la casse simple
 - Recherche legacy `title` explicitement insensible à la casse simple
@@ -124,7 +355,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Post-filtrage frontend aligné sur les mêmes règles
 - Limitation restante : pas de normalisation complète des accents ou de l'Unicode
 
-### Lot 5.12.2 - Correctif livré
+#### Lot 5.12.2 - Correctif livré
 
 - Fiche item améliorée côté frontend sans changement backend
 - Chargement du schéma plugin pour présenter les métadonnées
@@ -134,7 +365,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Métadonnées inconnues conservées dans une section `Autres informations`
 - Galerie média conservée sous la fiche item
 
-### Lot 5.13 - Livré
+#### Lot 5.13 - Livré
 
 - Parsing backend des filtres metadata selon le type du schéma plugin
 - Rejet des filtres invalides avec réponse 400
@@ -147,103 +378,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Suppression du post-filtrage frontend pour les types gérés par le backend
 - Pas de filtres range dans ce lot
 
-### Lot 6.0.1 - Livré
-
-- Exécution locale via `docker compose up --build`, `docker-compose up --build` ou `podman-compose up --build`
-- Service backend Node 22 lancé avec `node src/server.js`
-- Port backend interne 3000, configurable côté hôte via `BACKEND_PORT`
-- Chemins backend configurables via `DATA_DIR` et `PLUGINS_DIR`
-- Base SQLite dérivée de `DATA_DIR` via `collection-manager.db`
-- Volume persistant `./backend/data:/app/data:Z`
-- Plugins montés via `./backend/plugins:/app/plugins:ro,Z`
-- Service frontend construit avec Vite et servi en statique par Nginx
-- Proxy Nginx `/api` vers `http://backend:3000`
-- Port frontend public configurable via `FRONTEND_PORT`, avec défaut 8080
-- Compatibilité Podman rootless / Bazzite / SELinux validée avec labels de volumes `:Z`
-- `.env` requis avec `JWT_SECRET` et `ADMIN_PASSWORD`
-- Documentation de déploiement local dans `docs/deployment-docker.md`
-- GitHub Actions, GHCR, HTTPS et reverse proxy externe non inclus dans ce lot
-
-### Lot 6.0.2 - Livré
-
-- Workflow GitHub Actions `.github/workflows/ci.yml`
-- Déclenchement sur push et pull request
-- Jobs sur `ubuntu-latest`
-- Node 22 pour les jobs backend et frontend
-- Job backend :
-  - `npm ci` dans `backend/`
-  - `node --check` sur les fichiers JavaScript de `backend/src`
-- Job frontend :
-  - `npm ci` dans `frontend/`
-  - `npm exec vite build`
-- Job Docker après succès backend et frontend :
-  - `docker build -t collectionmgnt-backend ./backend`
-  - `docker build -t collectionmgnt-frontend ./frontend`
-- Aucune publication d'image dans ce lot
-- Pas de release GitHub, pas de GHCR, pas de Docker Hub
-- Aucun test applicatif n'est lancé actuellement, faute de script `test` existant
-
-### Lot 6.0.3 - Livré
-
-- Workflow GitHub Actions `.github/workflows/publish.yml`
-- Publication automatique sur GitHub Container Registry
-- Déclenchement sur push `main`, tags `v*` et `workflow_dispatch`
-- Permissions `contents: read` et `packages: write`
-- Vérifications backend et frontend avant publication
-- Images publiées :
-  - `ghcr.io/<owner>/collectionmgnt-backend`
-  - `ghcr.io/<owner>/collectionmgnt-frontend`
-- Propriétaire GitHub normalisé en minuscules pour les noms d'images
-- Tags publiés :
-  - `latest` uniquement depuis `main`
-  - tag Git exact uniquement depuis les tags `v*`
-  - `sha-*` pour chaque publication
-- Pas de Docker Hub
-- Pas de GitHub Release
-- Pas de multi-arch, cosign, SBOM ou scan sécurité dans ce lot
-
-### Lot 7.0.1 - Livré
-
-- API backend persistante de préférences d'affichage par plugin
-- Routes protégées :
-  - `GET /api/plugins/:pluginId/display-preferences`
-  - `PUT /api/plugins/:pluginId/display-preferences`
-  - `DELETE /api/plugins/:pluginId/display-preferences`
-- Stockage dans la table SQLite `settings` avec les clés `displayPreferences.<pluginId>`
-- Calcul de préférences par défaut depuis le schéma plugin
-- Validation stricte des noms de champs depuis le schéma plugin
-- Densités acceptées : `comfortable` et `compact`
-- Rejet des champs inconnus et des densités invalides avec réponse 400
-- Suppression des préférences pour revenir aux valeurs par défaut
-- Aucun changement des fichiers `fields.json`
-- Aucun changement frontend dans ce lot
-
-### Lot 7.0.2 - Livré
-
-- Frontend branché sur `GET /api/plugins/:pluginId/display-preferences`
-- Cartes items pilotées par `list.highlightedFields`
-- Cartes items affichant les labels du schéma plugin quand les préférences et le schéma sont disponibles
-- Densité des cartes appliquée via `list.density`
-- Fiche détail pilotée par `details.fieldOrder`
-- Champs masqués en fiche détail via `details.hiddenFields`
-- Section `Autres informations` conservée pour les métadonnées inconnues du schéma plugin
-- Formatage des métadonnées partagé côté frontend
-- Aucun panneau d'édition, de sauvegarde ou de reset des préférences dans ce lot
-
-### Lot 7.0.3 - Livré
-
-- Bouton `Affichage` dans la liste d'une collection
-- Panneau inline d'édition des préférences d'affichage
-- Édition des champs mis en avant sur les cartes via `list.highlightedFields`
-- Réordonnancement par boutons `Monter` et `Descendre`
-- Édition de la densité des cartes via `list.density`
-- Édition de l'ordre de fiche détail via `details.fieldOrder`
-- Masquage de champs en fiche détail via `details.hiddenFields`
-- Sauvegarde via `PUT /api/plugins/:pluginId/display-preferences`
-- Réinitialisation via `DELETE /api/plugins/:pluginId/display-preferences`
-- Aucun drag & drop, format rating/date avancé, champ principal alternatif ou vue liste dense dans ce lot
-
-### Lot 5.14 - Livré
+#### Lot 5.14 - Livré
 
 - Pagination backend de `GET /api/items` via `page` et `pageSize`
 - Valeurs par défaut : `page=1`, `pageSize=24`
@@ -256,7 +391,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Retour automatique à une page valide si la page courante devient vide après suppression ou changement externe
 - Aucun changement de schéma SQLite, tri configurable, FTS ou infinite scroll dans ce lot
 
-### Lot 5.15 - Livré
+#### Lot 5.15 - Livré
 
 - Tri configurable de `GET /api/items` via `sort` et `direction`
 - Valeurs par défaut : `sort=title`, `direction=asc`
@@ -275,7 +410,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Fallback frontend vers `sort=title`, `direction=asc` si un tri metadata devient invalide après changement de schéma
 - Aucun changement de schéma SQLite, propriété plugin `sortable`, tri multi-colonnes, FTS/ranking ou vue liste dense dans ce lot
 
-### Lot 5.16 - Livré
+#### Lot 5.16 - Livré
 
 - Vue liste dense alternative dans les listes items
 - Vue cartes conservée comme affichage par défaut
@@ -289,7 +424,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Pas de vue de données avancée : aucun tri par clic header, redimensionnement de colonnes, édition inline, sélection de colonnes CSV ou configuration dédiée des colonnes
 - Aucun changement backend, API, schéma SQLite, plugins ou thumbnails en liste dans ce lot
 
-### Lot 5.16.1 - Livré
+#### Lot 5.16.1 - Livré
 
 - Contexte des listes items conservé dans la query frontend
 - Paramètres conservés : recherche, filtres dynamiques, page, taille de page, tri, direction et mode `Cartes` / `Liste`
@@ -299,7 +434,109 @@ Version actuelle : v0.12-lot10.0.1.
 - Suppression depuis la fiche conservant le contexte de liste et ajoutant `deleted=1`
 - Aucun changement backend, API, schéma SQLite, plugins, préférences d'affichage, pagination ou contrat de tri dans ce lot
 
-### Lot 8.0.1 - Livré
+### Lot 6.x
+
+#### Lot 6.0.1 - Livré
+
+- Exécution locale via `docker compose up --build`, `docker-compose up --build` ou `podman-compose up --build`
+- Service backend Node 22 lancé avec `node src/server.js`
+- Port backend interne 3000, configurable côté hôte via `BACKEND_PORT`
+- Chemins backend configurables via `DATA_DIR` et `PLUGINS_DIR`
+- Base SQLite dérivée de `DATA_DIR` via `collection-manager.db`
+- Volume persistant `./backend/data:/app/data:Z`
+- Plugins montés via `./backend/plugins:/app/plugins:ro,Z`
+- Service frontend construit avec Vite et servi en statique par Nginx
+- Proxy Nginx `/api` vers `http://backend:3000`
+- Port frontend public configurable via `FRONTEND_PORT`, avec défaut 8080
+- Compatibilité Podman rootless / Bazzite / SELinux validée avec labels de volumes `:Z`
+- `.env` requis avec `JWT_SECRET` et `ADMIN_PASSWORD`
+- Documentation de déploiement local dans `docs/deployment-docker.md`
+- GitHub Actions, GHCR, HTTPS et reverse proxy externe non inclus dans ce lot
+
+#### Lot 6.0.2 - Livré
+
+- Workflow GitHub Actions `.github/workflows/ci.yml`
+- Déclenchement sur push et pull request
+- Jobs sur `ubuntu-latest`
+- Node 22 pour les jobs backend et frontend
+- Job backend :
+  - `npm ci` dans `backend/`
+  - `node --check` sur les fichiers JavaScript de `backend/src`
+- Job frontend :
+  - `npm ci` dans `frontend/`
+  - `npm exec vite build`
+- Job Docker après succès backend et frontend :
+  - `docker build -t collectionmgnt-backend ./backend`
+  - `docker build -t collectionmgnt-frontend ./frontend`
+- Aucune publication d'image dans ce lot
+- Pas de release GitHub, pas de GHCR, pas de Docker Hub
+- Aucun test applicatif n'est lancé actuellement, faute de script `test` existant
+
+#### Lot 6.0.3 - Livré
+
+- Workflow GitHub Actions `.github/workflows/publish.yml`
+- Publication automatique sur GitHub Container Registry
+- Déclenchement sur push `main`, tags `v*` et `workflow_dispatch`
+- Permissions `contents: read` et `packages: write`
+- Vérifications backend et frontend avant publication
+- Images publiées :
+  - `ghcr.io/<owner>/collectionmgnt-backend`
+  - `ghcr.io/<owner>/collectionmgnt-frontend`
+- Propriétaire GitHub normalisé en minuscules pour les noms d'images
+- Tags publiés :
+  - `latest` uniquement depuis `main`
+  - tag Git exact uniquement depuis les tags `v*`
+  - `sha-*` pour chaque publication
+- Pas de Docker Hub
+- Pas de GitHub Release
+- Pas de multi-arch, cosign, SBOM ou scan sécurité dans ce lot
+
+### Lot 7.x
+
+#### Lot 7.0.1 - Livré
+
+- API backend persistante de préférences d'affichage par plugin
+- Routes protégées :
+  - `GET /api/plugins/:pluginId/display-preferences`
+  - `PUT /api/plugins/:pluginId/display-preferences`
+  - `DELETE /api/plugins/:pluginId/display-preferences`
+- Stockage dans la table SQLite `settings` avec les clés `displayPreferences.<pluginId>`
+- Calcul de préférences par défaut depuis le schéma plugin
+- Validation stricte des noms de champs depuis le schéma plugin
+- Densités acceptées : `comfortable` et `compact`
+- Rejet des champs inconnus et des densités invalides avec réponse 400
+- Suppression des préférences pour revenir aux valeurs par défaut
+- Aucun changement des fichiers `fields.json`
+- Aucun changement frontend dans ce lot
+
+#### Lot 7.0.2 - Livré
+
+- Frontend branché sur `GET /api/plugins/:pluginId/display-preferences`
+- Cartes items pilotées par `list.highlightedFields`
+- Cartes items affichant les labels du schéma plugin quand les préférences et le schéma sont disponibles
+- Densité des cartes appliquée via `list.density`
+- Fiche détail pilotée par `details.fieldOrder`
+- Champs masqués en fiche détail via `details.hiddenFields`
+- Section `Autres informations` conservée pour les métadonnées inconnues du schéma plugin
+- Formatage des métadonnées partagé côté frontend
+- Aucun panneau d'édition, de sauvegarde ou de reset des préférences dans ce lot
+
+#### Lot 7.0.3 - Livré
+
+- Bouton `Affichage` dans la liste d'une collection
+- Panneau inline d'édition des préférences d'affichage
+- Édition des champs mis en avant sur les cartes via `list.highlightedFields`
+- Réordonnancement par boutons `Monter` et `Descendre`
+- Édition de la densité des cartes via `list.density`
+- Édition de l'ordre de fiche détail via `details.fieldOrder`
+- Masquage de champs en fiche détail via `details.hiddenFields`
+- Sauvegarde via `PUT /api/plugins/:pluginId/display-preferences`
+- Réinitialisation via `DELETE /api/plugins/:pluginId/display-preferences`
+- Aucun drag & drop, format rating/date avancé, champ principal alternatif ou vue liste dense dans ce lot
+
+### Lot 8.x
+
+#### Lot 8.0.1 - Livré
 
 - Export métier JSON applicatif global via `GET /api/exports/application.json`
 - Export métier JSON par collection via `GET /api/exports/collections/:pluginId.json`
@@ -313,7 +550,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Export JSON collection conservé via API, sans exposition dans l'interface collection depuis le Lot 9.0.4.1
 - Aucun import, aucune restauration, aucun ZIP, aucun dump SQLite, aucun changement de schéma SQLite ou de plugins
 
-### Lot 8.1.1 - Livré
+#### Lot 8.1.1 - Livré
 
 - Audit média global lecture seule via `GET /api/admin/media-audit`
 - Route protégée par JWT
@@ -323,7 +560,9 @@ Version actuelle : v0.12-lot10.0.1.
 - Chemins du rapport relatifs à `DATA_DIR`, sans exposition de chemins absolus
 - Aucun cleanup, aucune suppression de fichier, aucune modification DB, aucune régénération thumbnail/image et aucun changement de schéma SQLite
 
-### Lot 9.0.1 - Livré
+### Lot 9.x
+
+#### Lot 9.0.1 - Livré
 
 - Fondation Administration via une page frontend protégée `/admin`
 - Accès Administration ajouté dans l'ancienne navigation d'accueil sans refonte de la navigation globale
@@ -335,7 +574,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Résumé système basé uniquement sur des `SELECT COUNT(*)`
 - Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import JSON, aucun cleanup média, aucune sauvegarde ZIP et aucun changement de schéma SQLite
 
-### Lot 9.0.2 - Livré
+#### Lot 9.0.2 - Livré
 
 - Action `Importer des données` depuis la section Données de la page Administration
 - Route protégée `POST /api/admin/imports/native-json`
@@ -352,7 +591,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Rapport d'import avec compteurs, items créés, items ignorés, erreurs et warnings
 - Aucun import CSV, aucune sauvegarde ZIP, aucune restauration médias physiques et aucun changement de schéma SQLite
 
-### Lot 9.0.3 - Livré
+#### Lot 9.0.3 - Livré
 
 - Cleanup média manuel guidé depuis la section Médias de la page Administration
 - Routes protégées `POST /api/admin/media-cleanup/preview` et `POST /api/admin/media-cleanup/execute`
@@ -364,7 +603,7 @@ Version actuelle : v0.12-lot10.0.1.
 - UI avec liste de candidats sûrs, sélection manuelle, confirmation `window.confirm` et rapport supprimés/ignorés/erreurs
 - Aucun changement de schéma SQLite, aucune sauvegarde ZIP et aucun cleanup automatique
 
-### Lot 9.0.4 - Livré
+#### Lot 9.0.4 - Livré
 
 - Sauvegarde ZIP complète téléchargeable depuis la page Administration
 - Route protégée `GET /api/admin/backup.zip`
@@ -376,7 +615,7 @@ Version actuelle : v0.12-lot10.0.1.
 - ZIP traité comme sensible car il contient la DB complète, incluant les utilisateurs et `password_hash`
 - Aucun changement de schéma SQLite, aucune restauration ZIP, aucun cloud, aucun stockage distant, aucune planification, aucun incrémental et aucun historique/rétention
 
-### Lot 9.0.4.1 - Livré
+#### Lot 9.0.4.1 - Livré
 
 - Option `Export JSON` retirée de l'interface collection
 - Menu d'export collection remplacé par une action unique `Export CSV`
@@ -385,7 +624,9 @@ Version actuelle : v0.12-lot10.0.1.
 - Administration inchangée : export/import natif JSON et sauvegarde ZIP restent dans l'Administration
 - Aucun changement backend, API, SQLite ou Administration
 
-### Lot 10.0.1 - Livré
+### Lot 10.x
+
+#### Lot 10.0.1 - Livré
 
 - Layout global pour les pages authentifiées
 - Barre supérieure persistante avec marque `CollectionMgnt` cliquable vers Collections
@@ -397,7 +638,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Breadcrumbs conservés sur les pages hiérarchiques, sans niveau Dashboard
 - Aucun changement backend, API, SQLite, rôles utilisateur ou page profil fonctionnelle
 
-### Lot 10.1.0 - Livré
+#### Lot 10.1.0 - Livré
 
 - Fondations responsive frontend posées sans refonte mobile complète
 - Convention de breakpoints clarifiée autour de mobile jusqu'à 639px, tablette de 640px à 899px et desktop à partir de 900px
@@ -411,7 +652,7 @@ Version actuelle : v0.12-lot10.0.1.
 - Administration rendue plus lisible sur tablette/mobile, avec grille deux colonnes réservée au desktop
 - Aucun changement backend, API, SQLite, métier, captures README ou framework UI
 
-### Lot 10.1.1 - Livré
+#### Lot 10.1.1 - Livré
 
 - Fondation de tests automatisés backend avec le Node Test Runner natif
 - Helper de test Fastify avec DB SQLite temporaire, `DATA_DIR` temporaire, secret JWT de test, admin de test et plugins synchronisés
@@ -422,7 +663,9 @@ Version actuelle : v0.12-lot10.0.1.
 - Documentation des commandes locales et du workflow PR
 - Aucun changement backend fonctionnel, API, SQLite métier, UX, Playwright, Vitest frontend, Cypress, Sonar, Codecov ou couverture de code
 
-### Lot sécurité RBAC / rate limit / CSV - Livré
+### Sécurité
+
+#### Lot sécurité RBAC / rate limit / CSV - Livré
 
 - Modèle de rôles minimal `admin` / `user` sur la table `users`
 - Migration SQLite ajoutant `users.role` avec `DEFAULT 'user'` et `CHECK(role IN ('admin', 'user'))`
@@ -438,211 +681,13 @@ Version actuelle : v0.12-lot10.0.1.
 - Tests backend ajoutés pour RBAC admin/user/sans token, rate limit login et sécurisation CSV
 - Aucun changement du format JSON natif, aucun changement du format backup ZIP, aucune restauration, aucune gestion utilisateurs avancée, aucune matrice de permissions fine
 
-### Prochaine étape
+## Jalons long terme
 
-- Restauration ZIP guidée
-- Import CSV CollectionMgnt
-- Amélioration des rapports et historiques d'administration
+### v1.0
 
-### Non livré à ce stade
+#### Première version stable
 
-- Support backend des types plugin avancés : multiselect, url, email, barcode, isbn
-- Restauration ZIP complète
-- Import CSV externe depuis une autre application de gestion de collection
-
----
-
-# v0.1 - Fondation
-
-## Objectif
-
-Poser les bases techniques du projet.
-
-### Backend
-
-- Fastify
-- SQLite
-- JWT
-- Structure plugins
-
-### Frontend
-
-- Vue 3
-- Vite
-- Vue Router
-- Pinia
-
-### Infrastructure
-
-- Docker
-- Docker Compose
-- Synology compatible
-
-### Livrables
-
-- Authentification
-- Structure projet
-- Chargement plugins
-
----
-
-# v0.2 - Plugins et Collections
-
-## Objectif
-
-Créer le moteur de collections générique.
-
-### Fonctionnalités
-
-- CRUD générique
-- Plugins déclaratifs
-- Champs dynamiques
-- Validation dynamique
-
-### Livrables
-
-- Gestion collections
-- Gestion plugins
-- Renommage plugins
-
----
-
-# v0.3 - Recherche
-
-## Objectif
-
-Recherche puissante sans code spécifique.
-
-### Fonctionnalités
-
-- Recherche globale
-- Recherche avancée
-- Filtres automatiques
-- Facettes
-
-### Livrables
-
-- Multi-collections
-- Recherche configurable
-
----
-
-# v0.4 - Médias
-
-## Objectif
-
-Gestion complète des images.
-
-### Fonctionnalités
-
-- Upload
-- Conversion WebP
-- Miniatures
-- Galerie
-
-### Livrables
-
-- Images multiples
-- Image principale
-
----
-
-# v0.5 - Sauvegardes
-
-## Objectif
-
-Sécuriser les données.
-
-### Fonctionnalités
-
-- Sauvegarde ZIP
-- Restauration ZIP
-- Sauvegarde automatique
-
-### Livrables
-
-- Export complet
-- Politique de rétention
-
----
-
-# v0.6 - Internationalisation
-
-## Objectif
-
-Support multilingue.
-
-### Langues
-
-- Français
-- Anglais
-
-### Fonctionnalités
-
-- Changement de langue
-- Préférences utilisateur
-
----
-
-# v0.7 - Plugins officiels
-
-## Plugins fournis
-
-### Jeux Vidéo
-
-- Plateforme
-- Genre
-- Éditeur
-
-### Films
-
-- Réalisateur
-- Format
-- Année
-
-### Livres
-
-- Auteur
-- ISBN
-- Éditeur
-
-### Consoles
-
-- Fabricant
-- Génération
-
-### Autre
-
-- Champs génériques
-
----
-
-# v0.8 - Prêts et Tags
-
-## Fonctionnalités
-
-- Gestion des prêts
-- Historique
-- Tags globaux
-
----
-
-# v0.9 - Stabilisation
-
-## Qualité
-
-- Optimisation SQLite
-- Optimisation recherche
-- Tests automatisés
-- Documentation complète
-
----
-
-# v1.0
-
-## Première version stable
-
-### Inclus
+##### Inclus
 
 - Authentification
 - Plugins déclaratifs
@@ -653,125 +698,197 @@ Support multilingue.
 - Internationalisation
 - Plugins officiels
 
-### Compatible
+##### Compatible
 
 - Synology NAS
 - Docker Compose
 
 ---
 
-# Backlog futur
+### Post-v1.0
 
-## Plugins
+#### v0.1 - Fondation
 
-- Mangas
-- Bandes dessinées
-- Vinyles
-- Figurines
-- LEGO
-- Cartes Pokémon
+##### Objectif
 
-## Fonctionnalités
+Poser les bases techniques du projet.
 
-- Import CSV
-- Export CSV
-- Import JSON
-- Export JSON
-- API publique
+###### Backend
 
-## Recherche
+- Fastify
+- SQLite
+- JWT
+- Structure plugins
 
-- SQLite FTS5
-- Recherche approximative
+###### Frontend
 
-## Médias
+- Vue 3
+- Vite
+- Vue Router
+- Pinia
 
-- OCR
-- Lecture ISBN
-- Lecture code-barres
+###### Infrastructure
 
-## Administration
+- Docker
+- Docker Compose
+- Synology compatible
 
-- Multi-utilisateurs avancé
-- Gestion utilisateurs
-- Permissions fines
+###### Livrables
 
-## Sécurité - Travaux futurs
+- Authentification
+- Structure projet
+- Chargement plugins
 
-### Priorité élevée
+---
 
-- Revue et mise à jour de la dépendance JWT / fast-jwt.
-- Validation stricte de `JWT_SECRET` avec longueur minimale.
-- Journalisation des événements sensibles :
-  - connexion réussie
-  - connexion échouée
-  - téléchargement backup
-  - import
-  - media cleanup
+#### v0.2 - Plugins et Collections
 
-### Priorité moyenne
+##### Objectif
 
-- Renforcement des en-têtes HTTP avec Helmet ou équivalent.
-- Rate limiting complémentaire :
-  - backup
-  - import
-  - upload
-- Politique minimale de mot de passe.
+Créer le moteur de collections générique.
 
-### Tooling / CI sécurité
+###### Fonctionnalités
 
-- Dependabot.
-- CodeQL.
-- `npm audit` en CI.
-- Scan de sécurité des images conteneur, par exemple Trivy.
+- CRUD générique
+- Plugins déclaratifs
+- Champs dynamiques
+- Validation dynamique
 
-### Infrastructure
+###### Livrables
 
-- Docker hardening avec utilisateur non privilégié.
-- Monitoring basique des événements sensibles.
+- Gestion collections
+- Gestion plugins
+- Renommage plugins
 
-## Distribution
+---
 
-- Installation plugins ZIP
-- Catalogue de plugins
+#### v0.3 - Recherche
 
-## Lot futur 
+##### Objectif
 
-### Configuration des champs et préférences d’affichage
+Recherche puissante sans code spécifique.
 
-- Définition d’échelles de notation configurables :
-  - note sur 5
-  - note sur 10
-  - note sur 20
-  - note sur 100
-  - pourcentage
-  - affichage en étoiles
-- Configuration des colonnes affichées dans les listes
-- Choix des métadonnées mises en avant dans les cartes items
-- Préférences d’affichage par collection/plugin
+###### Fonctionnalités
 
-### Outils d’audit et maintenance média
+- Recherche globale
+- Recherche avancée
+- Filtres automatiques
+- Facettes
 
-- Détection des fichiers orphelins sur disque
-- Détection des entrées media sans fichier associé
-- Rapport d’audit détaillé
-- Mode dry-run
-- Nettoyage manuel depuis l’interface d’administration
-- Régénération éventuelle des miniatures et images optimisées
+###### Livrables
 
-### Import CSV externe
+- Multi-collections
+- Recherche configurable
 
-- Importer un export CSV venant de l'application Icollect
+---
 
-### Internationalisation / changement de langue
-  - option dans le menu utilisateur ou administration
-  - probablement FR / EN au départ
-  - préférence persistée côté utilisateur ou settings
-  - ne pas se limiter à traduire le README
+#### v0.4 - Médias
 
-### Responsive / usage tablette-mobile
-  - top bar compacte
-  - cartes adaptées mobile
-  - listes avec scroll/colonnes simplifiées
-  - administration utilisable sur petit écran
-  - formulaires confortables au tactile
+##### Objectif
+
+Gestion complète des images.
+
+###### Fonctionnalités
+
+- Upload
+- Conversion WebP
+- Miniatures
+- Galerie
+
+###### Livrables
+
+- Images multiples
+- Image principale
+
+---
+
+#### v0.5 - Sauvegardes
+
+##### Objectif
+
+Sécuriser les données.
+
+###### Fonctionnalités
+
+- Sauvegarde ZIP
+- Restauration ZIP
+- Sauvegarde automatique
+
+###### Livrables
+
+- Export complet
+- Politique de rétention
+
+---
+
+#### v0.6 - Internationalisation
+
+##### Objectif
+
+Support multilingue.
+
+###### Langues
+
+- Français
+- Anglais
+
+###### Fonctionnalités
+
+- Changement de langue
+- Préférences utilisateur
+
+---
+
+#### v0.7 - Plugins officiels
+
+##### Plugins fournis
+
+###### Jeux Vidéo
+
+- Plateforme
+- Genre
+- Éditeur
+
+###### Films
+
+- Réalisateur
+- Format
+- Année
+
+###### Livres
+
+- Auteur
+- ISBN
+- Éditeur
+
+###### Consoles
+
+- Fabricant
+- Génération
+
+###### Autre
+
+- Champs génériques
+
+---
+
+#### v0.8 - Prêts et Tags
+
+##### Fonctionnalités
+
+- Gestion des prêts
+- Historique
+- Tags globaux
+
+---
+
+#### v0.9 - Stabilisation
+
+##### Qualité
+
+- Optimisation SQLite
+- Optimisation recherche
+- Tests automatisés
+- Documentation complète
+
+---
