@@ -110,6 +110,7 @@ Frontend :
 ### Authentification
 
 - JWT via `Authorization: Bearer`
+- `@fastify/jwt` migré vers `10.1.0`, avec `fast-jwt` `6.2.4`
 - Validation stricte de `JWT_SECRET` au démarrage avec longueur minimale de 32 caractères
 - Création automatique du premier administrateur avec `role=admin`
 - Modèle de rôles minimal : `admin` et `user`
@@ -406,6 +407,7 @@ Variables disponibles :
 - Déclenchement sur push et pull request
 - Workflow CodeQL `.github/workflows/codeql.yml` pour l'analyse JavaScript
 - Dependabot configuré dans `.github/dependabot.yml` pour backend npm, frontend npm et GitHub Actions
+- Dette sécurité `@fastify/jwt` / `fast-jwt` traitée par migration vers `@fastify/jwt` `10.1.0`
 - Node 22 utilisé pour les vérifications backend et frontend
 - Backend : `npm ci`, `npm run check:syntax`, puis `npm test`
 - Tests backend d'intégration via le Node Test Runner natif et Fastify `inject`

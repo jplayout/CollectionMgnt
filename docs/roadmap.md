@@ -66,13 +66,13 @@ Limites majeures connues :
 
 - Lot sécurité RBAC / rate limit / CSV livré.
 - Lot 10.3.0 Security & CI Hardening livré : CodeQL, Dependabot, Helmet et validation stricte de `JWT_SECRET`.
+- Lot 10.3.1 Migration `@fastify/jwt` livré : dette sécurité `fast-jwt` traitée par mise à jour vers `@fastify/jwt` `10.1.0`.
 - Détail complet conservé dans `Historique des lots livrés > Sécurité`.
 
 ### Travaux futurs prioritaires
 
 Priorité élevée :
 
-- Revue et mise à jour de la dépendance JWT / fast-jwt.
 - Journalisation des événements sensibles :
   - connexion réussie
   - connexion échouée
@@ -837,6 +837,16 @@ Contraintes :
 - Tests backend ajoutés pour les en-têtes de sécurité et la validation de `JWT_SECRET`
 - Trivy non intégré dans ce lot pour éviter de fragiliser la CI
 - Aucun changement métier, UX, API fonctionnelle, SQLite, OAuth, MFA, SSO, HTTPS embarqué, reverse proxy, monitoring, audit logs avancés ou CSP stricte
+
+#### Lot 10.3.1 - Migration @fastify/jwt - Livré
+
+- Migration backend de `@fastify/jwt` de `9.1.0` vers `10.1.0`
+- Mise à jour transitive de `fast-jwt` de `5.0.6` vers `6.2.4`
+- Dette sécurité `fast-jwt` / `@fastify/jwt` supprimée selon `npm audit --omit=dev`
+- Payload JWT existant conservé : `id`, `role`, `username`
+- Comportement existant conservé pour `fastify.jwt.sign(...)`, `request.jwtVerify()`, `request.user` et RBAC admin/user
+- Aucun changement produit, API, frontend, SQLite, modèle de rôles, middleware RBAC ou refonte auth
+- Tests backend existants conservés pour login, `/api/auth/me`, RBAC, routes admin, imports, exports, backup, media audit/cleanup et validation `JWT_SECRET`
 
 #### Lot 10.4.0 - Playwright E2E MVP - Livré
 
