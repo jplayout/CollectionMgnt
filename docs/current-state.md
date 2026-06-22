@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot10.3.0
+Version : v0.12-lot10.4.0
 
 ## État du projet
 
@@ -240,6 +240,15 @@ Frontend :
   - `MediaThumbnail.vue`
   - `ImageUploader.vue`
 
+### Tests E2E
+
+- Playwright installé côté frontend pour un MVP E2E Chromium uniquement
+- Scénarios E2E couverts : login admin, arrivée Collections, accès Administration, import du dataset officiel, ouverture d'une collection et ouverture d'une fiche item
+- Backend E2E lancé localement sur `127.0.0.1:3100` avec un `DATA_DIR` temporaire et les plugins locaux
+- Frontend E2E lancé via Vite sur `127.0.0.1:4173` avec proxy `/api` vers le backend E2E
+- Dataset utilisé : `demo/datasets/collectionmgnt-demo-v1.json`
+- Media pack de démonstration non testé dans ce lot
+
 ### Authentification frontend
 
 - Store Pinia auth
@@ -403,11 +412,13 @@ Variables disponibles :
 - Tests backend exécutés avec une base SQLite temporaire, un `DATA_DIR` temporaire, un secret JWT de test et un admin de test
 - Couverture MVP backend : auth login succès/échec, route protégée sans token, résumé système, export JSON applicatif, import natif invalide, backup ZIP smoke test, audit média et cleanup média smoke tests
 - Frontend : `npm ci` puis `npm exec vite build`
+- E2E Playwright : installation Chromium puis `npm run e2e` côté frontend
+- E2E Chromium uniquement, avec dataset de démonstration et `DATA_DIR` temporaire pour éviter toute dépendance à une base locale existante
 - Qualité : `git diff --check`
 - Docker : build des images backend et frontend après succès des jobs Node
 - Aucune publication d'image par le workflow CI
 - Trivy non intégré dans ce lot pour éviter de fragiliser la CI
-- Pas de Vitest frontend, Playwright, Cypress, couverture de code, Sonar ou Codecov dans ce lot
+- Pas de Vitest frontend, Cypress, couverture de code, Sonar, Codecov ou E2E exhaustifs dans ce lot
 - Workflow GitHub Actions `.github/workflows/publish.yml`
 - Publication GHCR automatique sur push `main`, tags `v*` et déclenchement manuel
 - Images publiées :
