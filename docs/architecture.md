@@ -57,14 +57,16 @@ Ordre de bootstrap :
 1. `initializeDatabase()`
    - cree `DATA_DIR` si necessaire ;
    - ouvre `DATA_DIR/collection-manager.db` ;
-   - applique `schema.sql` si la base n'existe pas encore.
+   - applique `schema.sql` si la base n'existe pas encore ;
+   - applique la migration minimale `users.role` sur les bases existantes.
 2. `buildApp()`
    - cree l'instance Fastify.
 3. `registerJwt(app)`
    - configure `@fastify/jwt` avec `JWT_SECRET` ;
-   - ajoute le decorateur `authenticate`.
+   - ajoute les decorateurs `authenticate` et `requireAdmin`.
 4. `createInitialAdmin(db)`
    - cree le premier administrateur si aucun utilisateur n'existe ;
+   - assigne `role=admin` a cet utilisateur ;
    - utilise `ADMIN_USERNAME` ou `admin` ;
    - exige `ADMIN_PASSWORD`.
 5. `bootstrapPlugins()`
@@ -93,7 +95,8 @@ Les routes sont regroupees sous `backend/src/routes`, `backend/src/auth`,
 `backend/src/routes/index.js` enregistre :
 
 - les routes auth publiques ;
-- un groupe protege par JWT pour plugins, items, medias, exports et admin.
+- un groupe protege par JWT pour plugins, items, medias et exports ;
+- un sous-groupe admin protege par `requireAdmin`.
 
 Les routes admin principales sont :
 
@@ -103,6 +106,15 @@ Les routes admin principales sont :
 - `GET /api/admin/media-audit`
 - `POST /api/admin/media-cleanup/preview`
 - `POST /api/admin/media-cleanup/execute`
+
+Le controle d'acces distingue :
+
+- `401 Unauthorized` quand le JWT est absent ou invalide ;
+- `403 Forbidden` quand le JWT est valide mais que le role n'est pas `admin`.
+
+L'export applicatif global `GET /api/exports/application.json` est egalement
+reserve aux admins. Les exports CSV de collection restent accessibles aux
+utilisateurs authentifies.
 
 ### Services
 
@@ -232,9 +244,11 @@ Les fondations responsive utilisent les conventions :
 
 1. L'utilisateur poste ses identifiants sur `/api/auth/login`.
 2. Le backend verifie le hash du mot de passe.
-3. Le backend retourne un JWT et un utilisateur sans `password_hash`.
+3. Le backend retourne un JWT incluant le role et un utilisateur sans `password_hash`.
 4. Le frontend stocke le JWT en `sessionStorage`.
 5. Les appels suivants ajoutent l'en-tete `Authorization`.
+
+`POST /api/auth/login` est limite a 5 tentatives par fenetre de 5 minutes.
 
 ### Navigation Collections
 

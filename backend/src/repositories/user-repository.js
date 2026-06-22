@@ -26,13 +26,15 @@ export class UserRepository {
                     INSERT INTO users (
                         username,
                         password_hash,
+                        role,
                         preferred_language
                     )
-                    VALUES (?, ?, ?)
+                    VALUES (?, ?, ?, ?)
                 `)
                 .run(
                     user.username,
                     user.password_hash,
+                    user.role ?? 'user',
                     user.preferred_language ?? 'fr'
                 );
 
@@ -47,6 +49,7 @@ export class UserRepository {
                 SELECT
                     id,
                     username,
+                    role,
                     preferred_language,
                     created_at,
                     updated_at

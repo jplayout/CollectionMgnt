@@ -4,6 +4,7 @@ CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('admin', 'user')),
     preferred_language TEXT DEFAULT 'fr',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -86,7 +87,7 @@ CREATE TABLE schema_info (
 );
 
 INSERT INTO schema_info(version)
-VALUES (1);
+VALUES (2);
 
 CREATE INDEX idx_items_plugin_id ON items(plugin_id);
 CREATE INDEX idx_item_tags_tag_id ON item_tags(tag_id);

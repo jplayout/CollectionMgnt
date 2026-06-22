@@ -9,6 +9,7 @@ import { createTestApp } from '../helpers/test-app.js';
 
 let context;
 let token;
+let user;
 
 before(async () => {
 
@@ -17,6 +18,12 @@ before(async () => {
 
     token =
         await context.login();
+
+    user =
+        await context.createUser({
+            username:
+                'regular-admin-test-user'
+        });
 
 });
 
@@ -71,6 +78,50 @@ test(
         assert.equal(
             typeof body.counts.media,
             'number'
+        );
+
+    }
+);
+
+test(
+    'GET /api/admin/system-summary rejects non-admin users',
+    async () => {
+
+        const response =
+            await context.app.inject({
+                headers: {
+                    authorization:
+                        `Bearer ${user.token}`
+                },
+                method:
+                    'GET',
+                url:
+                    '/api/admin/system-summary'
+            });
+
+        assert.equal(
+            response.statusCode,
+            403
+        );
+
+    }
+);
+
+test(
+    'GET /api/admin/system-summary rejects requests without a token',
+    async () => {
+
+        const response =
+            await context.app.inject({
+                method:
+                    'GET',
+                url:
+                    '/api/admin/system-summary'
+            });
+
+        assert.equal(
+            response.statusCode,
+            401
         );
 
     }

@@ -12,6 +12,7 @@ import Database from 'better-sqlite3';
 
 import { buildApp } from '../../src/app.js';
 import { registerJwt } from '../../src/auth/jwt.js';
+import { hashPassword } from '../../src/auth/password-service.js';
 import { createInitialAdmin } from '../../src/bootstrap/admin-user.js';
 import { syncPlugins } from '../../src/bootstrap/plugin-sync.js';
 import { loadPlugins } from '../../src/plugins/plugin-loader.js';
@@ -168,6 +169,56 @@ export async function createTestApp() {
                 });
 
             return response.json().token;
+
+        },
+        async createUser({
+            password = 'test-password',
+            role = 'user',
+            username
+        }) {
+
+            const passwordHash =
+                await hashPassword(
+                    password
+                );
+
+            const result =
+                db
+                    .prepare(`
+                        INSERT INTO users (
+                            username,
+                            password_hash,
+                            role,
+                            preferred_language
+                        )
+                        VALUES (?, ?, ?, 'fr')
+                    `)
+                    .run(
+                        username,
+                        passwordHash,
+                        role
+                    );
+
+            return {
+                id:
+                    result.lastInsertRowid,
+                password,
+                role,
+                token:
+                    app.jwt.sign(
+                        {
+                            id:
+                                result.lastInsertRowid,
+                            role,
+                            username
+                        },
+                        {
+                            expiresIn:
+                                '8h'
+                        }
+                    ),
+                username
+            };
 
         }
     };

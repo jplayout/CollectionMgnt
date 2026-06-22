@@ -2,6 +2,8 @@ import {
     UserRepository
 } from '../repositories/user-repository.js';
 
+import fastifyRateLimit from '@fastify/rate-limit';
+
 import {
     verifyPassword
 } from './password-service.js';
@@ -15,8 +17,26 @@ export default async function (
             fastify.db
         );
 
+    await fastify.register(
+        fastifyRateLimit,
+        {
+            global:
+                false
+        }
+    );
+
     fastify.post(
         '/api/auth/login',
+        {
+            config: {
+                rateLimit: {
+                    max:
+                        5,
+                    timeWindow:
+                        '5 minutes'
+                }
+            }
+        },
         async (
             request,
             reply
@@ -78,6 +98,7 @@ export default async function (
                 fastify.jwt.sign(
                     {
                         id: user.id,
+                        role: user.role,
                         username: user.username
                     },
                     {
@@ -170,6 +191,8 @@ function toSafeUser(
             user.id,
         username:
             user.username,
+        role:
+            user.role,
         preferred_language:
             user.preferred_language,
         created_at:

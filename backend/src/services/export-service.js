@@ -396,17 +396,38 @@ function escapeCsvCell(value) {
             ? JSON.stringify(value)
             : String(value);
 
+    const safeValue =
+        neutralizeFormulaValue(
+            stringValue
+        );
+
     if (
         /[",\r\n]/.test(
-            stringValue
+            safeValue
         )
     ) {
 
-        return `"${stringValue.replaceAll('"', '""')}"`;
+        return `"${safeValue.replaceAll('"', '""')}"`;
 
     }
 
-    return stringValue;
+    return safeValue;
+
+}
+
+function neutralizeFormulaValue(value) {
+
+    if (
+        /^[=+\-@]/.test(
+            value
+        )
+    ) {
+
+        return `'${value}`;
+
+    }
+
+    return value;
 
 }
 

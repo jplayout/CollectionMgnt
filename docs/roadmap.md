@@ -422,6 +422,22 @@ Version actuelle : v0.12-lot10.0.1.
 - Documentation des commandes locales et du workflow PR
 - Aucun changement backend fonctionnel, API, SQLite métier, UX, Playwright, Vitest frontend, Cypress, Sonar, Codecov ou couverture de code
 
+### Lot sécurité RBAC / rate limit / CSV - Livré
+
+- Modèle de rôles minimal `admin` / `user` sur la table `users`
+- Migration SQLite ajoutant `users.role` avec `DEFAULT 'user'` et `CHECK(role IN ('admin', 'user'))`
+- Préservation de l'accès administrateur lors de la migration via `ADMIN_USERNAME`, ou premier utilisateur existant en fallback
+- Premier administrateur créé avec `role=admin`
+- Rôle inclus dans le JWT, la réponse de login et `/api/auth/me`
+- Middleware admin dédié avec distinction `401` sans token ou token invalide, `403` pour utilisateur authentifié non admin
+- Routes admin réservées aux admins : résumé système, backup ZIP, import JSON natif, audit média et cleanup média
+- Export applicatif global `GET /api/exports/application.json` réservé aux admins
+- Exports CSV de collection conservés pour les utilisateurs authentifiés
+- Protection de `POST /api/auth/login` par rate limit Fastify : 5 tentatives par fenêtre de 5 minutes, puis `429`
+- Neutralisation anti-formule appliquée uniquement aux exports CSV pour les cellules commençant par `=`, `+`, `-` ou `@`
+- Tests backend ajoutés pour RBAC admin/user/sans token, rate limit login et sécurisation CSV
+- Aucun changement du format JSON natif, aucun changement du format backup ZIP, aucune restauration, aucune gestion utilisateurs avancée, aucune matrice de permissions fine
+
 ### Prochaine étape
 
 - Restauration ZIP guidée
@@ -677,8 +693,8 @@ Support multilingue.
 ## Administration
 
 - Multi-utilisateurs avancé
-- Rôles
-- Permissions
+- Gestion utilisateurs
+- Permissions fines
 
 ## Distribution
 

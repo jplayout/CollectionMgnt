@@ -103,9 +103,15 @@ La couverture MVP verifie :
 - bootstrap complet de l'application ;
 - login admin avec succes ;
 - login en echec ;
+- limitation de `POST /api/auth/login` avec reponse `429` apres depassement ;
+- role utilisateur expose par login et `/api/auth/me` ;
 - route protegee sans token vers `401` ;
 - `GET /api/admin/system-summary` ;
+- refus `403` pour utilisateur authentifie non admin sur les routes admin principales ;
 - `GET /api/exports/application.json` ;
+- refus `403` pour utilisateur non admin sur l'export applicatif global ;
+- export CSV de collection accessible a un utilisateur authentifie ;
+- neutralisation anti-formule CSV pour champs systeme et metadata ;
 - `POST /api/admin/imports/native-json` avec payload invalide ;
 - `GET /api/admin/backup.zip` en smoke test ;
 - `GET /api/admin/media-audit` en smoke test ;

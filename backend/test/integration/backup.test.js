@@ -9,6 +9,7 @@ import { createTestApp } from '../helpers/test-app.js';
 
 let context;
 let token;
+let user;
 
 before(async () => {
 
@@ -17,6 +18,12 @@ before(async () => {
 
     token =
         await context.login();
+
+    user =
+        await context.createUser({
+            username:
+                'regular-backup-test-user'
+        });
 
 });
 
@@ -57,6 +64,50 @@ test(
 
         assert.ok(
             response.rawPayload.length > 0
+        );
+
+    }
+);
+
+test(
+    'GET /api/admin/backup.zip rejects non-admin users',
+    async () => {
+
+        const response =
+            await context.app.inject({
+                headers: {
+                    authorization:
+                        `Bearer ${user.token}`
+                },
+                method:
+                    'GET',
+                url:
+                    '/api/admin/backup.zip'
+            });
+
+        assert.equal(
+            response.statusCode,
+            403
+        );
+
+    }
+);
+
+test(
+    'GET /api/admin/backup.zip rejects requests without a token',
+    async () => {
+
+        const response =
+            await context.app.inject({
+                method:
+                    'GET',
+                url:
+                    '/api/admin/backup.zip'
+            });
+
+        assert.equal(
+            response.statusCode,
+            401
         );
 
     }
