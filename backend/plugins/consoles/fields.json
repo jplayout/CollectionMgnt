@@ -3,6 +3,63 @@
     "name": "manufacturer",
     "label": "Fabricant",
     "type": "text",
-    "searchable": true
+    "required": false,
+    "searchable": true,
+    "filterable": true,
+    "faceted": true
+  },
+  {
+    "name": "type",
+    "label": "Type",
+    "type": "select",
+    "required": false,
+    "searchable": true,
+    "filterable": true,
+    "faceted": true,
+    "options": [
+      "Home console",
+      "Handheld",
+      "Hybrid",
+      "Mini console",
+      "Computer"
+    ]
+  },
+  {
+    "name": "region",
+    "label": "Région",
+    "type": "select",
+    "required": false,
+    "searchable": true,
+    "filterable": true,
+    "faceted": true,
+    "options": [
+      "PAL",
+      "NTSC-J",
+      "NTSC-U",
+      "Region free"
+    ]
+  },
+  {
+    "name": "release_date",
+    "label": "Date de sortie",
+    "type": "date",
+    "required": false,
+    "searchable": false,
+    "filterable": true
+  },
+  {
+    "name": "condition",
+    "label": "État",
+    "type": "select",
+    "required": false,
+    "searchable": true,
+    "filterable": true,
+    "faceted": false,
+    "options": [
+      "Loose",
+      "Boxed",
+      "Complete",
+      "New"
+    ]
   }
 ]

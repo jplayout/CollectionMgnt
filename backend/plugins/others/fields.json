@@ -3,6 +3,56 @@
     "name": "category",
     "label": "Catégorie",
     "type": "text",
-    "searchable": true
+    "required": false,
+    "searchable": true,
+    "filterable": true,
+    "faceted": true
+  },
+  {
+    "name": "maker",
+    "label": "Fabricant / Créateur",
+    "type": "text",
+    "required": false,
+    "searchable": true,
+    "filterable": true
+  },
+  {
+    "name": "acquired_date",
+    "label": "Date d’acquisition",
+    "type": "date",
+    "required": false,
+    "searchable": false,
+    "filterable": true
+  },
+  {
+    "name": "condition",
+    "label": "État",
+    "type": "select",
+    "required": false,
+    "searchable": true,
+    "filterable": true,
+    "faceted": false,
+    "options": [
+      "New",
+      "Good",
+      "Used",
+      "Damaged"
+    ]
+  },
+  {
+    "name": "location",
+    "label": "Emplacement",
+    "type": "text",
+    "required": false,
+    "searchable": true,
+    "filterable": true
+  },
+  {
+    "name": "favorite",
+    "label": "Favori",
+    "type": "checkbox",
+    "required": false,
+    "searchable": false,
+    "filterable": true
   }
 ]

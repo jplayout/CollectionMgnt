@@ -3,6 +3,57 @@
     "name": "director",
     "label": "Réalisateur",
     "type": "text",
-    "searchable": true
+    "required": false,
+    "searchable": true,
+    "filterable": true
+  },
+  {
+    "name": "genre",
+    "label": "Genre",
+    "type": "text",
+    "required": false,
+    "searchable": true,
+    "filterable": true,
+    "faceted": true
+  },
+  {
+    "name": "format",
+    "label": "Format",
+    "type": "select",
+    "required": false,
+    "searchable": true,
+    "filterable": true,
+    "faceted": true,
+    "options": [
+      "DVD",
+      "Blu-ray",
+      "4K UHD",
+      "Digital",
+      "Cinema"
+    ]
+  },
+  {
+    "name": "release_date",
+    "label": "Date de sortie",
+    "type": "date",
+    "required": false,
+    "searchable": false,
+    "filterable": true
+  },
+  {
+    "name": "watched",
+    "label": "Vu",
+    "type": "checkbox",
+    "required": false,
+    "searchable": false,
+    "filterable": true
+  },
+  {
+    "name": "rating",
+    "label": "Note",
+    "type": "rating",
+    "required": false,
+    "searchable": false,
+    "filterable": true
   }
 ]
