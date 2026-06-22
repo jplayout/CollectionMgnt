@@ -50,6 +50,7 @@ Frontend :
 - Export métier JSON global
 - Export métier JSON par collection disponible via API
 - Export CSV simple par collection
+- Neutralisation des cellules CSV commencant par `=`, `+`, `-` ou `@` pour limiter l'interpretation comme formule par les tableurs
 
 ### Médias
 
@@ -88,12 +89,17 @@ Frontend :
 - Résumé système lecture seule via `GET /api/admin/system-summary`
 - Compteurs système : plugins, plugins actifs, items et médias
 - Version applicative exposée côté admin sans secrets ni données utilisateurs sensibles
-- Aucun rôle utilisateur, aucune gestion utilisateurs, aucun import CSV, aucune restauration ZIP, aucun cloud, aucune planification automatique et aucune sauvegarde incrémentale dans ce lot
+- Accès admin réservé aux utilisateurs `role=admin`
+- Réponse `401` si le JWT est absent ou invalide, `403` si l'utilisateur authentifié n'est pas admin
+- Aucun écran de gestion utilisateurs, aucun import CSV, aucune restauration ZIP, aucun cloud, aucune planification automatique et aucune sauvegarde incrémentale dans ce lot
 
 ### Authentification
 
 - JWT via `Authorization: Bearer`
-- Création automatique du premier administrateur
+- Création automatique du premier administrateur avec `role=admin`
+- Modèle de rôles minimal : `admin` et `user`
+- Rôle exposé dans le JWT, la réponse login et `/api/auth/me`
+- Limitation de `POST /api/auth/login` à 5 tentatives par fenêtre de 5 minutes
 - Login
 - Utilisateur courant (`/me`)
 - Logout stateless

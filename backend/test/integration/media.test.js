@@ -9,6 +9,7 @@ import { createTestApp } from '../helpers/test-app.js';
 
 let context;
 let token;
+let user;
 
 before(async () => {
 
@@ -17,6 +18,12 @@ before(async () => {
 
     token =
         await context.login();
+
+    user =
+        await context.createUser({
+            username:
+                'regular-media-test-user'
+        });
 
 });
 
@@ -60,6 +67,78 @@ test(
 
         assert.ok(
             Array.isArray(body.warnings)
+        );
+
+    }
+);
+
+test(
+    'POST /api/admin/media-cleanup/preview rejects non-admin users',
+    async () => {
+
+        const response =
+            await context.app.inject({
+                headers: {
+                    authorization:
+                        `Bearer ${user.token}`
+                },
+                method:
+                    'POST',
+                url:
+                    '/api/admin/media-cleanup/preview'
+            });
+
+        assert.equal(
+            response.statusCode,
+            403
+        );
+
+    }
+);
+
+test(
+    'POST /api/admin/media-cleanup/preview rejects requests without a token',
+    async () => {
+
+        const response =
+            await context.app.inject({
+                method:
+                    'POST',
+                url:
+                    '/api/admin/media-cleanup/preview'
+            });
+
+        assert.equal(
+            response.statusCode,
+            401
+        );
+
+    }
+);
+
+test(
+    'POST /api/admin/media-cleanup/execute rejects non-admin users',
+    async () => {
+
+        const response =
+            await context.app.inject({
+                headers: {
+                    authorization:
+                        `Bearer ${user.token}`
+                },
+                method:
+                    'POST',
+                payload: {
+                    candidateIds:
+                        []
+                },
+                url:
+                    '/api/admin/media-cleanup/execute'
+            });
+
+        assert.equal(
+            response.statusCode,
+            403
         );
 
     }

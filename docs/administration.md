@@ -8,7 +8,8 @@ Le Lot 9.0.1 ajoute une première fondation Administration simple.
 
 La page `/admin` regroupe les actions et informations qui relèvent de la maintenance applicative plutôt que de l'usage quotidien des collections.
 
-La route frontend est protégée comme les autres routes authentifiées.
+La route frontend est protégée comme les autres routes authentifiées. Les API
+de maintenance admin sont reservees aux utilisateurs `role=admin`.
 
 ## Accès
 
@@ -18,8 +19,15 @@ La route frontend est protégée comme les autres routes authentifiées.
 - La route `/dashboard` redirige vers `/collections`
 - Aucun breadcrumb n'est affiché sur la page racine Administration
 
-Il n'existe pas encore de rôles utilisateurs.
-Tout utilisateur authentifié accède donc à la page Administration dans ce lot.
+Le modele de roles backend est volontairement minimal :
+
+- `admin` : acces aux routes d'administration et a l'export applicatif global ;
+- `user` : acces aux fonctionnalites utilisateur authentifiees, dont l'export CSV de collection.
+
+Les erreurs d'acces sont distinguees :
+
+- `401 Unauthorized` si le token est absent ou invalide ;
+- `403 Forbidden` si l'utilisateur est authentifie mais non admin.
 
 ## Sections
 
@@ -34,7 +42,7 @@ L'export utilise la route existante :
 
 - `GET /api/exports/application.json`
 
-Cette route est protégée par JWT.
+Cette route est protégée par JWT et role `admin`.
 Elle produit un export métier JSON sans fichiers médias physiques, sans utilisateurs, sans `password_hash`, sans secrets et sans variables d'environnement.
 
 L'import utilise :
@@ -65,7 +73,7 @@ La route utilisée est :
 
 - `GET /api/admin/backup.zip`
 
-Cette route est protégée par JWT.
+Cette route est protégée par JWT et role `admin`.
 Elle génère une archive technique complète contenant :
 
 - `manifest.json`
@@ -135,7 +143,7 @@ La route backend utilisée est :
 
 - `GET /api/admin/system-summary`
 
-Cette route est protégée par JWT, read-only, et repose uniquement sur des `SELECT COUNT(*)`.
+Cette route est protégée par JWT et role `admin`, read-only, et repose uniquement sur des `SELECT COUNT(*)`.
 
 Exemple :
 
@@ -153,9 +161,8 @@ Exemple :
 
 ## Limites MVP
 
-Le Lot 9.0.4 ne fournit pas :
+Le lot courant ne fournit pas :
 
-- rôles utilisateurs
 - gestion utilisateurs
 - import CSV
 - cleanup automatique

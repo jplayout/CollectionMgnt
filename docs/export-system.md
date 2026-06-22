@@ -21,6 +21,10 @@ Toutes les routes d'export sont protégées par JWT.
 - `GET /api/exports/collections/:pluginId.json`
 - `GET /api/exports/collections/:pluginId.csv`
 
+L'export applicatif global est reserve aux utilisateurs `admin`.
+Les exports collection, dont le CSV utilisateur, restent accessibles aux
+utilisateurs authentifies.
+
 Les routes collection retournent 404 si le plugin demandé est inconnu.
 
 ## Surfaces d'Interface
@@ -161,7 +165,11 @@ Règles de sérialisation :
 - valeurs metadata absentes ou nulles : cellule vide
 - checkbox : `true` ou `false`
 - objets et arrays : JSON compact
+- cellules commencant par `=`, `+`, `-` ou `@` : prefixe `'` ajoute dans le CSV uniquement
 - virgules, guillemets et retours ligne : échappement CSV standard
+
+Cette neutralisation limite le risque d'interpretation comme formule dans Excel
+ou LibreOffice. Les donnees stockees et les exports JSON ne sont pas modifies.
 
 ## Téléchargement
 
@@ -219,12 +227,14 @@ Elles sont comptées comme ignorées, car les fichiers médias physiques ne sont
 ## Sécurité
 
 - routes protégées par JWT
-- route d'import natif protégée par JWT
+- export applicatif global et routes admin reserves au role `admin`
+- route d'import natif protégée par JWT et role `admin`
 - validation stricte du JSON natif avant import
 - import natif non destructif en mode `add_only`
 - pas d'export des utilisateurs ni des hashes de mot de passe
 - pas d'export des secrets ou variables d'environnement
 - settings filtrés pour éviter les clés sensibles évidentes
+- neutralisation anti-formule appliquee aux exports CSV uniquement
 - aucun accès direct aux fichiers médias physiques
 
 ## Limites

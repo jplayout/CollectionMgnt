@@ -48,6 +48,8 @@ export async function createInitialAdmin(
         username,
         password_hash:
             passwordHash,
+        role:
+            'admin',
         preferred_language:
             'fr'
     });

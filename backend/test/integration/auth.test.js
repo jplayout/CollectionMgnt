@@ -59,8 +59,45 @@ test(
         );
 
         assert.equal(
+            body.user.role,
+            'admin'
+        );
+
+        assert.equal(
             body.user.password_hash,
             undefined
+        );
+
+    }
+);
+
+test(
+    'GET /api/auth/me returns the authenticated user role',
+    async () => {
+
+        const token =
+            await context.login();
+
+        const response =
+            await context.app.inject({
+                headers: {
+                    authorization:
+                        `Bearer ${token}`
+                },
+                method:
+                    'GET',
+                url:
+                    '/api/auth/me'
+            });
+
+        assert.equal(
+            response.statusCode,
+            200
+        );
+
+        assert.equal(
+            response.json().user.role,
+            'admin'
         );
 
     }
@@ -93,6 +130,128 @@ test(
             response.json().error,
             'Invalid credentials'
         );
+
+    }
+);
+
+test(
+    'login returns 429 after repeated invalid attempts',
+    async () => {
+
+        const rateLimitedContext =
+            await createTestApp();
+
+        try {
+
+            for (
+                let attempt = 0;
+                attempt < 5;
+                attempt += 1
+            ) {
+
+                const response =
+                    await rateLimitedContext.app.inject({
+                        method:
+                            'POST',
+                        payload: {
+                            password:
+                                'wrong-password',
+                            username:
+                                rateLimitedContext.admin.username
+                        },
+                        url:
+                            '/api/auth/login'
+                    });
+
+                assert.equal(
+                    response.statusCode,
+                    401
+                );
+
+            }
+
+            const response =
+                await rateLimitedContext.app.inject({
+                    method:
+                        'POST',
+                    payload: {
+                        password:
+                            'wrong-password',
+                        username:
+                            rateLimitedContext.admin.username
+                    },
+                    url:
+                        '/api/auth/login'
+                });
+
+            assert.equal(
+                response.statusCode,
+                429
+            );
+
+        } finally {
+
+            await rateLimitedContext.close();
+
+        }
+
+    }
+);
+
+test(
+    'login still accepts valid credentials before the rate limit is exceeded',
+    async () => {
+
+        const rateLimitedContext =
+            await createTestApp();
+
+        try {
+
+            for (
+                let attempt = 0;
+                attempt < 4;
+                attempt += 1
+            ) {
+
+                await rateLimitedContext.app.inject({
+                    method:
+                        'POST',
+                    payload: {
+                        password:
+                            'wrong-password',
+                        username:
+                            rateLimitedContext.admin.username
+                    },
+                    url:
+                        '/api/auth/login'
+                });
+
+            }
+
+            const response =
+                await rateLimitedContext.app.inject({
+                    method:
+                        'POST',
+                    payload: {
+                        password:
+                            rateLimitedContext.admin.password,
+                        username:
+                            rateLimitedContext.admin.username
+                    },
+                    url:
+                        '/api/auth/login'
+                });
+
+            assert.equal(
+                response.statusCode,
+                200
+            );
+
+        } finally {
+
+            await rateLimitedContext.close();
+
+        }
 
     }
 );

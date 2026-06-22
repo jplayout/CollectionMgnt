@@ -49,4 +49,27 @@ export async function registerJwt(
         }
     );
 
+    app.decorate(
+        'requireAdmin',
+        async (
+            request,
+            reply
+        ) => {
+
+            if (
+                request.user?.role !== 'admin'
+            ) {
+
+                return reply
+                    .code(403)
+                    .send({
+                        error:
+                            'Forbidden'
+                    });
+
+            }
+
+        }
+    );
+
 }

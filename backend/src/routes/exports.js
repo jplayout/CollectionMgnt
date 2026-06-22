@@ -15,6 +15,10 @@ export default async function (
 
     fastify.get(
         '/api/exports/application.json',
+        {
+            preHandler:
+                fastify.requireAdmin
+        },
         async (
             request,
             reply

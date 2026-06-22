@@ -45,12 +45,19 @@ Utilisateurs de l'application.
 | id | INTEGER | PRIMARY KEY AUTOINCREMENT | Identifiant interne |
 | username | TEXT | NOT NULL UNIQUE | Nom utilisateur |
 | password_hash | TEXT | NOT NULL | Hash du mot de passe |
+| role | TEXT | NOT NULL DEFAULT 'user', CHECK(role IN ('admin', 'user')) | Role applicatif |
 | preferred_language | TEXT | DEFAULT 'fr' | Langue preferee |
 | created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | Date de creation |
 | updated_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | Date de modification |
 
 Le premier administrateur est cree automatiquement au bootstrap si la table est
-vide.
+vide, avec `role='admin'`.
+
+Migration de role :
+
+- les nouvelles bases creent `users.role` directement ;
+- les bases existantes recoivent la colonne via `ALTER TABLE users ADD COLUMN` avec `DEFAULT 'user'` et contrainte `CHECK` ;
+- pour preserver l'acces admin, la migration promeut `ADMIN_USERNAME` si ce compte existe, sinon le premier utilisateur par `id`.
 
 ### plugins
 
@@ -190,10 +197,12 @@ Valeur initiale :
 
 ```sql
 INSERT INTO schema_info(version)
-VALUES (1);
+VALUES (2);
 ```
 
-Il n'existe pas encore de systeme de migrations versionnees complet.
+Le schema dispose d'une migration applicative minimale pour ajouter `users.role`
+aux bases existantes. Il n'existe pas encore de systeme de migrations
+versionnees complet.
 
 ## Index Principaux
 
@@ -216,6 +225,7 @@ tags et les futurs audits applicatifs.
 
 - Les cles etrangeres SQLite sont activees.
 - `users.username` est unique.
+- `users.role` est limite a `admin` ou `user`.
 - `plugins.code` est unique.
 - `items.metadata` doit toujours etre du JSON valide.
 - Supprimer un item cascade vers `media`, `item_tags` et `loans`.

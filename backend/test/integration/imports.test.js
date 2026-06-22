@@ -9,6 +9,7 @@ import { createTestApp } from '../helpers/test-app.js';
 
 let context;
 let token;
+let user;
 
 before(async () => {
 
@@ -17,6 +18,12 @@ before(async () => {
 
     token =
         await context.login();
+
+    user =
+        await context.createUser({
+            username:
+                'regular-import-test-user'
+        });
 
 });
 
@@ -52,6 +59,58 @@ test(
         assert.equal(
             typeof response.json().error,
             'string'
+        );
+
+    }
+);
+
+test(
+    'POST /api/admin/imports/native-json rejects non-admin users',
+    async () => {
+
+        const response =
+            await context.app.inject({
+                headers: {
+                    authorization:
+                        `Bearer ${user.token}`
+                },
+                method:
+                    'POST',
+                payload: {
+                    invalid:
+                        true
+                },
+                url:
+                    '/api/admin/imports/native-json'
+            });
+
+        assert.equal(
+            response.statusCode,
+            403
+        );
+
+    }
+);
+
+test(
+    'POST /api/admin/imports/native-json rejects requests without a token',
+    async () => {
+
+        const response =
+            await context.app.inject({
+                method:
+                    'POST',
+                payload: {
+                    invalid:
+                        true
+                },
+                url:
+                    '/api/admin/imports/native-json'
+            });
+
+        assert.equal(
+            response.statusCode,
+            401
         );
 
     }

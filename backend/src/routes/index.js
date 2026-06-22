@@ -61,23 +61,34 @@ export async function registerRoutes(
             );
 
             await protectedRoutes.register(
-                adminMediaAuditRoutes
-            );
+                async adminRoutes => {
 
-            await protectedRoutes.register(
-                adminMediaCleanupRoutes
-            );
+                    adminRoutes.addHook(
+                        'preHandler',
+                        adminRoutes.requireAdmin
+                    );
 
-            await protectedRoutes.register(
-                adminBackupRoutes
-            );
+                    await adminRoutes.register(
+                        adminMediaAuditRoutes
+                    );
 
-            await protectedRoutes.register(
-                adminSystemRoutes
-            );
+                    await adminRoutes.register(
+                        adminMediaCleanupRoutes
+                    );
 
-            await protectedRoutes.register(
-                adminImportsRoutes
+                    await adminRoutes.register(
+                        adminBackupRoutes
+                    );
+
+                    await adminRoutes.register(
+                        adminSystemRoutes
+                    );
+
+                    await adminRoutes.register(
+                        adminImportsRoutes
+                    );
+
+                }
             );
 
         }
