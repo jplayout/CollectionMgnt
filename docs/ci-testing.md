@@ -1,6 +1,6 @@
 # CI Et Tests
 
-Etat courant : v0.12-lot10.0.1.
+Etat courant : v0.12-lot10.3.0.
 
 Ce document decrit les validations automatisees disponibles pour les
 contributeurs. Le projet privilegie une base simple et rapide plutot qu'une
@@ -32,6 +32,19 @@ Jobs actuels :
 Le workflow de publication `.github/workflows/publish.yml` reste separe et sert
 a publier les images GHCR depuis `main`, les tags `v*` ou un declenchement
 manuel.
+
+Le workflow CodeQL `.github/workflows/codeql.yml` analyse le code JavaScript sur
+push `main`, pull request et declenchement manuel.
+
+Dependabot est configure dans `.github/dependabot.yml` pour verifier chaque
+semaine :
+
+- les dependances npm backend ;
+- les dependances npm frontend ;
+- les GitHub Actions.
+
+Les mises a jour mineures et patch sont regroupees pour limiter le bruit des
+pull requests.
 
 ## Versions Recommandees
 
@@ -106,6 +119,8 @@ La couverture MVP verifie :
 - limitation de `POST /api/auth/login` avec reponse `429` apres depassement ;
 - role utilisateur expose par login et `/api/auth/me` ;
 - route protegee sans token vers `401` ;
+- validation de `JWT_SECRET` absent ou trop faible ;
+- presence des en-tetes HTTP de securite de base ;
 - `GET /api/admin/system-summary` ;
 - refus `403` pour utilisateur authentifie non admin sur les routes admin principales ;
 - `GET /api/exports/application.json` ;

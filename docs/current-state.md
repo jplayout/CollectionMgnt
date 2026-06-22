@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot10.2.2
+Version : v0.12-lot10.3.0
 
 ## État du projet
 
@@ -110,6 +110,7 @@ Frontend :
 ### Authentification
 
 - JWT via `Authorization: Bearer`
+- Validation stricte de `JWT_SECRET` au démarrage avec longueur minimale de 32 caractères
 - Création automatique du premier administrateur avec `role=admin`
 - Modèle de rôles minimal : `admin` et `user`
 - Rôle exposé dans le JWT, la réponse login et `/api/auth/me`
@@ -118,6 +119,13 @@ Frontend :
 - Utilisateur courant (`/me`)
 - Logout stateless
 - Protection des routes plugins, items et médias
+
+### Sécurité applicative
+
+- En-têtes de sécurité HTTP via Helmet avec configuration prudente
+- CSP stricte volontairement non activée dans ce lot
+- En-têtes couverts : `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` et `Permissions-Policy`
+- Configuration pensée pour ne pas bloquer uploads médias, exports, téléchargements et API existantes
 
 ### Validation dynamique
 
@@ -328,6 +336,7 @@ Variables requises :
 - `JWT_SECRET`
 - `ADMIN_USERNAME`
 - `ADMIN_PASSWORD`
+- `JWT_SECRET` doit contenir au moins 32 caractères
 
 Variables disponibles pour le déploiement Docker local :
 
@@ -386,6 +395,8 @@ Variables disponibles :
 
 - Workflow GitHub Actions `.github/workflows/ci.yml`
 - Déclenchement sur push et pull request
+- Workflow CodeQL `.github/workflows/codeql.yml` pour l'analyse JavaScript
+- Dependabot configuré dans `.github/dependabot.yml` pour backend npm, frontend npm et GitHub Actions
 - Node 22 utilisé pour les vérifications backend et frontend
 - Backend : `npm ci`, `npm run check:syntax`, puis `npm test`
 - Tests backend d'intégration via le Node Test Runner natif et Fastify `inject`
@@ -395,6 +406,7 @@ Variables disponibles :
 - Qualité : `git diff --check`
 - Docker : build des images backend et frontend après succès des jobs Node
 - Aucune publication d'image par le workflow CI
+- Trivy non intégré dans ce lot pour éviter de fragiliser la CI
 - Pas de Vitest frontend, Playwright, Cypress, couverture de code, Sonar ou Codecov dans ce lot
 - Workflow GitHub Actions `.github/workflows/publish.yml`
 - Publication GHCR automatique sur push `main`, tags `v*` et déclenchement manuel

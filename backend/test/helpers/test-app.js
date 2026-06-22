@@ -10,7 +10,10 @@ import {
 
 import Database from 'better-sqlite3';
 
-import { buildApp } from '../../src/app.js';
+import {
+    buildApp,
+    registerSecurityHeaders
+} from '../../src/app.js';
 import { registerJwt } from '../../src/auth/jwt.js';
 import { hashPassword } from '../../src/auth/password-service.js';
 import { createInitialAdmin } from '../../src/bootstrap/admin-user.js';
@@ -38,6 +41,9 @@ const DEFAULT_TEST_ADMIN = {
         'admin'
 };
 
+const TEST_JWT_SECRET =
+    'test-secret-with-minimum-length-32';
+
 export async function createTestApp() {
 
     const testRoot =
@@ -63,7 +69,7 @@ export async function createTestApp() {
     );
 
     process.env.JWT_SECRET =
-        'test-secret';
+        TEST_JWT_SECRET;
 
     process.env.ADMIN_USERNAME =
         DEFAULT_TEST_ADMIN.username;
@@ -87,6 +93,10 @@ export async function createTestApp() {
 
     const app =
         buildApp();
+
+    await registerSecurityHeaders(
+        app
+    );
 
     await registerJwt(
         app

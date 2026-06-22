@@ -1,4 +1,7 @@
-import { buildApp } from './app.js';
+import {
+    buildApp,
+    registerSecurityHeaders
+} from './app.js';
 
 import { initializeDatabase }
 from './database/init.js';
@@ -34,6 +37,10 @@ try {
         await initializeDatabase();
 
     const app = buildApp();
+
+    await registerSecurityHeaders(
+        app
+    );
 
     await registerJwt(
         app

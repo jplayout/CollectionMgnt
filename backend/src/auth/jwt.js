@@ -1,21 +1,16 @@
 import fastifyJwt from '@fastify/jwt';
 
+export const MIN_JWT_SECRET_LENGTH =
+    32;
+
 export async function registerJwt(
     app
 ) {
 
     const secret =
-        process.env.JWT_SECRET;
-
-    if (
-        !secret
-    ) {
-
-        throw new Error(
-            'JWT_SECRET is required'
+        validateJwtSecret(
+            process.env.JWT_SECRET
         );
-
-    }
 
     await app.register(
         fastifyJwt,
@@ -71,5 +66,35 @@ export async function registerJwt(
 
         }
     );
+
+}
+
+export function validateJwtSecret(secret) {
+
+    if (
+        typeof secret !== 'string' ||
+        secret.trim() === ''
+    ) {
+
+        throw new Error(
+            'JWT_SECRET is required'
+        );
+
+    }
+
+    const normalizedSecret =
+        secret.trim();
+
+    if (
+        normalizedSecret.length < MIN_JWT_SECRET_LENGTH
+    ) {
+
+        throw new Error(
+            `JWT_SECRET must be at least ${MIN_JWT_SECRET_LENGTH} characters long`
+        );
+
+    }
+
+    return normalizedSecret;
 
 }

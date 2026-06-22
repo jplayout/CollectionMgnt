@@ -56,7 +56,7 @@ Le dataset contient 94 items répartis entre jeux vidéo, livres, films, console
 
 ## État du projet
 
-Version actuelle : **v0.12-lot10.2.2**
+Version actuelle : **v0.12-lot10.3.0**
 
 Le projet est utilisable pour des collections réelles, mais reste en développement actif. Certaines fonctions avancées sont encore prévues, notamment la restauration ZIP guidée, les imports CSV avancés, la gestion utilisateur plus fine et l'amélioration des rapports d'administration.
 
@@ -117,10 +117,12 @@ cd ..
 Créer un fichier `.env` à la racine du projet pour le backend :
 
 ```env
-JWT_SECRET=change-me
+JWT_SECRET=change-me-use-at-least-32-characters
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=change-me
 ```
+
+`JWT_SECRET` doit contenir au moins 32 caractères. Le backend refuse de démarrer si cette valeur est absente ou trop faible.
 
 Un fichier `frontend/.env` peut être utilisé si le frontend doit cibler une API différente :
 
@@ -335,7 +337,7 @@ The dataset contains 94 items across video games, books, movies, consoles and mi
 
 ## Project Status
 
-Current version: **v0.12-lot10.2.2**
+Current version: **v0.12-lot10.3.0**
 
 The project is usable for real collections, but it is still under active development. Planned areas include guided ZIP restore, advanced CSV imports, finer user management and improved administration reports.
 
@@ -396,10 +398,12 @@ cd ..
 Create a root `.env` file for the backend:
 
 ```env
-JWT_SECRET=change-me
+JWT_SECRET=change-me-use-at-least-32-characters
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=change-me
 ```
+
+`JWT_SECRET` must contain at least 32 characters. The backend refuses to start when this value is missing or too weak.
 
 A `frontend/.env` file can be used when the frontend must target a different API:
 
