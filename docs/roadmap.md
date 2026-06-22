@@ -147,13 +147,6 @@ Priorité moyenne :
 ### Collections et items
 
 - Configuration des champs et préférences d’affichage.
-- Acquisition assistée / pré-remplissage automatique :
-  - support futur des identifiants ISBN / EAN / UPC / code-barres
-  - scan possible depuis mobile/tablette
-  - recherche automatique via sources externes
-  - pré-remplissage des champs item
-  - récupération éventuelle de métadonnées et images
-  - fonctionnalité distincte du simple enrichissement des plugins standards
 - Définition d’échelles de notation configurables :
   - note sur 5
   - note sur 10
@@ -167,6 +160,57 @@ Priorité moyenne :
 - Gestion des prêts.
 - Historique.
 - Tags globaux.
+
+### Acquisition assistée
+
+#### Acquisition assistée / pré-remplissage automatique
+
+Objectif :
+
+- Réduire fortement le temps nécessaire à la création d’un item grâce à l’identification automatique et au pré-remplissage des métadonnées.
+
+Phase 1 — Identifiants standard :
+
+- Support futur des identifiants ISBN / EAN / UPC dans les plugins.
+- Validation et stockage des identifiants.
+- Ne pas se limiter à un simple champ texte si un type dédié devient pertinent.
+
+Phase 2 — Scan mobile et tablette :
+
+- Utilisation de l’appareil photo depuis un téléphone ou une tablette.
+- Détection automatique des codes-barres.
+- Remplissage automatique du champ ISBN / EAN / UPC détecté.
+
+Phase 3 — Lookup livres :
+
+- Premier cas cible recommandé : livres.
+- Recherche via Open Library et/ou Google Books.
+- Pré-remplissage possible :
+  - titre
+  - auteur
+  - éditeur
+  - date de publication
+  - couverture
+
+Phase 4 — Architecture fournisseurs :
+
+- Prévoir une architecture extensible de fournisseurs de métadonnées.
+- Ne pas verrouiller CollectionMgnt sur un seul service externe.
+- Gérer les erreurs, quotas, indisponibilités et différences de qualité des sources.
+
+Phase 5 — Extension progressive :
+
+- Étendre ensuite aux jeux vidéo, films, consoles et autres collections.
+- Création semi-automatique avec validation utilisateur avant enregistrement.
+
+Contraintes :
+
+- Fonctionnalité optionnelle.
+- Validation utilisateur obligatoire avant création définitive.
+- Compatibilité desktop, tablette et mobile.
+- Aucune dépendance obligatoire à un fournisseur externe.
+- Respect de la confidentialité : ne pas envoyer plus de données que nécessaire aux services externes.
+- Images/couvertures récupérées seulement après validation ou selon un comportement clairement documenté.
 
 ### Import / export / sauvegarde
 
