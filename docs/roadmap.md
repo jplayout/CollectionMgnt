@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot10.2.1.
-- Dernier lot livré : Lot 10.2.1 - Demo Dataset.
+- Version actuelle : v0.12-lot10.2.2.
+- Dernier lot livré : Lot 10.2.2 - Demo Media Pack.
 
 Capacités disponibles :
 
@@ -17,6 +17,7 @@ Capacités disponibles :
 - Collections dynamiques pilotées par plugins déclaratifs.
 - Plugins standards enrichis pour supporter le dataset de démonstration.
 - Dataset officiel de démonstration importable via l'import JSON natif.
+- Script de pack média de démonstration avec images PNG générées et uploadées via l'API média.
 - CRUD items, validation dynamique, recherche, filtres, pagination, tri et vues cartes/liste.
 - Préférences d'affichage par collection/plugin.
 - Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
@@ -191,6 +192,8 @@ Priorité moyenne :
 - Mode dry-run.
 - Nettoyage manuel depuis l’interface d’administration.
 - Régénération éventuelle des miniatures et images optimisées.
+- Scénarios QA média avec fichiers orphelins volontaires.
+- Tests E2E du dataset de démonstration avec pack média.
 - OCR.
 - Lecture ISBN.
 - Lecture code-barres.
@@ -707,6 +710,26 @@ Priorité moyenne :
 - Aucun script générateur ajouté au dépôt
 - Aucun dataset multiple ajouté
 - Aucun changement backend, frontend, API, SQLite, plugins, format export/import ou média dans ce lot
+
+#### Lot 10.2.2 - Demo Media Pack - Livré
+
+- Script de pack média de démonstration disponible dans `demo/scripts/install-demo-media.mjs`
+- Documentation média disponible dans `demo/media/README.md`
+- Le script importe le dataset officiel via `POST /api/admin/imports/native-json`
+- Utilisation du rapport d'import pour récupérer les nouveaux IDs item via `createdItems`
+- Génération d'une image PNG principale pour chaque item importé
+- Images générées en mémoire, sans fichier image versionné dans le dépôt
+- Style uniforme sans image sous copyright : fond coloré déterministe, type de collection, titre et métadonnées courtes
+- Upload des images via `POST /api/media`
+- Chaque image uploadée est marquée `is_primary=true`
+- Paramètres CLI supportés : `--base-url`, `--username`, `--password`, `--dataset`, `--skip-existing` et `--force`
+- Aucun stockage d'identifiants ou de token JWT dans un fichier
+- Aucune écriture directe dans SQLite
+- Aucune écriture directe dans `DATA_DIR/uploads`
+- Aucun backup ZIP de démonstration
+- Aucun scénario QA média orphelin dans ce lot
+- Aucune dépendance ajoutée
+- Aucun changement backend, frontend, API, SQLite, plugins, dataset JSON ou routes média dans ce lot
 
 ### Sécurité
 

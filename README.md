@@ -48,15 +48,15 @@ Cas d'usage :
 - Nettoyage média manuel guidé des candidats disque sûrs.
 - Sauvegarde ZIP complète téléchargeable.
 
-## Dataset de démonstration
+## Démonstration
 
-Un dataset officiel de démonstration est disponible dans [demo/README.md](demo/README.md).
+Un dataset officiel et un script de pack média généré sont disponibles dans [demo/README.md](demo/README.md).
 
-Il contient 94 items répartis entre jeux vidéo, livres, films, consoles et objets divers. Il peut être importé depuis Administration > Importer des données.
+Le dataset contient 94 items répartis entre jeux vidéo, livres, films, consoles et objets divers. Le script peut importer ce dataset puis ajouter une image principale générée pour chaque item via l'API média existante.
 
 ## État du projet
 
-Version actuelle : **v0.12-lot10.2.1**
+Version actuelle : **v0.12-lot10.2.2**
 
 Le projet est utilisable pour des collections réelles, mais reste en développement actif. Certaines fonctions avancées sont encore prévues, notamment la restauration ZIP guidée, les imports CSV avancés, la gestion utilisateur plus fine et l'amélioration des rapports d'administration.
 
@@ -323,15 +323,15 @@ Use cases:
 - Guided manual media cleanup for safe filesystem candidates.
 - Downloadable full ZIP backup.
 
-## Demo Dataset
+## Demo
 
-An official demo dataset is available in [demo/README.md](demo/README.md).
+An official demo dataset and generated media pack script are available in [demo/README.md](demo/README.md).
 
-It contains 94 items across video games, books, movies, consoles and miscellaneous objects. It can be imported from Administration > Import data.
+The dataset contains 94 items across video games, books, movies, consoles and miscellaneous objects. The script can import this dataset, then add one generated primary image per item through the existing media API.
 
 ## Project Status
 
-Current version: **v0.12-lot10.2.1**
+Current version: **v0.12-lot10.2.2**
 
 The project is usable for real collections, but it is still under active development. Planned areas include guided ZIP restore, advanced CSV imports, finer user management and improved administration reports.
 
