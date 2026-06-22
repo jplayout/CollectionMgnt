@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot10.2.1
+Version : v0.12-lot10.2.2
 
 ## État du projet
 
@@ -38,6 +38,7 @@ Frontend :
 - Aucun champ ISBN, EAN, UPC ou code-barres dans les plugins standards à ce stade
 - Dataset officiel de démonstration disponible dans `demo/datasets/collectionmgnt-demo-v1.json`
 - Dataset de démonstration importable via l'import JSON natif existant
+- Script de pack média de démonstration disponible dans `demo/scripts/install-demo-media.mjs`
 
 ### Collections
 
@@ -65,6 +66,7 @@ Frontend :
 
 - Upload d'images originales
 - Association d'images aux items
+- Pack média de démonstration générant une image PNG principale par item importé via l'API média existante
 - Stockage disque dans `backend/data/uploads/items/{itemId}`
 - Validation réelle du contenu image avec Sharp
 - Génération d'une image optimisée WebP
@@ -103,6 +105,7 @@ Frontend :
 - Réponse `401` si le JWT est absent ou invalide, `403` si l'utilisateur authentifié n'est pas admin
 - Aucun écran de gestion utilisateurs, aucun import CSV, aucune restauration ZIP, aucun cloud, aucune planification automatique et aucune sauvegarde incrémentale dans ce lot
 - Le dataset de démonstration ne contient aucun fichier média physique et sa réimportation crée de nouveaux items
+- Le script média de démonstration importe le dataset en mode `add_only`, génère les images en mémoire et les upload via l'API, sans écriture directe dans SQLite ou `DATA_DIR/uploads`
 
 ### Authentification
 
