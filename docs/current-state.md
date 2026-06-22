@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot10.0.1
+Version : v0.12-lot10.2.0
 
 ## État du projet
 
@@ -30,6 +30,12 @@ Frontend :
 - API backend de préférences d'affichage par plugin via la table `settings`
 - Préférences d'affichage stockées avec les clés `displayPreferences.<pluginId>`
 - Préférences d'affichage sans modification des fichiers `fields.json`
+- Plugins standards enrichis pour préparer un futur dataset de démonstration :
+  - `books`
+  - `movies`
+  - `consoles`
+  - `others`
+- Aucun champ ISBN, EAN, UPC ou code-barres dans les plugins standards à ce stade
 
 ### Collections
 

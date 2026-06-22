@@ -8,13 +8,14 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot10.0.1.
-- Dernier lot livré : Lot sécurité RBAC / rate limit / CSV.
+- Version actuelle : v0.12-lot10.2.0.
+- Dernier lot livré : Lot 10.2.0 - Plugin Metadata Enrichment.
 
 Capacités disponibles :
 
 - Authentification JWT avec modèle de rôles minimal `admin` / `user`.
 - Collections dynamiques pilotées par plugins déclaratifs.
+- Plugins standards enrichis pour préparer un futur dataset de démonstration.
 - CRUD items, validation dynamique, recherche, filtres, pagination, tri et vues cartes/liste.
 - Préférences d'affichage par collection/plugin.
 - Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
@@ -144,6 +145,13 @@ Priorité moyenne :
 ### Collections et items
 
 - Configuration des champs et préférences d’affichage.
+- Acquisition assistée / pré-remplissage automatique :
+  - support futur des identifiants ISBN / EAN / UPC / code-barres
+  - scan possible depuis mobile/tablette
+  - recherche automatique via sources externes
+  - pré-remplissage des champs item
+  - récupération éventuelle de métadonnées et images
+  - fonctionnalité distincte du simple enrichissement des plugins standards
 - Définition d’échelles de notation configurables :
   - note sur 5
   - note sur 10
@@ -662,6 +670,18 @@ Priorité moyenne :
 - CI GitHub Actions renforcée : syntax backend, tests backend, build frontend, `git diff --check` et build Docker conservé
 - Documentation des commandes locales et du workflow PR
 - Aucun changement backend fonctionnel, API, SQLite métier, UX, Playwright, Vitest frontend, Cypress, Sonar, Codecov ou couverture de code
+
+#### Lot 10.2.0 - Plugin Metadata Enrichment - Livré
+
+- Enrichissement des plugins standards `books`, `movies`, `consoles` et `others`
+- Préparation d'un futur dataset de démonstration sans créer le dataset dans ce lot
+- Champs `books` enrichis : `author`, `genre`, `publisher`, `publication_date`, `read`, `rating`
+- Champs `movies` enrichis : `director`, `genre`, `format`, `release_date`, `watched`, `rating`
+- Champs `consoles` enrichis : `manufacturer`, `type`, `region`, `release_date`, `condition`
+- Champs `others` enrichis : `category`, `maker`, `acquired_date`, `condition`, `location`, `favorite`
+- Utilisation uniquement des types plugin déjà supportés : text, select, date, checkbox et rating
+- Aucun champ ISBN, EAN, UPC ou code-barres ajouté
+- Aucun changement backend, API, SQLite, frontend, média de démonstration ou dataset de démonstration dans ce lot
 
 ### Sécurité
 

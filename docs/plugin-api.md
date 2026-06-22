@@ -1,6 +1,6 @@
 # Plugin API
 
-État courant : v0.10-lot8.0.1.
+État courant : v0.12-lot10.2.0.
 
 ## Structure
 
@@ -179,3 +179,69 @@ Expression régulière.
 ## options
 
 Valeurs autorisées pour un champ `select`.
+
+---
+
+# Plugins standards
+
+Les plugins standards fournis dans `backend/plugins` restent volontairement simples.
+Ils utilisent uniquement les types réellement validés actuellement et n'ajoutent pas
+encore de champs ISBN, EAN, UPC ou code-barres.
+
+## books
+
+Collection : Livres.
+
+Champs metadata :
+
+- `author`
+- `genre`
+- `publisher`
+- `publication_date`
+- `read`
+- `rating`
+
+## movies
+
+Collection : Films.
+
+Champs metadata :
+
+- `director`
+- `genre`
+- `format`
+- `release_date`
+- `watched`
+- `rating`
+
+## consoles
+
+Collection : Consoles.
+
+Champs metadata :
+
+- `manufacturer`
+- `type`
+- `region`
+- `release_date`
+- `condition`
+
+## others
+
+Collection : Autre.
+
+Champs metadata :
+
+- `category`
+- `maker`
+- `acquired_date`
+- `condition`
+- `location`
+- `favorite`
+
+## Acquisition assistée
+
+L'acquisition assistée par ISBN, EAN, UPC, code-barres, scan mobile/tablette,
+recherche automatique externe, pré-remplissage des champs et récupération
+éventuelle de métadonnées ou images est une fonctionnalité future distincte.
+Elle ne fait pas partie de l'enrichissement simple des plugins standards.
