@@ -1,0 +1,72 @@
+name: Trivy Security Scanning
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trivy:
+    name: Trivy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Scan backend dependencies
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: fs
+          scan-ref: backend
+          scanners: vuln
+          vuln-type: library
+          format: table
+          exit-code: '0'
+
+      - name: Scan frontend dependencies
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: fs
+          scan-ref: frontend
+          scanners: vuln
+          vuln-type: library
+          format: table
+          exit-code: '0'
+
+      - name: Build backend image
+        continue-on-error: true
+        run: docker build -t collectionmgnt-backend:trivy ./backend
+
+      - name: Build frontend image
+        continue-on-error: true
+        run: docker build -t collectionmgnt-frontend:trivy ./frontend
+
+      - name: Scan backend image
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: collectionmgnt-backend:trivy
+          scanners: vuln
+          vuln-type: os,library
+          format: table
+          exit-code: '0'
+
+      - name: Scan frontend image
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: collectionmgnt-frontend:trivy
+          scanners: vuln
+          vuln-type: os,library
+          format: table
+          exit-code: '0'

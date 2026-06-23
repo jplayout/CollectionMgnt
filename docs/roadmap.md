@@ -69,6 +69,7 @@ Limites majeures connues :
 - Lot sécurité RBAC / rate limit / CSV livré.
 - Lot 10.3.0 Security & CI Hardening livré : CodeQL, Dependabot, Helmet et validation stricte de `JWT_SECRET`.
 - Lot 10.3.1 Migration `@fastify/jwt` livré : dette sécurité `fast-jwt` traitée par mise à jour vers `@fastify/jwt` `10.1.0`.
+- Lot 10.3.2 Trivy Security Scanning livré : scans dépendances et images conteneur en mode non bloquant.
 - Détail complet conservé dans `Historique des lots livrés > Sécurité`.
 
 ### Travaux futurs prioritaires
@@ -94,8 +95,9 @@ Priorité moyenne :
 
 - Dependabot livré pour backend npm, frontend npm et GitHub Actions.
 - CodeQL livré pour l'analyse JavaScript.
+- Trivy livré en mode observatoire non bloquant pour les dépendances backend/frontend et les images conteneur.
 - `npm audit` en CI.
-- Scan de sécurité des images conteneur, par exemple Trivy, reporté à un lot futur.
+- Politique de blocage automatique sur vulnérabilités à définir dans un lot futur.
 
 ### Infrastructure sécurité
 
@@ -849,6 +851,18 @@ Contraintes :
 - Comportement existant conservé pour `fastify.jwt.sign(...)`, `request.jwtVerify()`, `request.user` et RBAC admin/user
 - Aucun changement produit, API, frontend, SQLite, modèle de rôles, middleware RBAC ou refonte auth
 - Tests backend existants conservés pour login, `/api/auth/me`, RBAC, routes admin, imports, exports, backup, media audit/cleanup et validation `JWT_SECRET`
+
+#### Lot 10.3.2 - Trivy Security Scanning - Livré
+
+- Workflow dédié `.github/workflows/trivy.yml`
+- Déclenchement sur push `main`, pull request et déclenchement manuel
+- Scan Trivy des dépendances backend npm via le répertoire `backend`
+- Scan Trivy des dépendances frontend npm via le répertoire `frontend`
+- Build local des images `collectionmgnt-backend:trivy` et `collectionmgnt-frontend:trivy`
+- Scan Trivy des images conteneur backend et frontend construites par le workflow
+- Mode initial non bloquant : `exit-code=0` et `continue-on-error`
+- Rapports visibles dans les logs GitHub Actions
+- Aucune politique CVSS, exception de sécurité, signature d'image, SBOM avancé, cosign, SLSA ou scan secrets dans ce lot
 
 #### Lot 10.4.0 - Playwright E2E MVP - Livré
 
