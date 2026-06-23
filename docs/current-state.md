@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot10.4.0
+Version : v0.12-lot10.5.1
 
 ## État du projet
 
@@ -384,6 +384,21 @@ Variables disponibles :
 - Symptôme possible sans label SELinux : `SQLITE_CANTOPEN` ou `unable to open database file`
 - `backend/data` doit exister avant le premier démarrage
 - Variables d'exemple documentées dans `.env.example`
+
+### Docker Synology
+
+- Base Compose Synology disponible dans `deploy/compose.synology.yml`
+- Compose basé sur les images GHCR prébuildées, sans `build:`
+- Services `backend` et `frontend` reliés par un réseau Docker interne
+- Frontend exposé sur le port hôte configurable `${FRONTEND_PORT:-8080}:80`
+- Backend non exposé sur l'hôte, accessible uniquement par le frontend via le réseau Docker interne
+- Volume persistant explicite `/volume1/docker/collectionmgnt/data:/app/data`
+- Aucun suffixe SELinux `:Z` dans le compose Synology
+- Aucun montage plugins hôte par défaut afin de conserver les plugins intégrés à l'image backend
+- Variables Synology attendues : `JWT_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `FRONTEND_PORT`
+- `JWT_SECRET` doit rester fort, stable et contenir au moins 32 caractères
+- Le dossier `/volume1/docker/collectionmgnt/data` doit être sauvegardé avant les mises à jour
+- Reverse proxy HTTPS Synology hors périmètre de ce lot et à documenter ultérieurement
 
 ---
 
