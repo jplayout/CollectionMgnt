@@ -8,11 +8,13 @@ This directory contains deployment-oriented Compose files.
 
 It exposes only the frontend on the NAS host. The backend stays available only on the internal Docker network, and the frontend proxies `/api` requests to it.
 
-Persistent data is stored in:
+Persistent data is stored by default in:
 
 ```text
 /volume1/docker/collectionmgnt/data
 ```
+
+This host path is configurable with `COLLECTIONMGNT_DATA_DIR` if your Synology Docker data lives on another volume or share.
 
 Back up this directory before updating images or changing the deployment. It contains the SQLite database, uploaded media, thumbnails and generated backups.
 

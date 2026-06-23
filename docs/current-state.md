@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot10.5.1
+Version : v0.12-lot10.5.2
 
 ## État du projet
 
@@ -388,16 +388,18 @@ Variables disponibles :
 ### Docker Synology
 
 - Base Compose Synology disponible dans `deploy/compose.synology.yml`
+- Guide de déploiement DSM / Container Manager disponible dans `docs/deployment/synology.md`
 - Compose basé sur les images GHCR prébuildées, sans `build:`
 - Services `backend` et `frontend` reliés par un réseau Docker interne
 - Frontend exposé sur le port hôte configurable `${FRONTEND_PORT:-8080}:80`
 - Backend non exposé sur l'hôte, accessible uniquement par le frontend via le réseau Docker interne
-- Volume persistant explicite `/volume1/docker/collectionmgnt/data:/app/data`
+- Volume persistant explicite et configurable `${COLLECTIONMGNT_DATA_DIR:-/volume1/docker/collectionmgnt/data}:/app/data`
 - Aucun suffixe SELinux `:Z` dans le compose Synology
 - Aucun montage plugins hôte par défaut afin de conserver les plugins intégrés à l'image backend
-- Variables Synology attendues : `JWT_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `FRONTEND_PORT`
+- Variables Synology attendues : `JWT_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `FRONTEND_PORT`, `COLLECTIONMGNT_DATA_DIR`
 - `JWT_SECRET` doit rester fort, stable et contenir au moins 32 caractères
-- Le dossier `/volume1/docker/collectionmgnt/data` doit être sauvegardé avant les mises à jour
+- Le dossier configuré dans `COLLECTIONMGNT_DATA_DIR`, ou `/volume1/docker/collectionmgnt/data` par défaut, doit être sauvegardé avant les mises à jour
+- Le guide Synology couvre les prérequis, la préparation du dossier persistant, la configuration des variables, le démarrage, les vérifications, la persistance, la mise à jour simple et le dépannage courant
 - Reverse proxy HTTPS Synology hors périmètre de ce lot et à documenter ultérieurement
 
 ---
