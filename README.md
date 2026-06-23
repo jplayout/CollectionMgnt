@@ -56,7 +56,7 @@ Le dataset contient 94 items répartis entre jeux vidéo, livres, films, console
 
 ## État du projet
 
-Version actuelle : **v0.12-lot10.3.0**
+Version actuelle : **v0.12-lot10.5.1**
 
 Le projet est utilisable pour des collections réelles, mais reste en développement actif. Certaines fonctions avancées sont encore prévues, notamment la restauration ZIP guidée, les imports CSV avancés, la gestion utilisateur plus fine et l'amélioration des rapports d'administration.
 
@@ -174,6 +174,8 @@ git diff --check
 ### Docker et images
 
 Un déploiement local Docker/Podman est documenté dans `docs/deployment-docker.md`.
+
+Une base Compose pour Synology Container Manager est disponible dans `deploy/compose.synology.yml`.
 
 Des images prébuildées sont publiées sur GitHub Container Registry :
 
@@ -337,7 +339,7 @@ The dataset contains 94 items across video games, books, movies, consoles and mi
 
 ## Project Status
 
-Current version: **v0.12-lot10.3.0**
+Current version: **v0.12-lot10.5.1**
 
 The project is usable for real collections, but it is still under active development. Planned areas include guided ZIP restore, advanced CSV imports, finer user management and improved administration reports.
 
@@ -432,6 +434,8 @@ npm run dev
 ### Docker and Images
 
 Local Docker/Podman deployment is documented in `docs/deployment-docker.md`.
+
+A Compose foundation for Synology Container Manager is available in `deploy/compose.synology.yml`.
 
 Prebuilt images are published on GitHub Container Registry:
 

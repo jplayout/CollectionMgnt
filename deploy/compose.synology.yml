@@ -1,0 +1,41 @@
+# CollectionMgnt - Synology Container Manager compose foundation.
+#
+# This file is intended for a Synology NAS project using prebuilt GHCR images.
+# Create the host data directory before starting the project:
+# /volume1/docker/collectionmgnt/data
+#
+# The backend is intentionally not exposed on the host. The frontend container
+# serves the app and proxies /api to the backend over the internal Docker network.
+
+services:
+  backend:
+    image: ghcr.io/jplayout/collectionmgnt-backend:latest
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      # Required. Keep this value stable and use at least 32 characters.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
+      DATA_DIR: /app/data
+      PLUGINS_DIR: /app/plugins
+    volumes:
+      # Persistent data: SQLite database, uploaded media, thumbnails and backups.
+      - /volume1/docker/collectionmgnt/data:/app/data
+    networks:
+      - collectionmgnt
+
+  frontend:
+    image: ghcr.io/jplayout/collectionmgnt-frontend:latest
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      # Change the host port if 8080 is already used on the NAS.
+      - "${FRONTEND_PORT:-8080}:80"
+    networks:
+      - collectionmgnt
+
+networks:
+  collectionmgnt:
+    driver: bridge

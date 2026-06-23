@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot10.4.0.
-- Dernier lot livré : Lot 10.4.0 - Playwright E2E MVP.
+- Version actuelle : v0.12-lot10.5.1.
+- Dernier lot livré : Lot 10.5.1 - Synology Compose Foundation.
 
 Capacités disponibles :
 
@@ -28,6 +28,7 @@ Capacités disponibles :
 - Layout authentifié, responsive de base et tests backend d'intégration.
 - Playwright E2E MVP côté frontend avec Chromium, dataset de démonstration et `DATA_DIR` temporaire.
 - CI GitHub Actions, CodeQL, Dependabot, publication GHCR et builds Docker/Podman documentés.
+- Base Compose Synology disponible avec images GHCR, volume persistant explicite et backend non exposé sur l'hôte.
 
 Limites majeures connues :
 
@@ -36,6 +37,7 @@ Limites majeures connues :
 - Support backend des types plugin avancés non livré : multiselect, url, email, barcode, isbn.
 - Gestion utilisateurs avancée, permissions fines et page profil non livrées.
 - Audit sécurité conteneur, HTTPS de déploiement et hardening Docker encore à traiter.
+- Guide complet Synology, reverse proxy HTTPS et stratégie de mise à jour NAS encore à documenter.
 - Recherche globale multi-collections, FTS, normalisation Unicode et filtres range non livrés.
 - Tests frontend unitaires, E2E exhaustifs, couverture de code et tooling qualité avancé non livrés.
 
@@ -884,6 +886,24 @@ Contraintes :
 - Scripts frontend ajoutés : `e2e`, `e2e:ui` et `e2e:install`
 - Artefacts locaux Playwright ignorés par Git : `frontend/playwright-report/` et `frontend/test-results/`
 - Media pack, screenshots E2E, tests multi-navigateurs, filtres, pagination détaillée, export, backup et scénarios exhaustifs hors périmètre de ce MVP
+
+#### Lot 10.5.1 - Synology Compose Foundation - Livré
+
+- Ajout de `deploy/compose.synology.yml` comme base de projet Synology Container Manager
+- Compose basé sur les images GHCR prébuildées :
+  - `ghcr.io/jplayout/collectionmgnt-backend:latest`
+  - `ghcr.io/jplayout/collectionmgnt-frontend:latest`
+- Services `backend` et `frontend` reliés par un réseau Docker interne dédié
+- Frontend exposé sur le port hôte configurable `${FRONTEND_PORT:-8080}:80`
+- Backend non exposé publiquement sur l'hôte Synology
+- Volume persistant explicite `/volume1/docker/collectionmgnt/data:/app/data`
+- `DATA_DIR=/app/data` et `PLUGINS_DIR=/app/plugins` configurés côté backend
+- `JWT_SECRET` obligatoire et documenté comme stable et long d'au moins 32 caractères
+- `ADMIN_USERNAME` et `ADMIN_PASSWORD` configurables via variables d'environnement
+- `restart: unless-stopped` ajouté aux deux services
+- Aucun `build:`, aucun suffixe SELinux `:Z`, aucun montage de dossier plugins hôte par défaut
+- Ajout de `deploy/README.md` avec rappels sur Container Manager, persistance, sauvegarde et HTTPS futur
+- Aucun changement backend, frontend, API, SQLite, CI, reverse proxy HTTPS ou guide Synology complet dans ce lot
 
 ### Sécurité
 
