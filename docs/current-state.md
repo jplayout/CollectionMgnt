@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot10.5.2
+Version : v0.12-lot10.5.2.1
 
 ## État du projet
 
@@ -390,6 +390,9 @@ Variables disponibles :
 - Base Compose Synology disponible dans `deploy/compose.synology.yml`
 - Guide de déploiement DSM / Container Manager disponible dans `docs/deployment/synology.md`
 - Compose basé sur les images GHCR prébuildées, sans `build:`
+- Images GHCR publiées en multi-architecture `linux/amd64` et `linux/arm64`
+- Synology ARM64, dont Realtek RTD1293, supporté via l'image `linux/arm64`
+- `linux/arm/v7` non supporté officiellement à ce stade
 - Services `backend` et `frontend` reliés par un réseau Docker interne
 - Frontend exposé sur le port hôte configurable `${FRONTEND_PORT:-8080}:80`
 - Backend non exposé sur l'hôte, accessible uniquement par le frontend via le réseau Docker interne
@@ -444,6 +447,7 @@ Variables disponibles :
 - Images publiées :
   - `ghcr.io/<owner>/collectionmgnt-backend`
   - `ghcr.io/<owner>/collectionmgnt-frontend`
+- Plateformes publiées : `linux/amd64` et `linux/arm64`
 - Tags publiés : `latest` sur `main`, tag Git `v*` sur tag, et `sha-*`
 - Aucune publication Docker Hub et aucune release GitHub
 
@@ -738,6 +742,25 @@ Variables disponibles :
   - `latest` uniquement depuis `main`
   - tag Git exact uniquement depuis les tags `v*`
 - Pas de Docker Hub, pas de GitHub Release, pas de multi-arch, pas de cosign, pas de SBOM et pas de scan sécurité dans ce lot
+
+### Lot 10.5.2.1 - Images GHCR multi-architecture
+
+#### Livré
+
+- Publication GHCR migrée vers Docker Buildx dans `.github/workflows/publish.yml`
+- Configuration QEMU via `docker/setup-qemu-action`
+- Configuration Buildx via `docker/setup-buildx-action`
+- Publication via `docker/build-push-action`
+- Images backend et frontend publiées pour `linux/amd64` et `linux/arm64`
+- Support des NAS Synology ARM64, dont Realtek RTD1293, via l'image `linux/arm64`
+- Tags visibles conservés :
+  - `sha-*` à chaque publication
+  - `latest` uniquement depuis `main`
+  - tag Git exact uniquement depuis les tags `v*`
+- `linux/arm/v7` non supporté officiellement à ce stade
+- Vérification post-merge recommandée :
+  - `docker buildx imagetools inspect ghcr.io/jplayout/collectionmgnt-backend:latest`
+  - `docker buildx imagetools inspect ghcr.io/jplayout/collectionmgnt-frontend:latest`
 
 ### Lot 7.0.1 - Préférences d'affichage backend
 

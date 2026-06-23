@@ -16,6 +16,8 @@ HTTPS, reverse proxy et accès mobile hors LAN seront documentés séparément.
   - `ghcr.io/jplayout/collectionmgnt-backend:latest`
   - `ghcr.io/jplayout/collectionmgnt-frontend:latest`
 
+Les images GHCR sont publiées pour `linux/amd64` et `linux/arm64`. Les NAS Synology ARM64, dont les modèles basés sur Realtek RTD1293, utilisent l'image `linux/arm64`. `linux/arm/v7` n'est pas supporté officiellement à ce stade.
+
 ## Préparation
 
 ### Dossier persistant
@@ -112,6 +114,13 @@ Ne pas monter de dossier plugins hôte par défaut. Les plugins intégrés sont 
 Démarrer le projet depuis Container Manager.
 
 Container Manager doit télécharger les images GHCR, créer le réseau interne, monter le dossier persistant et lancer les deux conteneurs.
+
+Après publication d'une nouvelle version, les manifests multi-architecture peuvent être vérifiés depuis un poste équipé de Docker Buildx :
+
+```bash
+docker buildx imagetools inspect ghcr.io/jplayout/collectionmgnt-backend:latest
+docker buildx imagetools inspect ghcr.io/jplayout/collectionmgnt-frontend:latest
+```
 
 ## Vérification
 
