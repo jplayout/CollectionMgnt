@@ -37,9 +37,18 @@ Quelques valeurs rares commencent volontairement par `=`, `+`, `-` ou `@` dans d
 
 ## Pack média généré
 
-Le script `demo/scripts/install-demo-media.mjs` importe le dataset puis génère une image PNG principale pour chaque item importé.
+Le script `demo/scripts/install-demo-media.mjs` installe le pack média de démonstration. Il peut importer le dataset si nécessaire, ou compléter les images manquantes d'un dataset déjà importé.
 
 Les images sont générées à la volée, sans image sous copyright, puis envoyées via l'API média existante. Le script n'écrit pas directement dans SQLite et n'écrit pas directement dans `DATA_DIR/uploads`.
+
+Par défaut, le script est prudent :
+
+- il affiche les étapes et une progression pendant l'exécution ;
+- s'il détecte que le dataset de démonstration est déjà présent, il n'importe pas une nouvelle copie ;
+- il complète uniquement les images manquantes ;
+- s'il ne trouve pas le dataset, il l'importe puis attache les images aux items créés.
+
+Sur un NAS Synology ARM64, la génération et l'optimisation des 94 images peuvent prendre plusieurs minutes.
 
 ### Prérequis
 
@@ -56,16 +65,36 @@ node demo/scripts/install-demo-media.mjs \
   --password 'change-me'
 ```
 
+Pour compléter les images après un import manuel du dataset, sans jamais réimporter le dataset :
+
+```bash
+node demo/scripts/install-demo-media.mjs \
+  --base-url http://localhost:3000 \
+  --username admin \
+  --password 'change-me' \
+  --attach-existing
+```
+
+Pour une instance Synology où l'application est exposée par le frontend sur le port `8080`, utiliser l'URL frontend sans ajouter `/api` :
+
+```bash
+node demo/scripts/install-demo-media.mjs \
+  --base-url http://IP_DU_NAS:8080 \
+  --username admin \
+  --password 'change-me' \
+  --attach-existing
+```
+
 Options disponibles :
 
 - `--dataset` pour utiliser un autre fichier JSON natif.
-- `--skip-existing` pour ignorer l'upload si un item nouvellement importé a déjà un média.
+- `--attach-existing` pour compléter les médias manquants d'un dataset déjà importé, sans réimport.
 - `--force` pour uploader malgré les médias existants.
 
 ## Limites
 
 - L'import natif est non destructif et fonctionne en mode `add_only`.
-- Le script importe le dataset à chaque exécution : relancer la commande crée donc de nouveaux items.
+- La correspondance `--attach-existing` utilise le couple collection/plugin + titre. Les titres introuvables ou ambigus sont affichés dans le résumé final.
 - Les identifiants et le token JWT ne sont ni stockés ni écrits dans un fichier.
 - Aucun fichier média généré n'est versionné dans le dépôt.
 - Les scénarios QA avec médias orphelins sont reportés à un lot ultérieur.
@@ -111,9 +140,18 @@ A few metadata values intentionally start with `=`, `+`, `-` or `@` to verify CS
 
 ## Generated Media Pack
 
-The `demo/scripts/install-demo-media.mjs` script imports the dataset, then generates one primary PNG image for each imported item.
+The `demo/scripts/install-demo-media.mjs` script installs the demo media pack. It can import the dataset when needed, or complete missing images for a dataset that was already imported.
 
 Images are generated on demand without copyrighted assets and uploaded through the existing media API. The script does not write directly to SQLite and does not write directly to `DATA_DIR/uploads`.
+
+By default, the script is cautious:
+
+- it prints execution steps and progress;
+- when it detects that the demo dataset is already present, it does not import another copy;
+- it only completes missing images;
+- when the dataset is not found, it imports it and attaches images to the created items.
+
+On a Synology ARM64 NAS, generating and optimizing the 94 images can take several minutes.
 
 ### Requirements
 
@@ -130,16 +168,36 @@ node demo/scripts/install-demo-media.mjs \
   --password 'change-me'
 ```
 
+To complete images after manually importing the dataset, without ever importing the dataset again:
+
+```bash
+node demo/scripts/install-demo-media.mjs \
+  --base-url http://localhost:3000 \
+  --username admin \
+  --password 'change-me' \
+  --attach-existing
+```
+
+For a Synology instance where the app is exposed by the frontend on port `8080`, use the frontend URL without adding `/api`:
+
+```bash
+node demo/scripts/install-demo-media.mjs \
+  --base-url http://NAS_IP:8080 \
+  --username admin \
+  --password 'change-me' \
+  --attach-existing
+```
+
 Available options:
 
 - `--dataset` to use another native JSON file.
-- `--skip-existing` to skip upload when a newly imported item already has media.
+- `--attach-existing` to complete missing media for an already imported dataset, without reimporting.
 - `--force` to upload even when media already exists.
 
 ## Limits
 
 - Native import is non-destructive and uses `add_only` mode.
-- The script imports the dataset on every run, so running it again creates new items.
+- `--attach-existing` matches items by collection/plugin + title. Missing or ambiguous titles are printed in the final summary.
 - Credentials and JWT tokens are not stored or written to a file.
 - No generated media file is versioned in the repository.
 - QA scenarios with orphan media are deferred to a later lot.

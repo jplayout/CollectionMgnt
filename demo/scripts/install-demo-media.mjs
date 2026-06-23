@@ -97,46 +97,166 @@ async function main() {
 
     validateOptions(options);
 
+    logStep('Reading dataset');
     const dataset = await readDataset(options.dataset);
-    const token = await login(options);
-    const importReport = await importDataset(options, token);
-    const createdItems = Array.isArray(importReport.createdItems)
-        ? importReport.createdItems
-        : [];
+    const expectedItems = getDatasetItems(dataset);
+    const expectedByKey = indexExpectedItems(expectedItems);
 
-    const sourceItems = indexDatasetItems(dataset);
+    logStep('Connecting');
+    const token = await login(options);
     const summary = {
+        ambiguousItems: [],
         errors: [],
+        expectedItems: expectedItems.length,
+        imagesAlreadyPresent: 0,
         imagesSkipped: 0,
         imagesUploaded: 0,
-        itemsImported: createdItems.length
+        itemsFound: 0,
+        itemsImported: 0,
+        itemsMissing: [],
+        mode: options.attachExisting
+            ? 'attach-existing'
+            : 'auto'
     };
 
-    for (const createdItem of createdItems) {
-        await processCreatedItem({
-            createdItem,
+    let attachTargets = [];
+
+    if (options.attachExisting) {
+        logStep('Searching existing dataset items');
+        attachTargets = await findExistingDatasetItems({
+            expectedItems,
             options,
-            sourceItems,
             summary,
             token
         });
+    } else {
+        logStep('Detecting existing dataset items');
+        const existingTargets = await findExistingDatasetItems({
+            expectedItems,
+            options,
+            summary,
+            token
+        });
+
+        if (
+            existingTargets.length > 0 ||
+            summary.ambiguousItems.length > 0
+        ) {
+            console.log(
+                `Found ${existingTargets.length} existing demo items; using attach-existing mode and not importing another copy.`
+            );
+            summary.mode = 'auto attach-existing';
+            attachTargets = existingTargets;
+        } else {
+            console.log(
+                'No existing demo items found; importing a new copy of the dataset.'
+            );
+            logStep('Importing dataset');
+            const importReport = await importDataset(options, token);
+            const createdItems = Array.isArray(importReport.createdItems)
+                ? importReport.createdItems
+                : [];
+
+            summary.itemsImported = createdItems.length;
+            summary.mode = 'auto import-and-attach';
+
+            attachTargets = mapCreatedItems({
+                createdItems,
+                expectedByKey,
+                summary
+            });
+        }
     }
+
+    summary.itemsFound = attachTargets.length;
+
+    logStep('Verifying existing media');
+
+    const installTargets = [];
+
+    for (let index = 0; index < attachTargets.length; index += 1) {
+        const target = attachTargets[index];
+        const existingMedia = await getItemMedia({
+            itemId: target.itemId,
+            options,
+            token
+        });
+        const hasMedia =
+            Array.isArray(existingMedia) &&
+            existingMedia.length > 0;
+
+        if (hasMedia && !options.force) {
+            summary.imagesAlreadyPresent += 1;
+            summary.imagesSkipped += 1;
+            logProgress(
+                index + 1,
+                attachTargets.length,
+                `already has media: ${target.item.plugin}/${target.item.title}`
+            );
+            continue;
+        }
+
+        installTargets.push(target);
+    }
+
+    logStep('Uploading missing images');
+
+    if (installTargets.length === 0) {
+        console.log('No missing images to upload.');
+    }
+
+    for (let index = 0; index < installTargets.length; index += 1) {
+        const target = installTargets[index];
+        const label =
+            `${target.item.plugin}/${target.item.title}`;
+
+        try {
+            await uploadDemoImage({
+                itemId: target.itemId,
+                options,
+                sourceItem: target.item,
+                token
+            });
+
+            summary.imagesUploaded += 1;
+            logProgress(
+                index + 1,
+                installTargets.length,
+                `uploaded: ${label}`
+            );
+        } catch (error) {
+            const message =
+                `${label}: ${error.message}`;
+            summary.errors.push(message);
+            console.error(`Upload failed for ${message}`);
+        }
+    }
+
+    addAttachTargetIssues({
+        expectedItems,
+        summary,
+        targets: attachTargets
+    });
 
     printSummary(summary);
 
-    if (summary.errors.length > 0) {
+    if (
+        summary.errors.length > 0 ||
+        summary.itemsMissing.length > 0 ||
+        summary.ambiguousItems.length > 0
+    ) {
         process.exitCode = 1;
     }
 }
 
 function parseArgs(args) {
     const options = {
+        attachExisting: false,
         baseUrl: null,
         dataset: DEFAULT_DATASET,
         force: false,
         help: false,
         password: null,
-        skipExisting: false,
         username: null
     };
 
@@ -149,7 +269,11 @@ function parseArgs(args) {
         }
 
         if (arg === '--skip-existing') {
-            options.skipExisting = true;
+            continue;
+        }
+
+        if (arg === '--attach-existing') {
+            options.attachExisting = true;
             continue;
         }
 
@@ -204,10 +328,6 @@ function validateOptions(options) {
         throw new Error('--password is required');
     }
 
-    if (options.force && options.skipExisting) {
-        throw new Error('--force and --skip-existing cannot be used together');
-    }
-
     options.baseUrl = options.baseUrl.replace(/\/+$/, '');
 }
 
@@ -218,10 +338,15 @@ node demo/scripts/install-demo-media.mjs \\
   --username admin \\
   --password '<password>' \\
   [--dataset demo/datasets/collectionmgnt-demo-v1.json] \\
-  [--skip-existing] [--force]
+  [--attach-existing] [--force]
 
-The script imports the demo dataset in add_only mode, generates one PNG image
-for each imported item, then uploads it through the existing media API.`);
+Default mode is safe: the script detects whether demo items already exist.
+If they do, it attaches missing images without importing another copy. If they
+do not, it imports the dataset and uploads one generated PNG image per item.
+
+Use --attach-existing to never import the dataset and only complete missing
+images for already imported demo items. Use --force to upload even when an item
+already has media.`);
 }
 
 async function readDataset(datasetPath) {
@@ -281,67 +406,195 @@ async function importDataset(options, token) {
     );
 }
 
-function indexDatasetItems(dataset) {
-    const items = new Map();
+function getDatasetItems(dataset) {
+    const items = [];
 
     for (const collection of dataset.collections) {
         for (const item of collection.items) {
-            items.set(
-                getDatasetItemKey(collection.plugin, item.source_id),
-                {
-                    ...item,
-                    plugin: collection.plugin,
-                    pluginName: collection.plugin_name
-                }
-            );
+            items.push({
+                ...item,
+                plugin: collection.plugin,
+                pluginName: collection.plugin_name
+            });
         }
     }
 
     return items;
 }
 
-async function processCreatedItem({
-    createdItem,
+function indexExpectedItems(items) {
+    const indexed = new Map();
+
+    for (const item of items) {
+        indexed.set(
+            getDatasetItemKey(item.plugin, item.source_id),
+            item
+        );
+    }
+
+    return indexed;
+}
+
+async function findExistingDatasetItems({
+    expectedItems,
     options,
-    sourceItems,
     summary,
     token
 }) {
-    const itemId = Number(createdItem.new_id);
+    const expectedByPlugin = groupByPlugin(expectedItems);
+    const targets = [];
 
-    if (!Number.isInteger(itemId) || itemId <= 0) {
-        summary.errors.push(
-            `Missing new_id for ${createdItem.plugin}/${createdItem.source_id}`
-        );
-        return;
+    for (const [plugin, pluginItems] of expectedByPlugin) {
+        const existingItems = await fetchAllItems({
+            options,
+            plugin,
+            token
+        });
+        const existingByTitle = indexExistingItemsByTitle(existingItems);
+
+        for (const expectedItem of pluginItems) {
+            const matches =
+                existingByTitle.get(
+                    normalizeMatchTitle(expectedItem.title)
+                ) ?? [];
+
+            if (matches.length === 1) {
+                targets.push({
+                    item: expectedItem,
+                    itemId: Number(matches[0].id),
+                    matchKind: 'plugin-title'
+                });
+            } else if (matches.length > 1) {
+                summary.ambiguousItems.push(
+                    `${expectedItem.plugin}/${expectedItem.title}`
+                );
+            }
+        }
     }
 
-    const sourceItem = sourceItems.get(
-        getDatasetItemKey(createdItem.plugin, createdItem.source_id)
-    );
+    return targets;
+}
 
-    if (!sourceItem) {
-        summary.errors.push(
-            `Dataset item not found for ${createdItem.plugin}/${createdItem.source_id}`
+function mapCreatedItems({
+    createdItems,
+    expectedByKey,
+    summary
+}) {
+    const targets = [];
+
+    for (const createdItem of createdItems) {
+        const itemId = Number(createdItem.new_id);
+
+        if (!Number.isInteger(itemId) || itemId <= 0) {
+            summary.errors.push(
+                `Missing new_id for ${createdItem.plugin}/${createdItem.source_id}`
+            );
+            continue;
+        }
+
+        const expectedItem = expectedByKey.get(
+            getDatasetItemKey(createdItem.plugin, createdItem.source_id)
         );
-        return;
+
+        if (!expectedItem) {
+            summary.errors.push(
+                `Dataset item not found for ${createdItem.plugin}/${createdItem.source_id}`
+            );
+            continue;
+        }
+
+        targets.push({
+            item: expectedItem,
+            itemId,
+            matchKind: 'import-report'
+        });
     }
 
-    if (options.skipExisting && !options.force) {
-        const existingMedia = await fetchJson(
-            `${options.baseUrl}/api/items/${itemId}/media`,
+    return targets;
+}
+
+async function fetchAllItems({
+    options,
+    plugin,
+    token
+}) {
+    const items = [];
+    let page = 1;
+    let totalPages = 1;
+
+    do {
+        const url =
+            `${options.baseUrl}/api/items?plugin=${encodeURIComponent(plugin)}&page=${page}&pageSize=100`;
+        const response = await fetchJson(
+            url,
             {
                 headers: authHeaders(token),
                 method: 'GET'
             }
         );
 
-        if (Array.isArray(existingMedia) && existingMedia.length > 0) {
-            summary.imagesSkipped += 1;
-            return;
+        if (Array.isArray(response.items)) {
+            items.push(...response.items);
         }
+
+        totalPages = Number(response.totalPages) || 1;
+        page += 1;
+    } while (page <= totalPages);
+
+    return items;
+}
+
+function groupByPlugin(items) {
+    const grouped = new Map();
+
+    for (const item of items) {
+        if (!grouped.has(item.plugin)) {
+            grouped.set(item.plugin, []);
+        }
+
+        grouped.get(item.plugin).push(item);
     }
 
+    return grouped;
+}
+
+function indexExistingItemsByTitle(items) {
+    const indexed = new Map();
+
+    for (const item of items) {
+        const key =
+            normalizeMatchTitle(item.title);
+
+        if (!indexed.has(key)) {
+            indexed.set(key, []);
+        }
+
+        indexed.get(key).push(item);
+    }
+
+    return indexed;
+}
+
+async function getItemMedia({
+    itemId,
+    options,
+    token
+}) {
+    return fetchJson(
+        `${options.baseUrl}/api/items/${itemId}/media`,
+        {
+            headers: authHeaders(token),
+            method: 'GET'
+        }
+    );
+}
+
+async function uploadDemoImage({
+    itemId,
+    options,
+    sourceItem,
+    token
+}) {
     const image = createDemoImage(sourceItem);
     const form = new FormData();
 
@@ -358,7 +611,7 @@ async function processCreatedItem({
     form.append(
         'file',
         new Blob([image], { type: 'image/png' }),
-        `${sourceItem.plugin}-${createdItem.source_id}.png`
+        `${sourceItem.plugin}-${sourceItem.source_id}.png`
     );
 
     await fetchJson(
@@ -369,8 +622,66 @@ async function processCreatedItem({
             method: 'POST'
         }
     );
+}
 
-    summary.imagesUploaded += 1;
+function addAttachTargetIssues({
+    expectedItems,
+    summary,
+    targets
+}) {
+    const targetCounts = new Map();
+    const ambiguousItems = new Set(summary.ambiguousItems);
+
+    for (const target of targets) {
+        const key =
+            getDatasetItemKey(
+                target.item.plugin,
+                target.item.source_id
+            );
+        targetCounts.set(
+            key,
+            (targetCounts.get(key) ?? 0) + 1
+        );
+    }
+
+    for (const item of expectedItems) {
+        const key =
+            getDatasetItemKey(
+                item.plugin,
+                item.source_id
+            );
+        const count =
+            targetCounts.get(key) ?? 0;
+
+        if (count === 0) {
+            const label =
+                `${item.plugin}/${item.title}`;
+
+            if (!ambiguousItems.has(label)) {
+                summary.itemsMissing.push(label);
+            }
+        } else if (count > 1) {
+            summary.ambiguousItems.push(
+                `${item.plugin}/${item.title}`
+            );
+        }
+    }
+}
+
+function logStep(message) {
+    console.log(`\n== ${message} ==`);
+}
+
+function logProgress(done, total, message) {
+    console.log(`[${done}/${total}] ${message}`);
+}
+
+function normalizeMatchTitle(value) {
+    return String(value ?? '')
+        .normalize('NFKC')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toLocaleLowerCase('fr-FR');
 }
 
 function createDemoImage(item) {
@@ -692,13 +1003,28 @@ function authHeaders(token) {
 }
 
 function printSummary(summary) {
+    logStep('Summary');
     console.log('Demo media installation summary');
+    console.log(`Mode: ${summary.mode}`);
+    console.log(`Items expected: ${summary.expectedItems}`);
+    console.log(`Items found: ${summary.itemsFound}`);
     console.log(`Items imported: ${summary.itemsImported}`);
+    console.log(`Images already present: ${summary.imagesAlreadyPresent}`);
     console.log(`Images uploaded: ${summary.imagesUploaded}`);
     console.log(`Images skipped: ${summary.imagesSkipped}`);
+    console.log(`Items missing: ${summary.itemsMissing.length}`);
+    console.log(`Items ambiguous: ${summary.ambiguousItems.length}`);
     console.log(`Errors: ${summary.errors.length}`);
 
+    for (const item of summary.itemsMissing) {
+        console.log(`Missing item: ${item}`);
+    }
+
+    for (const item of summary.ambiguousItems) {
+        console.log(`Ambiguous item: ${item}`);
+    }
+
     for (const error of summary.errors) {
-        console.log(`- ${error}`);
+        console.log(`Error: ${error}`);
     }
 }

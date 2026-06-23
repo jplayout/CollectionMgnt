@@ -39,6 +39,7 @@ Frontend :
 - Dataset officiel de démonstration disponible dans `demo/datasets/collectionmgnt-demo-v1.json`
 - Dataset de démonstration importable via l'import JSON natif existant
 - Script de pack média de démonstration disponible dans `demo/scripts/install-demo-media.mjs`
+- Script de pack média avec progression, détection des items déjà importés et mode `--attach-existing` pour compléter les images manquantes
 
 ### Collections
 
@@ -67,6 +68,7 @@ Frontend :
 - Upload d'images originales
 - Association d'images aux items
 - Pack média de démonstration générant une image PNG principale par item importé via l'API média existante
+- Pack média capable de compléter les médias manquants d'un dataset déjà importé, sans réimporter une nouvelle copie
 - Stockage disque dans `backend/data/uploads/items/{itemId}`
 - Validation réelle du contenu image avec Sharp
 - Génération d'une image optimisée WebP

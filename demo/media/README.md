@@ -6,9 +6,12 @@ Les images sont générées à la demande par `demo/scripts/install-demo-media.m
 
 Cela garde le dépôt léger et évite tout asset image sous copyright.
 
+Le script affiche les étapes d'exécution et une progression par item. Par défaut, il détecte si les items de démonstration existent déjà : dans ce cas il complète les images manquantes au lieu de réimporter une nouvelle copie du dataset.
+
 ## Périmètre actuel
 
 - une image PNG générée par item de démonstration importé ;
+- mode `--attach-existing` pour compléter les médias d'un dataset déjà importé ;
 - upload via `POST /api/media` ;
 - chaque image uploadée est marquée comme image principale ;
 - aucune écriture directe dans SQLite ;
@@ -37,9 +40,12 @@ Images are generated on demand by `demo/scripts/install-demo-media.mjs` and uplo
 
 This keeps the repository lightweight and avoids any copyrighted image asset.
 
+The script prints execution steps and item progress. By default, it detects whether demo items already exist: when they do, it completes missing images instead of importing another dataset copy.
+
 ## Current Scope
 
 - one generated PNG image per imported demo item;
+- `--attach-existing` mode to complete media for an already imported dataset;
 - upload through `POST /api/media`;
 - each uploaded image is marked as primary;
 - no direct SQLite write;

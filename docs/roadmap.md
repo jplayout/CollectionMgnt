@@ -813,12 +813,15 @@ Contraintes :
 - Documentation média disponible dans `demo/media/README.md`
 - Le script importe le dataset officiel via `POST /api/admin/imports/native-json`
 - Utilisation du rapport d'import pour récupérer les nouveaux IDs item via `createdItems`
+- Mode par défaut prudent : détection d'un dataset déjà présent, sans réimport d'une nouvelle copie
+- Mode `--attach-existing` pour compléter les images manquantes d'un dataset déjà importé manuellement
+- Progression affichée pendant la connexion, la détection/import, la recherche des items, la vérification des médias et l'upload
 - Génération d'une image PNG principale pour chaque item importé
 - Images générées en mémoire, sans fichier image versionné dans le dépôt
 - Style uniforme sans image sous copyright : fond coloré déterministe, type de collection, titre et métadonnées courtes
 - Upload des images via `POST /api/media`
 - Chaque image uploadée est marquée `is_primary=true`
-- Paramètres CLI supportés : `--base-url`, `--username`, `--password`, `--dataset`, `--skip-existing` et `--force`
+- Paramètres CLI supportés : `--base-url`, `--username`, `--password`, `--dataset`, `--attach-existing`, `--force` et compatibilité `--skip-existing`
 - Aucun stockage d'identifiants ou de token JWT dans un fichier
 - Aucune écriture directe dans SQLite
 - Aucune écriture directe dans `DATA_DIR/uploads`
