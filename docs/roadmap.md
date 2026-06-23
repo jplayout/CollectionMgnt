@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot10.5.2.
-- Dernier lot livré : Lot 10.5.2 - Synology Deployment Guide.
+- Version actuelle : v0.12-lot10.5.2.1.
+- Dernier lot livré : Lot 10.5.2.1 - Multi-Architecture GHCR Images.
 
 Capacités disponibles :
 
@@ -27,8 +27,8 @@ Capacités disponibles :
 - Administration MVP avec export global, import, backup ZIP, audit média, cleanup média et résumé système.
 - Layout authentifié, responsive de base et tests backend d'intégration.
 - Playwright E2E MVP côté frontend avec Chromium, dataset de démonstration et `DATA_DIR` temporaire.
-- CI GitHub Actions, CodeQL, Dependabot, publication GHCR et builds Docker/Podman documentés.
-- Base Compose Synology disponible avec images GHCR, volume persistant explicite configurable et backend non exposé sur l'hôte.
+- CI GitHub Actions, CodeQL, Dependabot, publication GHCR multi-architecture et builds Docker/Podman documentés.
+- Base Compose Synology disponible avec images GHCR `linux/amd64` et `linux/arm64`, volume persistant explicite configurable et backend non exposé sur l'hôte.
 - Guide de déploiement Synology DSM / Container Manager disponible.
 
 Limites majeures connues :
@@ -921,6 +921,18 @@ Contraintes :
 - Dépannage documenté pour `JWT_SECRET`, port occupé, volume manquant, backend inaccessible et frontend inaccessible
 - Limitations explicites : HTTPS, reverse proxy et accès mobile hors LAN hors périmètre
 - Aucun changement backend, frontend, API, SQLite, CI, sécurité ou images Docker dans ce lot
+
+#### Lot 10.5.2.1 - Multi-Architecture GHCR Images - Livré
+
+- Publication GHCR migrée vers Docker Buildx dans `.github/workflows/publish.yml`
+- Configuration QEMU via `docker/setup-qemu-action`
+- Configuration Buildx via `docker/setup-buildx-action`
+- Publication backend et frontend via `docker/build-push-action`
+- Images GHCR publiées pour `linux/amd64` et `linux/arm64`
+- Support des NAS Synology ARM64, dont Realtek RTD1293, via l'image `linux/arm64`
+- Tags visibles conservés : `sha-*`, `latest` sur `main` et tag Git exact sur `v*`
+- `linux/arm/v7` non supporté officiellement à ce stade
+- Vérification post-merge recommandée avec `docker buildx imagetools inspect` sur les images backend et frontend `latest`
 
 ### Sécurité
 
