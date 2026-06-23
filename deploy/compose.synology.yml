@@ -1,8 +1,11 @@
 # CollectionMgnt - Synology Container Manager compose foundation.
 #
 # This file is intended for a Synology NAS project using prebuilt GHCR images.
-# Create the host data directory before starting the project:
+# Create the host data directory before starting the project.
+# Default example:
 # /volume1/docker/collectionmgnt/data
+# If your NAS uses another volume or Docker share, set COLLECTIONMGNT_DATA_DIR
+# to the real host path before importing or starting the project.
 #
 # The backend is intentionally not exposed on the host. The frontend container
 # serves the app and proxies /api to the backend over the internal Docker network.
@@ -21,7 +24,7 @@ services:
       PLUGINS_DIR: /app/plugins
     volumes:
       # Persistent data: SQLite database, uploaded media, thumbnails and backups.
-      - /volume1/docker/collectionmgnt/data:/app/data
+      - ${COLLECTIONMGNT_DATA_DIR:-/volume1/docker/collectionmgnt/data}:/app/data
     networks:
       - collectionmgnt
 

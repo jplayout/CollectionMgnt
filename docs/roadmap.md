@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot10.5.1.
-- Dernier lot livré : Lot 10.5.1 - Synology Compose Foundation.
+- Version actuelle : v0.12-lot10.5.2.
+- Dernier lot livré : Lot 10.5.2 - Synology Deployment Guide.
 
 Capacités disponibles :
 
@@ -28,7 +28,8 @@ Capacités disponibles :
 - Layout authentifié, responsive de base et tests backend d'intégration.
 - Playwright E2E MVP côté frontend avec Chromium, dataset de démonstration et `DATA_DIR` temporaire.
 - CI GitHub Actions, CodeQL, Dependabot, publication GHCR et builds Docker/Podman documentés.
-- Base Compose Synology disponible avec images GHCR, volume persistant explicite et backend non exposé sur l'hôte.
+- Base Compose Synology disponible avec images GHCR, volume persistant explicite configurable et backend non exposé sur l'hôte.
+- Guide de déploiement Synology DSM / Container Manager disponible.
 
 Limites majeures connues :
 
@@ -37,7 +38,7 @@ Limites majeures connues :
 - Support backend des types plugin avancés non livré : multiselect, url, email, barcode, isbn.
 - Gestion utilisateurs avancée, permissions fines et page profil non livrées.
 - Audit sécurité conteneur, HTTPS de déploiement et hardening Docker encore à traiter.
-- Guide complet Synology, reverse proxy HTTPS et stratégie de mise à jour NAS encore à documenter.
+- Reverse proxy HTTPS et accès mobile hors LAN encore à documenter.
 - Recherche globale multi-collections, FTS, normalisation Unicode et filtres range non livrés.
 - Tests frontend unitaires, E2E exhaustifs, couverture de code et tooling qualité avancé non livrés.
 
@@ -896,7 +897,7 @@ Contraintes :
 - Services `backend` et `frontend` reliés par un réseau Docker interne dédié
 - Frontend exposé sur le port hôte configurable `${FRONTEND_PORT:-8080}:80`
 - Backend non exposé publiquement sur l'hôte Synology
-- Volume persistant explicite `/volume1/docker/collectionmgnt/data:/app/data`
+- Volume persistant explicite et configurable `${COLLECTIONMGNT_DATA_DIR:-/volume1/docker/collectionmgnt/data}:/app/data`
 - `DATA_DIR=/app/data` et `PLUGINS_DIR=/app/plugins` configurés côté backend
 - `JWT_SECRET` obligatoire et documenté comme stable et long d'au moins 32 caractères
 - `ADMIN_USERNAME` et `ADMIN_PASSWORD` configurables via variables d'environnement
@@ -904,6 +905,22 @@ Contraintes :
 - Aucun `build:`, aucun suffixe SELinux `:Z`, aucun montage de dossier plugins hôte par défaut
 - Ajout de `deploy/README.md` avec rappels sur Container Manager, persistance, sauvegarde et HTTPS futur
 - Aucun changement backend, frontend, API, SQLite, CI, reverse proxy HTTPS ou guide Synology complet dans ce lot
+
+#### Lot 10.5.2 - Synology Deployment Guide - Livré
+
+- Ajout de `docs/deployment/synology.md` comme guide de déploiement DSM / Container Manager
+- Documentation des prérequis Synology : DSM compatible, Container Manager et accès administrateur DSM
+- Documentation de la préparation du dossier persistant, avec `/volume1/docker/collectionmgnt/data` comme valeur par défaut configurable
+- Documentation de la génération et conservation d'un `JWT_SECRET` fort et stable
+- Documentation du choix de `ADMIN_USERNAME`, `ADMIN_PASSWORD` et `FRONTEND_PORT`
+- Procédure d'import du compose Synology dans Container Manager
+- Rappel de l'architecture frontend/backend : backend interne non exposé, API proxifiée par le frontend
+- Vérifications documentées : accès web, connexion admin, API via `/api` et import du dataset de démonstration
+- Persistance documentée pour SQLite, médias, thumbnails et backups
+- Procédure de mise à jour simple : sauvegarde du volume, pull des images et redémarrage
+- Dépannage documenté pour `JWT_SECRET`, port occupé, volume manquant, backend inaccessible et frontend inaccessible
+- Limitations explicites : HTTPS, reverse proxy et accès mobile hors LAN hors périmètre
+- Aucun changement backend, frontend, API, SQLite, CI, sécurité ou images Docker dans ce lot
 
 ### Sécurité
 
