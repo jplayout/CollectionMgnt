@@ -178,6 +178,7 @@ Un déploiement local Docker/Podman est documenté dans `docs/deployment-docker.
 Une base Compose pour Synology Container Manager est disponible dans `deploy/compose.synology.yml`.
 Le guide de déploiement DSM / Container Manager est disponible dans `docs/deployment/synology.md`.
 Le guide HTTPS via Synology DSM Reverse Proxy est disponible dans `docs/deployment/synology-https-reverse-proxy.md`.
+Le guide de mise à jour et rollback est disponible dans `docs/deployment/update-rollback.md`.
 
 Des images prébuildées sont publiées sur GitHub Container Registry :
 
@@ -243,6 +244,8 @@ Elle contient :
 
 La copie SQLite est créée de façon cohérente avant archivage. La sauvegarde ZIP ne fournit pas encore de restauration dans `v0.12-lot10.0.1`.
 
+Pour les mises à jour, le rollback le plus sûr repose sur la conservation du tag ou digest image, une copie complète du volume persistant et la configuration runtime. Voir `docs/deployment/update-rollback.md`.
+
 ## Données locales et sécurité
 
 Ne jamais publier :
@@ -269,6 +272,7 @@ Points d'entrée utiles :
 - `docs/administration.md`
 - `docs/export-system.md`
 - `docs/backup-zip.md`
+- `docs/deployment/update-rollback.md`
 - `docs/media-audit.md`
 - `docs/media-cleanup.md`
 - `docs/media-management.md`
@@ -440,6 +444,7 @@ Local Docker/Podman deployment is documented in `docs/deployment-docker.md`.
 A Compose foundation for Synology Container Manager is available in `deploy/compose.synology.yml`.
 The DSM / Container Manager deployment guide is available in `docs/deployment/synology.md`.
 The Synology DSM Reverse Proxy HTTPS guide is available in `docs/deployment/synology-https-reverse-proxy.md`.
+The update and rollback guide is available in `docs/deployment/update-rollback.md`.
 
 Prebuilt images are published on GitHub Container Registry:
 
@@ -505,6 +510,8 @@ It contains:
 
 The SQLite copy is created consistently before archiving. ZIP restore is not implemented yet in `v0.12-lot10.0.1`.
 
+For updates, the safest rollback path relies on keeping the image tag or digest, a full persistent volume copy and the runtime configuration. See `docs/deployment/update-rollback.md`.
+
 ## Local Data and Security
 
 Never publish:
@@ -531,6 +538,7 @@ Useful entry points:
 - `docs/administration.md`
 - `docs/export-system.md`
 - `docs/backup-zip.md`
+- `docs/deployment/update-rollback.md`
 - `docs/media-audit.md`
 - `docs/media-cleanup.md`
 - `docs/media-management.md`

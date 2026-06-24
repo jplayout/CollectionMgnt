@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot10.5.3.
-- Dernier lot livré : Lot 10.5.3 - HTTPS / Reverse Proxy DSM.
+- Version actuelle : v0.12-lot10.5.4.1.
+- Dernier lot livré : Lot 10.5.4.1 - Update / Rollback Foundations.
 
 Capacités disponibles :
 
@@ -31,10 +31,12 @@ Capacités disponibles :
 - Base Compose Synology disponible avec images GHCR `linux/amd64` et `linux/arm64`, volume persistant explicite configurable et backend non exposé sur l'hôte.
 - Guide de déploiement Synology DSM / Container Manager disponible.
 - Guide HTTPS / Reverse Proxy DSM disponible, avec recommandation de proxy vers le frontend uniquement.
+- Guide de mise à jour et rollback disponible, avec sauvegarde pré-update du volume persistant recommandée.
 
 Limites majeures connues :
 
 - Restauration ZIP complète non livrée.
+- Rollback automatisé non livré.
 - Import CSV CollectionMgnt et import CSV externe non livrés.
 - Support backend des types plugin avancés non livré : multiselect, url, email, barcode, isbn.
 - Gestion utilisateurs avancée, permissions fines et page profil non livrées.
@@ -962,6 +964,23 @@ Contraintes :
 - Dépannage documenté pour page inaccessible, certificat invalide, 502, login impossible, API inaccessible, upload/import, backup interrompu et accès LAN OK mais mobile KO
 - Liens ajoutés depuis la documentation Synology, `deploy/README.md`, l'état courant et le README
 - Aucun changement backend, frontend, API, SQLite, Docker, compose, HSTS applicatif, Caddy, Traefik ou Nginx Proxy Manager
+
+#### Lot 10.5.4.1 - Update / Rollback Foundations - Livré
+
+- Ajout de `docs/deployment/update-rollback.md` comme guide officiel de mise à jour et rollback pour les déploiements auto-hébergés
+- Documentation de l'objectif : mettre à jour CollectionMgnt en limitant le risque de perte de données
+- Distinction documentée entre export JSON métier, backup ZIP applicatif et copie complète du volume persistant
+- Tableau comparatif documenté pour les protections de données
+- Checklist pré-update documentée : noter tag ou digest courant, télécharger backup ZIP, arrêter l'application, copier `DATA_DIR` et vérifier `JWT_SECRET` plus variables importantes
+- Procédure Docker / Podman documentée pour pull ou rebuild, recréation des conteneurs et validation
+- Procédure Synology Container Manager documentée avec conservation du volume et des variables du projet
+- Validation post-update documentée : login, collections, items, médias, import/export, backup ZIP et HTTPS
+- Rollback simple documenté vers image précédente
+- Rollback complet documenté avec restauration du volume persistant et retour à l'ancien tag ou digest
+- Risques connus documentés : futures migrations DB, incompatibilités potentielles entre versions, rollback image seule parfois insuffisant et importance de la sauvegarde du volume
+- Bonnes pratiques documentées : éviter de dépendre uniquement de `latest`, conserver un backup pré-update et tester avant suppression des sauvegardes
+- Liens ajoutés depuis la documentation Synology, `deploy/README.md`, le README, l'état courant et la roadmap
+- Aucun changement backend, frontend, API, SQLite, Docker, compose, backup ZIP ou restauration
 
 ### Sécurité
 

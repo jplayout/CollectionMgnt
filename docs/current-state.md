@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot10.5.3
+Version : v0.12-lot10.5.4.1
 
 ## État du projet
 
@@ -392,6 +392,7 @@ Variables disponibles :
 - Base Compose Synology disponible dans `deploy/compose.synology.yml`
 - Guide de déploiement DSM / Container Manager disponible dans `docs/deployment/synology.md`
 - Guide HTTPS / Reverse Proxy DSM disponible dans `docs/deployment/synology-https-reverse-proxy.md`
+- Guide de mise à jour et rollback disponible dans `docs/deployment/update-rollback.md`
 - Compose basé sur les images GHCR prébuildées, sans `build:`
 - Images GHCR publiées en multi-architecture `linux/amd64` et `linux/arm64`
 - Synology ARM64, dont Realtek RTD1293, supporté via l'image `linux/arm64`
@@ -408,6 +409,7 @@ Variables disponibles :
 - Le guide Synology couvre les prérequis, la préparation du dossier persistant, la configuration des variables, le démarrage, les vérifications, la persistance, la mise à jour simple et le dépannage courant
 - La documentation HTTPS DSM recommande un reverse proxy vers le frontend uniquement, avec `/api` relayé par le Nginx frontend vers le backend interne
 - Le backend reste non exposé sur l'hôte, y compris pour l'accès HTTPS par domaine
+- La documentation update/rollback recommande de conserver le tag ou digest image, une copie complète du volume persistant et la configuration runtime avant toute mise à jour
 
 ---
 
@@ -779,6 +781,22 @@ Variables disponibles :
 - Tests de validation documentés pour login, import demo, upload média, exports, backup ZIP et accès téléphone/tablette
 - Points de vigilance documentés pour limites 10 MB, limites proxy DSM, gros backups, JWT en `sessionStorage` et `X-Forwarded-Proto`
 - Aucun changement backend, frontend, API, Docker, compose, HSTS applicatif, Caddy, Traefik ou Nginx Proxy Manager
+
+### Lot 10.5.4.1 - Update / Rollback Foundations
+
+#### Livré
+
+- Guide de mise à jour et rollback disponible dans `docs/deployment/update-rollback.md`
+- Distinction documentée entre export JSON métier, backup ZIP et copie complète du volume persistant
+- Tableau comparatif documenté pour les mécanismes de protection des données
+- Checklist pré-update documentée : tag ou digest courant, backup ZIP, arrêt applicatif, copie de `DATA_DIR` et variables importantes
+- Procédures Docker / Podman documentées pour pull, recréation et validation
+- Procédure Synology Container Manager documentée pour mise à jour avec conservation du volume
+- Validation post-update documentée pour login, collections, items, médias, import/export, backup ZIP et HTTPS
+- Rollback simple documenté vers image précédente
+- Rollback complet documenté avec restauration de `DATA_DIR` et retour à l'ancien tag ou digest
+- Risques connus documentés : migrations DB futures, incompatibilités entre versions, rollback image seule insuffisant et importance de la sauvegarde du volume
+- Aucun changement backend, frontend, API, Docker, compose, backup ZIP ou restauration
 
 ### Lot 7.0.1 - Préférences d'affichage backend
 
