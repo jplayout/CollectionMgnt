@@ -4,7 +4,7 @@ Ce guide décrit un déploiement de CollectionMgnt sur Synology DSM avec Contain
 
 Le déploiement expose uniquement le frontend sur le NAS. Le backend reste accessible seulement sur le réseau Docker interne et reçoit les appels `/api` via le Nginx du conteneur frontend.
 
-HTTPS, reverse proxy et accès mobile hors LAN seront documentés séparément.
+Pour publier l'application en HTTPS via un domaine ou sous-domaine, voir le guide [Synology HTTPS / Reverse Proxy](synology-https-reverse-proxy.md). L'approche recommandée consiste à faire pointer le reverse proxy DSM vers le frontend uniquement, sans exposer le backend.
 
 ## Prérequis
 
@@ -133,6 +133,8 @@ http://IP_DU_NAS:8080
 ```
 
 Remplacer `8080` par la valeur de `FRONTEND_PORT` si elle a été changée.
+
+Pour un accès HTTPS via DSM Reverse Proxy, utiliser ensuite le guide dédié : [Synology HTTPS / Reverse Proxy](synology-https-reverse-proxy.md).
 
 ### Connexion admin
 

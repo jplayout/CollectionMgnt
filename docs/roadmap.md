@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot10.5.2.1.
-- Dernier lot livré : Lot 10.5.2.1 - Multi-Architecture GHCR Images.
+- Version actuelle : v0.12-lot10.5.3.
+- Dernier lot livré : Lot 10.5.3 - HTTPS / Reverse Proxy DSM.
 
 Capacités disponibles :
 
@@ -30,6 +30,7 @@ Capacités disponibles :
 - CI GitHub Actions, CodeQL, Dependabot, publication GHCR multi-architecture et builds Docker/Podman documentés.
 - Base Compose Synology disponible avec images GHCR `linux/amd64` et `linux/arm64`, volume persistant explicite configurable et backend non exposé sur l'hôte.
 - Guide de déploiement Synology DSM / Container Manager disponible.
+- Guide HTTPS / Reverse Proxy DSM disponible, avec recommandation de proxy vers le frontend uniquement.
 
 Limites majeures connues :
 
@@ -37,8 +38,8 @@ Limites majeures connues :
 - Import CSV CollectionMgnt et import CSV externe non livrés.
 - Support backend des types plugin avancés non livré : multiselect, url, email, barcode, isbn.
 - Gestion utilisateurs avancée, permissions fines et page profil non livrées.
-- Audit sécurité conteneur, HTTPS de déploiement et hardening Docker encore à traiter.
-- Reverse proxy HTTPS et accès mobile hors LAN encore à documenter.
+- Audit sécurité conteneur et hardening Docker encore à traiter.
+- Scénarios avancés d'accès distant, VPN/tunnel et guides Caddy/Traefik/Nginx dédiés encore à traiter.
 - Recherche globale multi-collections, FTS, normalisation Unicode et filtres range non livrés.
 - Tests frontend unitaires, E2E exhaustifs, couverture de code et tooling qualité avancé non livrés.
 
@@ -71,6 +72,7 @@ Limites majeures connues :
 - Lot 10.3.0 Security & CI Hardening livré : CodeQL, Dependabot, Helmet et validation stricte de `JWT_SECRET`.
 - Lot 10.3.1 Migration `@fastify/jwt` livré : dette sécurité `fast-jwt` traitée par mise à jour vers `@fastify/jwt` `10.1.0`.
 - Lot 10.3.2 Trivy Security Scanning livré : scans dépendances et images conteneur en mode non bloquant.
+- Lot 10.5.3 HTTPS / Reverse Proxy DSM livré : documentation HTTPS DSM avec backend non exposé.
 - Détail complet conservé dans `Historique des lots livrés > Sécurité`.
 
 ### Travaux futurs prioritaires
@@ -117,14 +119,14 @@ Contexte :
 - Les futures fonctionnalités d’acquisition assistée reposeront potentiellement sur l’utilisation de l’appareil photo.
 - Les accès distants deviennent plus fréquents à mesure que le produit mûrit.
 
-Travaux envisagés :
+Travaux futurs envisagés :
 
-- Documentation officielle de déploiement HTTPS.
+- Documentation complémentaire de déploiement HTTPS hors DSM.
 - Guides de configuration pour :
   - Caddy
   - Traefik
   - Nginx
-- Documentation reverse proxy.
+- Documentation reverse proxy hors DSM.
 - Validation du fonctionnement derrière un reverse proxy TLS.
 - Vérification correcte des en-têtes proxy.
 - Recommandations TLS modernes.
@@ -134,6 +136,11 @@ Travaux envisagés :
   - reverse proxy exposé sur Internet
 - Validation des usages smartphone et tablette via HTTPS.
 - Vérification de compatibilité des futures fonctionnalités caméra dans un contexte sécurisé.
+
+Livré :
+
+- Guide Synology DSM HTTPS / Reverse Proxy avec règle recommandée vers le frontend uniquement.
+- Rappel que le backend reste non exposé et que `/api` est relayé par le Nginx frontend.
 
 Principes :
 
@@ -936,6 +943,25 @@ Contraintes :
 - Tags visibles conservés : `sha-*`, `latest` sur `main` et tag Git exact sur `v*`
 - `linux/arm/v7` non supporté officiellement à ce stade
 - Vérification post-merge recommandée avec `docker buildx imagetools inspect` sur les images backend et frontend `latest`
+
+#### Lot 10.5.3 - HTTPS / Reverse Proxy DSM - Livré
+
+- Ajout de `docs/deployment/synology-https-reverse-proxy.md` comme guide utilisateur HTTPS via Synology DSM Reverse Proxy
+- Architecture recommandée documentée :
+  - navigateur en HTTPS vers DSM Reverse Proxy
+  - DSM vers le port frontend du NAS, par défaut `8080`
+  - Nginx frontend vers le backend interne pour `/api`
+- Backend conservé non exposé sur l'hôte Synology
+- Documentation explicite de ne pas créer de règle DSM séparée pour `/api`
+- Prérequis documentés : Container Manager, compose Synology déjà déployé, domaine, certificat DSM, ports `80`/`443`, firewall DSM/routeur et port frontend
+- Étapes génériques documentées pour certificat DSM / Let's Encrypt et association au domaine CollectionMgnt
+- Règle reverse proxy DSM recommandée documentée avec source HTTPS `collection.example.com:443` et destination HTTP `localhost:${FRONTEND_PORT}`
+- Redirection HTTP vers HTTPS documentée comme recommandée lorsque DSM le permet
+- Tests de validation documentés : accès HTTPS, refresh de page interne, login admin, import demo, upload image, médias, exports CSV/JSON, backup ZIP et accès mobile Wi-Fi/4G/5G
+- Points de vigilance documentés : limites applicatives 10 MB, limites DSM possibles, gros backups, certificats autosignés déconseillés sur mobile, JWT en `sessionStorage` et `X-Forwarded-Proto` non bloquant actuellement
+- Dépannage documenté pour page inaccessible, certificat invalide, 502, login impossible, API inaccessible, upload/import, backup interrompu et accès LAN OK mais mobile KO
+- Liens ajoutés depuis la documentation Synology, `deploy/README.md`, l'état courant et le README
+- Aucun changement backend, frontend, API, SQLite, Docker, compose, HSTS applicatif, Caddy, Traefik ou Nginx Proxy Manager
 
 ### Sécurité
 
