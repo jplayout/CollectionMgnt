@@ -146,6 +146,8 @@ Principes :
 - aucun plugin ne cree de table ;
 - les items partagent la table `items` ;
 - les champs propres aux plugins sont stockes dans `items.metadata` ;
+- les identifiants d'acquisition assistee (`isbn`, `barcode`) restent des champs
+  metadata plugin, sans table dediee ni migration SQLite ;
 - les medias ont une ligne dans `media` et des fichiers sous `DATA_DIR` ;
 - les preferences applicatives sont stockees dans `settings`.
 

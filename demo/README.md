@@ -126,7 +126,7 @@ The dataset contains 5 collections and 94 items:
 - `consoles`: 12 consoles
 - `others`: 10 miscellaneous items
 
-The data covers search, filters, sorting, pagination, card/list views, CSV export, JSON export, JSON import, backup and responsive layouts.
+The data covers search, filters, sorting, pagination, card/list views, CSV export, JSON export, JSON import, backup and responsive layouts. A few demo items include checksum-valid ISBN, EAN-13 or UPC-A identifiers.
 
 A few metadata values intentionally start with `=`, `+`, `-` or `@` to verify CSV Formula Injection hardening.
 

@@ -35,7 +35,8 @@ Frontend :
   - `movies`
   - `consoles`
   - `others`
-- Aucun champ ISBN, EAN, UPC ou code-barres dans les plugins standards à ce stade
+- Fondations d'acquisition assistée livrées : champs identifiants `books.isbn`, `games.barcode`, `movies.barcode` et `others.barcode`
+- Aucun champ ISBN, EAN, UPC ou code-barres sur le plugin `consoles` à ce stade
 - Dataset officiel de démonstration disponible dans `demo/datasets/collectionmgnt-demo-v1.json`
 - Dataset de démonstration importable via l'import JSON natif existant
 - Script de pack média de démonstration disponible dans `demo/scripts/install-demo-media.mjs`
@@ -52,7 +53,7 @@ Frontend :
 - Recherche et filtres textuels/select insensibles à la casse simple
 - Filtrage par plugin
 - Filtrage dynamique sur les champs déclarés `filterable`
-- Filtres metadata typés côté backend pour text, textarea, select, checkbox, date, number et rating
+- Filtres metadata typés côté backend pour text, textarea, select, isbn, barcode, checkbox, date, number et rating
 - Pagination de `GET /api/items` via `page` et `pageSize`
 - Réponse paginée avec `items`, `total`, `page`, `pageSize` et `totalPages`
 - Tri configurable de `GET /api/items` via `sort` et `direction`
@@ -61,7 +62,7 @@ Frontend :
 - Export métier JSON par collection disponible via API
 - Export CSV simple par collection
 - Neutralisation des cellules CSV commencant par `=`, `+`, `-` ou `@` pour limiter l'interpretation comme formule par les tableurs
-- Dataset de démonstration : 5 collections, 94 items et tableaux `media` vides
+- Dataset de démonstration : 5 collections, 94 items, quelques ISBN/codes-barres checksum-valides et tableaux `media` vides
 
 ### Médias
 
@@ -197,7 +198,7 @@ Frontend :
   - champs dynamiques depuis `schema.fields`
   - préremplissage via `initialValue`
   - libellés de soumission configurables
-  - types supportés : text, textarea, select, checkbox, date, number, rating
+  - types supportés : text, textarea, select, checkbox, date, number, rating, isbn, barcode
   - validation légère : required, min, max, pattern, options
   - rating borné par défaut à 0..20 avec step UI à 1
   - fallback texte pour les select sans options
@@ -628,7 +629,7 @@ Variables disponibles :
 - Filtres dynamiques générés depuis `schema.fields`
 - Seuls les champs déclarés `filterable` sont proposés comme filtres
 - Recherche titre existante conservée
-- Contrôles frontend adaptés aux types text, textarea, select, checkbox, date, number et rating
+- Contrôles frontend adaptés aux types text, textarea, select, isbn, barcode, checkbox, date, number et rating
 - Bornes rating frontend par défaut `min=0`, `max=20`, `step=1`
 - Affichage des filtres actifs
 - Bouton `Réinitialiser`
@@ -657,7 +658,7 @@ Variables disponibles :
 
 - Recherche `search` explicitement insensible à la casse simple sur `title`, `description` et metadata `searchable`
 - Recherche legacy `title` explicitement insensible à la casse simple
-- Filtres metadata `filterable` text, textarea et select insensibles à la casse simple
+- Filtres metadata `filterable` text, textarea, select, isbn et barcode insensibles à la casse simple
 - Filtres checkbox, number, rating et date conservés stricts
 - Post-filtrage frontend aligné sur les mêmes règles
 - Pas de normalisation complète des accents ou de l'Unicode
@@ -854,7 +855,7 @@ Variables disponibles :
 - Le tri par défaut utilise `title`, champ obligatoire commun à tous les items
 - Champs système triables : `title`, `created_at`, `updated_at`
 - Le tri `sort=created_at`, `direction=desc` reste disponible explicitement
-- Champs metadata triables depuis le schéma plugin courant pour les types text, textarea, select, date, number, rating et checkbox
+- Champs metadata triables depuis le schéma plugin courant pour les types text, textarea, select, isbn, barcode, date, number, rating et checkbox
 - `sort` ou `direction` invalides rejetés avec une réponse 400
 - Tri metadata sans plugin connu rejeté avec une réponse 400
 - Tri appliqué avant `LIMIT` / `OFFSET`, avec total inchangé

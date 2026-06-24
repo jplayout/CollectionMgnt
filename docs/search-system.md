@@ -12,7 +12,7 @@ Capacités backend actuellement utilisées par `GET /api/items` :
 - recherche large via `search`
 - recherche simple par titre via `title`, conservée pour compatibilité
 - filtres metadata sur les champs déclarés `filterable`
-- filtres metadata via `json_extract`, insensibles à la casse simple pour text, textarea et select, stricts pour checkbox, number, rating et date
+- filtres metadata via `json_extract`, insensibles à la casse simple pour text, textarea, select, isbn et barcode, stricts pour checkbox, number, rating et date
 - validation backend des valeurs de filtres selon le type déclaré dans le schéma plugin
 - pagination via `page` et `pageSize`
 - tri configurable via `sort` et `direction`
@@ -80,7 +80,7 @@ Le tri `sort=created_at&direction=desc` reste disponible explicitement.
 Champs metadata triables :
 
 - champs du plugin courant uniquement ;
-- types supportés : text, textarea, select, date, number, rating et checkbox.
+- types supportés : text, textarea, select, isbn, barcode, date, number, rating et checkbox.
 
 Le tri metadata nécessite un plugin connu via `plugin=...`, afin que le backend puisse valider le champ depuis le schéma plugin.
 Un tri metadata sans plugin connu retourne une réponse 400.
@@ -100,7 +100,8 @@ Un tie-breaker stable via `id` est appliqué aux tris.
 
 - `search` est insensible à la casse simple sur titre, description et metadata `searchable`.
 - `title` reste disponible pour compatibilité et est insensible à la casse simple.
-- Les filtres `filterable` de type text, textarea et select sont insensibles à la casse simple.
+- Les filtres `filterable` de type text, textarea, select, isbn et barcode sont insensibles à la casse simple.
+- Les filtres `isbn` et `barcode` valident puis normalisent espaces et tirets avant comparaison.
 - Les filtres `filterable` de type checkbox, number, rating et date restent stricts.
 - Les types et noms de champs utilisés par les filtres viennent uniquement du schéma plugin.
 
@@ -148,7 +149,7 @@ Capacités frontend disponibles :
 - pas de ranking des résultats
 - pas de filtres range
 - pas encore d'exploitation de `faceted`
-- les filtres backend metadata text, textarea et select sont insensibles à la casse simple ; checkbox, number, rating et date restent stricts
+- les filtres backend metadata text, textarea, select, isbn et barcode sont insensibles à la casse simple ; checkbox, number, rating et date restent stricts
 - la recherche et les filtres textuels/select ne gèrent pas finement les accents ni la normalisation Unicode
 
 ## Étape Suivante

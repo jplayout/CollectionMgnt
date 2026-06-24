@@ -1,5 +1,13 @@
 [
   {
+    "name": "barcode",
+    "label": "Code-barres",
+    "type": "barcode",
+    "required": false,
+    "searchable": true,
+    "filterable": true
+  },
+  {
     "name": "director",
     "label": "Réalisateur",
     "type": "text",

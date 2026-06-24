@@ -3,6 +3,7 @@ import {
 } from '../repositories/native-import-repository.js';
 
 import {
+    normalizeItemMetadata,
     validateItem
 } from './item-validator.js';
 
@@ -285,6 +286,12 @@ export class NativeImportService {
             report
         );
 
+        const normalizedMetadata =
+            normalizeItemMetadata(
+                localSchema,
+                metadata
+            );
+
         const newId =
             this.repository.createItem({
                 plugin_id:
@@ -293,7 +300,8 @@ export class NativeImportService {
                     item.title,
                 description:
                     item.description,
-                metadata,
+                metadata:
+                    normalizedMetadata,
                 created_at:
                     item.created_at,
                 updated_at:

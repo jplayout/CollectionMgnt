@@ -84,7 +84,9 @@ const SUPPORTED_TYPES =
         'checkbox',
         'date',
         'number',
-        'rating'
+        'rating',
+        'isbn',
+        'barcode'
     ]);
 
 const DEFAULT_RATING_MIN =
@@ -577,7 +579,9 @@ function validateFieldValue(
         (
             field.type === 'text' ||
             field.type === 'textarea' ||
-            field.type === 'select'
+            field.type === 'select' ||
+            field.type === 'isbn' ||
+            field.type === 'barcode'
         )
     ) {
 

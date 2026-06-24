@@ -69,7 +69,7 @@ Il n'existe pas de propriété plugin `table.columns` à ce stade.
 
 La configuration de tri utilisateur ne fait pas encore partie du contrat plugin.
 Il n'existe pas de propriété `sortable` dans `fields.json` à ce stade.
-Les champs metadata triables par `GET /api/items?sort=...` sont inférés côté backend depuis les champs du plugin courant et les types supportés : text, textarea, select, date, number, rating et checkbox.
+Les champs metadata triables par `GET /api/items?sort=...` sont inférés côté backend depuis les champs du plugin courant et les types supportés : text, textarea, select, isbn, barcode, date, number, rating et checkbox.
 
 L'export CSV collection utilise les noms techniques `field.name` comme en-têtes de colonnes metadata.
 Les labels `field.label` restent destinés à l'affichage utilisateur et ne sont pas utilisés comme identifiants stables d'export.
@@ -87,6 +87,8 @@ Le backend et le formulaire frontend dynamique valident actuellement les types s
 - checkbox
 - select
 - rating
+- barcode
+- isbn
 
 ---
 
@@ -97,8 +99,6 @@ Ces types restent prévus dans le modèle de plugins, mais ne doivent pas être 
 - multiselect
 - url
 - email
-- barcode
-- isbn
 
 ---
 
@@ -124,11 +124,13 @@ Ajoute automatiquement un filtre sur `GET /api/items` quand le plugin courant es
 
 Les filtres utilisent le type déclaré dans `fields.json` :
 
-- text, textarea et select : égalité insensible à la casse simple
+- text, textarea, select, isbn et barcode : égalité insensible à la casse simple
 - checkbox : valeurs query acceptées `true` ou `false`, converties en `1` ou `0` côté backend
 - number : nombre fini obligatoire
 - rating : nombre fini obligatoire, borné par `min`/`max` avec défaut 0..20
 - date : date réelle au format `YYYY-MM-DD`
+- isbn : ISBN-10 ou ISBN-13 valide, normalisé sans espaces ni tirets avant comparaison
+- barcode : EAN-13 ou UPC-A valide, normalisé sans espaces ni tirets avant comparaison
 
 Si `options` est déclaré pour un champ `select`, la valeur du filtre doit correspondre à une option valide.
 
@@ -172,6 +174,18 @@ Le backend valide actuellement `min` et `max`. `step` est utilisé uniquement pa
 
 Les affichages avancés de type étoiles, pourcentage, note sur 5 ou note sur 100 sont prévus comme évolution future et ne sont pas disponibles actuellement.
 
+## isbn
+
+Un champ `isbn` est stocké dans `items.metadata` comme une chaîne normalisée.
+
+Le backend accepte ISBN-10 et ISBN-13, ignore les espaces et tirets, accepte `X` final pour ISBN-10 et vérifie le checksum.
+
+## barcode
+
+Un champ `barcode` est stocké dans `items.metadata` comme une chaîne normalisée.
+
+Le backend accepte EAN-13 et UPC-A, ignore les espaces et tirets et vérifie le checksum.
+
 ## pattern
 
 Expression régulière.
@@ -185,8 +199,8 @@ Valeurs autorisées pour un champ `select`.
 # Plugins standards
 
 Les plugins standards fournis dans `backend/plugins` restent volontairement simples.
-Ils utilisent uniquement les types réellement validés actuellement et n'ajoutent pas
-encore de champs ISBN, EAN, UPC ou code-barres.
+Ils utilisent uniquement les types réellement validés actuellement. Les champs
+identifiants sont declarés par plugin et stockés dans `items.metadata`.
 
 ## books
 
@@ -195,6 +209,7 @@ Collection : Livres.
 Champs metadata :
 
 - `author`
+- `isbn`
 - `genre`
 - `publisher`
 - `publication_date`
@@ -208,10 +223,26 @@ Collection : Films.
 Champs metadata :
 
 - `director`
+- `barcode`
 - `genre`
 - `format`
 - `release_date`
 - `watched`
+- `rating`
+
+## games
+
+Collection : Jeux vidéo.
+
+Champs metadata :
+
+- `barcode`
+- `platform`
+- `genre`
+- `publisher`
+- `developer`
+- `release_date`
+- `completed`
 - `rating`
 
 ## consoles
@@ -233,6 +264,7 @@ Collection : Autre.
 Champs metadata :
 
 - `category`
+- `barcode`
 - `maker`
 - `acquired_date`
 - `condition`
@@ -241,7 +273,7 @@ Champs metadata :
 
 ## Acquisition assistée
 
-L'acquisition assistée par ISBN, EAN, UPC, code-barres, scan mobile/tablette,
-recherche automatique externe, pré-remplissage des champs et récupération
-éventuelle de métadonnées ou images est une fonctionnalité future distincte.
-Elle ne fait pas partie de l'enrichissement simple des plugins standards.
+Les fondations d'acquisition assistée couvrent uniquement les identifiants `isbn`
+et `barcode`. Le scan mobile/tablette, la recherche automatique externe, le
+pré-remplissage des champs et la récupération éventuelle de métadonnées ou images
+restent des fonctionnalités futures distinctes.
