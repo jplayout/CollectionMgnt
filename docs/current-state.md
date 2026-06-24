@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot10.5.2.1
+Version : v0.12-lot10.5.3
 
 ## État du projet
 
@@ -391,6 +391,7 @@ Variables disponibles :
 
 - Base Compose Synology disponible dans `deploy/compose.synology.yml`
 - Guide de déploiement DSM / Container Manager disponible dans `docs/deployment/synology.md`
+- Guide HTTPS / Reverse Proxy DSM disponible dans `docs/deployment/synology-https-reverse-proxy.md`
 - Compose basé sur les images GHCR prébuildées, sans `build:`
 - Images GHCR publiées en multi-architecture `linux/amd64` et `linux/arm64`
 - Synology ARM64, dont Realtek RTD1293, supporté via l'image `linux/arm64`
@@ -405,7 +406,8 @@ Variables disponibles :
 - `JWT_SECRET` doit rester fort, stable et contenir au moins 32 caractères
 - Le dossier configuré dans `COLLECTIONMGNT_DATA_DIR`, ou `/volume1/docker/collectionmgnt/data` par défaut, doit être sauvegardé avant les mises à jour
 - Le guide Synology couvre les prérequis, la préparation du dossier persistant, la configuration des variables, le démarrage, les vérifications, la persistance, la mise à jour simple et le dépannage courant
-- Reverse proxy HTTPS Synology hors périmètre de ce lot et à documenter ultérieurement
+- La documentation HTTPS DSM recommande un reverse proxy vers le frontend uniquement, avec `/api` relayé par le Nginx frontend vers le backend interne
+- Le backend reste non exposé sur l'hôte, y compris pour l'accès HTTPS par domaine
 
 ---
 
@@ -763,6 +765,20 @@ Variables disponibles :
 - Vérification post-merge recommandée :
   - `docker buildx imagetools inspect ghcr.io/jplayout/collectionmgnt-backend:latest`
   - `docker buildx imagetools inspect ghcr.io/jplayout/collectionmgnt-frontend:latest`
+
+### Lot 10.5.3 - HTTPS / Reverse Proxy DSM
+
+#### Livré
+
+- Guide HTTPS / Reverse Proxy DSM disponible dans `docs/deployment/synology-https-reverse-proxy.md`
+- Architecture recommandée documentée : DSM Reverse Proxy vers le frontend uniquement
+- Rappel que le frontend Nginx relaie `/api` vers le backend interne `backend:3000`
+- Backend explicitement conservé non exposé sur l'hôte Synology
+- Prérequis documentés : domaine, certificat DSM, port frontend, routage `80`/`443`, firewall DSM/routeur
+- Procédure DSM générique documentée pour certificat Let's Encrypt, règle reverse proxy et redirection HTTP vers HTTPS
+- Tests de validation documentés pour login, import demo, upload média, exports, backup ZIP et accès téléphone/tablette
+- Points de vigilance documentés pour limites 10 MB, limites proxy DSM, gros backups, JWT en `sessionStorage` et `X-Forwarded-Proto`
+- Aucun changement backend, frontend, API, Docker, compose, HSTS applicatif, Caddy, Traefik ou Nginx Proxy Manager
 
 ### Lot 7.0.1 - Préférences d'affichage backend
 

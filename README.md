@@ -177,6 +177,7 @@ Un déploiement local Docker/Podman est documenté dans `docs/deployment-docker.
 
 Une base Compose pour Synology Container Manager est disponible dans `deploy/compose.synology.yml`.
 Le guide de déploiement DSM / Container Manager est disponible dans `docs/deployment/synology.md`.
+Le guide HTTPS via Synology DSM Reverse Proxy est disponible dans `docs/deployment/synology-https-reverse-proxy.md`.
 
 Des images prébuildées sont publiées sur GitHub Container Registry :
 
@@ -438,6 +439,7 @@ Local Docker/Podman deployment is documented in `docs/deployment-docker.md`.
 
 A Compose foundation for Synology Container Manager is available in `deploy/compose.synology.yml`.
 The DSM / Container Manager deployment guide is available in `docs/deployment/synology.md`.
+The Synology DSM Reverse Proxy HTTPS guide is available in `docs/deployment/synology-https-reverse-proxy.md`.
 
 Prebuilt images are published on GitHub Container Registry:
 
