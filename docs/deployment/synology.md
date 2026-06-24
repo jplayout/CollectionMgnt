@@ -6,6 +6,8 @@ Le déploiement expose uniquement le frontend sur le NAS. Le backend reste acces
 
 Pour publier l'application en HTTPS via un domaine ou sous-domaine, voir le guide [Synology HTTPS / Reverse Proxy](synology-https-reverse-proxy.md). L'approche recommandée consiste à faire pointer le reverse proxy DSM vers le frontend uniquement, sans exposer le backend.
 
+Pour préparer les mises à jour et les retours arrière, voir le guide [Update & Rollback](update-rollback.md).
+
 ## Prérequis
 
 - Un NAS Synology avec DSM compatible avec Container Manager.
@@ -195,6 +197,8 @@ La suppression de ce dossier supprime les données applicatives. Le remplacement
 
 ## Mise à jour simple
 
+La procédure détaillée de mise à jour et rollback est documentée dans [Update & Rollback](update-rollback.md).
+
 Avant toute mise à jour :
 
 1. Arrêter le projet depuis Container Manager.
@@ -277,8 +281,7 @@ Correction :
 
 ## Limitations
 
-- HTTPS n'est pas couvert par ce guide.
-- Le reverse proxy Synology sera documenté dans un lot suivant.
-- L'accès mobile hors LAN sera documenté dans un lot suivant.
-- Ce guide ne couvre pas de stratégie de rollback avancée.
+- HTTPS et le reverse proxy Synology sont couverts dans [Synology HTTPS / Reverse Proxy](synology-https-reverse-proxy.md).
+- L'accès mobile hors LAN dépend de la configuration réseau, du domaine, du certificat et du routage DSM.
+- La stratégie de rollback détaillée est couverte dans [Update & Rollback](update-rollback.md).
 - Ce guide ne modifie pas les images Docker, l'API, le backend, le frontend ou la base SQLite.

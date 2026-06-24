@@ -12,6 +12,8 @@ It exposes only the frontend on the NAS host. The backend stays available only o
 
 HTTPS through Synology DSM Reverse Proxy is documented in `../docs/deployment/synology-https-reverse-proxy.md`. The recommended setup points DSM to the frontend port only and does not expose the backend.
 
+Update and rollback guidance is documented in `../docs/deployment/update-rollback.md`.
+
 Persistent data is stored by default in:
 
 ```text
