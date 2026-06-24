@@ -336,15 +336,31 @@ function buildItemFilterQuery(
 
     if (filters.search) {
 
-        const searchClauses = [
-            'LOWER(title) LIKE LOWER(?)',
-            'LOWER(description) LIKE LOWER(?)'
-        ];
+        const searchClauses = [];
 
-        const searchParams = [
-            `%${filters.search}%`,
-            `%${filters.search}%`
-        ];
+        const searchParams = [];
+
+        const searchValues =
+            filters.searchValues ?? [
+                filters.search
+            ];
+
+        for (
+            const searchValue
+            of searchValues
+        ) {
+
+            searchClauses.push(
+                'LOWER(title) LIKE LOWER(?)',
+                'LOWER(description) LIKE LOWER(?)'
+            );
+
+            searchParams.push(
+                `%${searchValue}%`,
+                `%${searchValue}%`
+            );
+
+        }
 
         for (
             const field
@@ -361,16 +377,23 @@ function buildItemFilterQuery(
 
             }
 
-            searchClauses.push(`
-                LOWER(CAST(json_extract(
-                    metadata,
-                    '$.${field}'
-                ) AS TEXT)) LIKE LOWER(?)
-            `);
+            for (
+                const searchValue
+                of searchValues
+            ) {
 
-            searchParams.push(
-                `%${filters.search}%`
-            );
+                searchClauses.push(`
+                    LOWER(CAST(json_extract(
+                        metadata,
+                        '$.${field}'
+                    ) AS TEXT)) LIKE LOWER(?)
+                `);
+
+                searchParams.push(
+                    `%${searchValue}%`
+                );
+
+            }
 
         }
 
@@ -455,7 +478,9 @@ function isCaseInsensitiveFilterType(
     return [
         'text',
         'textarea',
-        'select'
+        'select',
+        'isbn',
+        'barcode'
     ].includes(type);
 
 }

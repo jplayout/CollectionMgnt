@@ -7,6 +7,7 @@ import {
 } from '../repositories/plugin-repository.js';
 
 import {
+    normalizeItemMetadata,
     validateItem
 } from '../services/item-validator.js';
 
@@ -94,13 +95,20 @@ export default async function (
                     `)
                     .get(plugin);
 
+            const normalizedMetadata =
+                normalizeItemMetadata(
+                    pluginDefinition,
+                    metadata ?? {}
+                );
+
             const itemId =
                 repository.create({
                     plugin_id:
                         pluginRow.id,
                     title,
                     description,
-                    metadata
+                    metadata:
+                        normalizedMetadata
                 });
 
             return {
@@ -203,6 +211,12 @@ export default async function (
                         .map(
                             field => field.name
                         );
+
+                filters.searchValues =
+                    buildSearchValues(
+                        filters.search,
+                        pluginDefinition.fields
+                    );
 
                 for (
                     const field
@@ -434,7 +448,10 @@ export default async function (
             const metadata =
                 mergeMetadata(
                     existingItem.metadata,
-                    payload.metadata,
+                    normalizeItemMetadata(
+                        pluginDefinition,
+                        payload.metadata
+                    ),
                     pluginDefinition.fields
                 );
 
@@ -651,6 +668,8 @@ function isSortableMetadataType(
         'text',
         'textarea',
         'select',
+        'isbn',
+        'barcode',
         'date',
         'number',
         'rating',
@@ -816,12 +835,288 @@ function parseMetadataFilter(
                 value
             );
 
+        case 'isbn':
+            return parseIsbnFilter(
+                field,
+                value
+            );
+
+        case 'barcode':
+            return parseBarcodeFilter(
+                field,
+                value
+            );
+
         default:
             return {
                 value
             };
 
     }
+
+}
+
+function parseIsbnFilter(
+    field,
+    value
+) {
+
+    const normalizedValue =
+        normalizeIdentifierFilterValue(
+            value
+        );
+
+    if (
+        !isValidIsbnFilterValue(
+            normalizedValue
+        )
+    ) {
+
+        return {
+            error:
+                `${field.name} filter must be a valid ISBN-10 or ISBN-13`
+        };
+
+    }
+
+    return {
+        value:
+            normalizedValue
+    };
+
+}
+
+function parseBarcodeFilter(
+    field,
+    value
+) {
+
+    const normalizedValue =
+        normalizeIdentifierFilterValue(
+            value
+        );
+
+    if (
+        !isValidBarcodeFilterValue(
+            normalizedValue
+        )
+    ) {
+
+        return {
+            error:
+                `${field.name} filter must be a valid EAN-13 or UPC-A barcode`
+        };
+
+    }
+
+    return {
+        value:
+            normalizedValue
+    };
+
+}
+
+function buildSearchValues(
+    search,
+    fields
+) {
+
+    if (
+        !search
+    ) {
+
+        return undefined;
+
+    }
+
+    const hasIdentifierField =
+        fields.some(
+            field => field.searchable &&
+                (
+                    field.type === 'isbn' ||
+                    field.type === 'barcode'
+                )
+        );
+
+    if (
+        !hasIdentifierField
+    ) {
+
+        return [
+            search
+        ];
+
+    }
+
+    return Array.from(
+        new Set([
+            search,
+            normalizeIdentifierFilterValue(
+                search
+            )
+        ].filter(Boolean))
+    );
+
+}
+
+function normalizeIdentifierFilterValue(value) {
+
+    if (
+        typeof value !== 'string'
+    ) {
+
+        return '';
+
+    }
+
+    return value
+        .replaceAll(
+            /[\s-]/g,
+            ''
+        )
+        .toUpperCase();
+
+}
+
+function isValidIsbnFilterValue(value) {
+
+    if (
+        /^[0-9]{9}[0-9X]$/.test(
+            value
+        )
+    ) {
+
+        return hasValidIsbn10Checksum(
+            value
+        );
+
+    }
+
+    if (
+        /^[0-9]{13}$/.test(
+            value
+        )
+    ) {
+
+        return hasValidEan13Checksum(
+            value
+        );
+
+    }
+
+    return false;
+
+}
+
+function isValidBarcodeFilterValue(value) {
+
+    if (
+        /^[0-9]{12}$/.test(
+            value
+        )
+    ) {
+
+        return hasValidUpcAChecksum(
+            value
+        );
+
+    }
+
+    if (
+        /^[0-9]{13}$/.test(
+            value
+        )
+    ) {
+
+        return hasValidEan13Checksum(
+            value
+        );
+
+    }
+
+    return false;
+
+}
+
+function hasValidIsbn10Checksum(value) {
+
+    let sum =
+        0;
+
+    for (
+        let index = 0;
+        index < 10;
+        index += 1
+    ) {
+
+        const digit =
+            value[index] === 'X'
+                ? 10
+                : Number(value[index]);
+
+        sum += digit * (10 - index);
+
+    }
+
+    return sum % 11 === 0;
+
+}
+
+function hasValidEan13Checksum(value) {
+
+    let sum =
+        0;
+
+    for (
+        let index = 0;
+        index < 12;
+        index += 1
+    ) {
+
+        const digit =
+            Number(
+                value[index]
+            );
+
+        sum += index % 2 === 0
+            ? digit
+            : digit * 3;
+
+    }
+
+    const checkDigit =
+        (10 - (sum % 10)) % 10;
+
+    return checkDigit === Number(value[12]);
+
+}
+
+function hasValidUpcAChecksum(value) {
+
+    let sum =
+        0;
+
+    for (
+        let index = 0;
+        index < 11;
+        index += 1
+    ) {
+
+        const digit =
+            Number(
+                value[index]
+            );
+
+        sum += index % 2 === 0
+            ? digit * 3
+            : digit;
+
+    }
+
+    const checkDigit =
+        (10 - (sum % 10)) % 10;
+
+    return checkDigit === Number(value[11]);
 
 }
 

@@ -48,6 +48,7 @@
             <input
                 v-else
                 :id="fieldId"
+                :inputmode="inputMode"
                 :max="numberMax"
                 :min="numberMin"
                 :pattern="textPattern"
@@ -260,9 +261,36 @@ const textPattern =
     computed(
         () => props.field.type === 'text' ||
             props.field.type === 'textarea' ||
-            props.field.type === 'select'
+            props.field.type === 'select' ||
+            props.field.type === 'isbn' ||
+            props.field.type === 'barcode'
             ? props.field.pattern
             : undefined
+    );
+
+const inputMode =
+    computed(
+        () => {
+
+            if (
+                props.field.type === 'barcode'
+            ) {
+
+                return 'numeric';
+
+            }
+
+            if (
+                props.field.type === 'isbn'
+            ) {
+
+                return 'text';
+
+            }
+
+            return undefined;
+
+        }
     );
 
 const isNumberField =

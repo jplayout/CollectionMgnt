@@ -38,7 +38,7 @@ Limites majeures connues :
 - Restauration ZIP complète non livrée.
 - Rollback automatisé non livré.
 - Import CSV CollectionMgnt et import CSV externe non livrés.
-- Support backend des types plugin avancés non livré : multiselect, url, email, barcode, isbn.
+- Support backend des types plugin avancés restant à livrer : multiselect, url, email.
 - Gestion utilisateurs avancée, permissions fines et page profil non livrées.
 - Audit sécurité conteneur et hardening Docker encore à traiter.
 - Scénarios avancés d'accès distant, VPN/tunnel et guides Caddy/Traefik/Nginx dédiés encore à traiter.
@@ -56,7 +56,7 @@ Limites majeures connues :
 ### Priorité moyenne
 
 - Import CSV externe depuis une autre application de gestion de collection.
-- Support backend des types plugin avancés : multiselect, url, email, barcode, isbn.
+- Support backend des types plugin avancés restant à livrer : multiselect, url, email.
 - Gestion utilisateurs avancée et permissions fines.
 
 ### Plus tard
@@ -163,7 +163,7 @@ Lien roadmap :
 
 ### Backend
 
-- Support backend des types plugin avancés : multiselect, url, email, barcode, isbn.
+- Support backend des types plugin avancés restant à livrer : multiselect, url, email.
 - Optimisation SQLite.
 - Optimisation recherche.
 - SQLite FTS5.
@@ -232,7 +232,7 @@ Objectif :
 
 Phase 1 — Identifiants standard :
 
-- Support futur des identifiants ISBN / EAN / UPC dans les plugins.
+- Fondations identifiants ISBN / EAN / UPC livrées dans les plugins standards pertinents ; lookup et scan restent futurs.
 - Validation et stockage des identifiants.
 - Ne pas se limiter à un simple champ texte si un type dédié devient pertinent.
 
@@ -325,7 +325,7 @@ Contraintes :
 
 ### Plugins
 
-- Support backend des types plugin avancés : multiselect, url, email, barcode, isbn.
+- Support backend des types plugin avancés restant à livrer : multiselect, url, email.
 - Plugins officiels.
 - Installation plugins ZIP.
 - Catalogue de plugins.
@@ -515,7 +515,7 @@ Contraintes :
 - Le tri par défaut utilise `title`, champ obligatoire commun à tous les items
 - Champs système triables : `title`, `created_at`, `updated_at`
 - Le tri `sort=created_at`, `direction=desc` reste disponible explicitement
-- Champs metadata triables depuis le schéma plugin courant pour les types text, textarea, select, date, number, rating et checkbox
+- Champs metadata triables depuis le schéma plugin courant pour les types text, textarea, select, isbn, barcode, date, number, rating et checkbox
 - Validation stricte de `sort` et `direction`, avec réponse 400 en cas de valeur invalide
 - Rejet du tri metadata sans plugin connu
 - Tri appliqué avant `LIMIT` / `OFFSET`, avec `COUNT(*)` inchangé
@@ -789,7 +789,7 @@ Contraintes :
 - Champs `consoles` enrichis : `manufacturer`, `type`, `region`, `release_date`, `condition`
 - Champs `others` enrichis : `category`, `maker`, `acquired_date`, `condition`, `location`, `favorite`
 - Utilisation uniquement des types plugin déjà supportés : text, select, date, checkbox et rating
-- Aucun champ ISBN, EAN, UPC ou code-barres ajouté
+- Aucun champ ISBN, EAN, UPC ou code-barres ajouté dans ce lot historique ; les fondations identifiants sont traitées ensuite dans le lot Assisted Acquisition Foundations
 - Aucun changement backend, API, SQLite, frontend, média de démonstration ou dataset de démonstration dans ce lot
 
 #### Lot 10.2.1 - Demo Dataset - Livré

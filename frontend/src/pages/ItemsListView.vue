@@ -186,6 +186,7 @@
                             <input
                                 v-else
                                 v-model="filterValues[field.name]"
+                                :inputmode="getFieldInputMode(field)"
                                 :placeholder="field.type === 'select' ? 'Saisie libre' : ''"
                                 type="text"
                             >
@@ -1270,11 +1271,37 @@ function canFilterOnBackend(
         'text',
         'textarea',
         'select',
+        'isbn',
+        'barcode',
         'checkbox',
         'date',
         'number',
         'rating'
     ].includes(field.type);
+
+}
+
+function getFieldInputMode(
+    field
+) {
+
+    if (
+        field.type === 'barcode'
+    ) {
+
+        return 'numeric';
+
+    }
+
+    if (
+        field.type === 'isbn'
+    ) {
+
+        return 'text';
+
+    }
+
+    return undefined;
 
 }
 
@@ -1286,6 +1313,8 @@ function isSortableMetadataField(
         'text',
         'textarea',
         'select',
+        'isbn',
+        'barcode',
         'date',
         'number',
         'rating',

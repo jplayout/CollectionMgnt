@@ -68,6 +68,52 @@ export function validateItem(
     return errors;
 }
 
+export function normalizeItemMetadata(
+    plugin,
+    metadata
+) {
+
+    const normalizedMetadata = {
+        ...metadata
+    };
+
+    for (
+        const field
+        of plugin.fields
+    ) {
+
+        const value =
+            normalizedMetadata[
+                field.name
+            ];
+
+        if (
+            isEmptyValue(value)
+        ) {
+
+            continue;
+
+        }
+
+        if (
+            field.type === 'isbn' ||
+            field.type === 'barcode'
+        ) {
+
+            normalizedMetadata[
+                field.name
+            ] =
+                normalizeIdentifier(
+                    value
+                );
+
+        }
+
+    }
+
+    return normalizedMetadata;
+}
+
 const DEFAULT_RATING_MIN =
     0;
 
@@ -84,7 +130,15 @@ function validateField(
 
         case 'text':
         case 'textarea':
+        case 'isbn':
+        case 'barcode':
             validateString(
+                field,
+                value,
+                errors
+            );
+
+            validateIdentifier(
                 field,
                 value,
                 errors
@@ -135,6 +189,212 @@ function validateField(
             break;
 
     }
+
+}
+
+function validateIdentifier(
+    field,
+    value,
+    errors
+) {
+
+    if (
+        typeof value !== 'string'
+    ) {
+
+        return;
+
+    }
+
+    if (
+        field.type === 'isbn' &&
+        !isValidIsbn(value)
+    ) {
+
+        errors.push(
+            `${field.name} must be a valid ISBN-10 or ISBN-13`
+        );
+
+        return;
+
+    }
+
+    if (
+        field.type === 'barcode' &&
+        !isValidBarcode(value)
+    ) {
+
+        errors.push(
+            `${field.name} must be a valid EAN-13 or UPC-A barcode`
+        );
+
+    }
+
+}
+
+function normalizeIdentifier(value) {
+
+    return String(value)
+        .replaceAll(
+            /[\s-]/g,
+            ''
+        )
+        .toUpperCase();
+
+}
+
+function isValidIsbn(value) {
+
+    const normalizedValue =
+        normalizeIdentifier(
+            value
+        );
+
+    if (
+        /^[0-9]{9}[0-9X]$/.test(
+            normalizedValue
+        )
+    ) {
+
+        return hasValidIsbn10Checksum(
+            normalizedValue
+        );
+
+    }
+
+    if (
+        /^[0-9]{13}$/.test(
+            normalizedValue
+        )
+    ) {
+
+        return hasValidEan13Checksum(
+            normalizedValue
+        );
+
+    }
+
+    return false;
+
+}
+
+function isValidBarcode(value) {
+
+    const normalizedValue =
+        normalizeIdentifier(
+            value
+        );
+
+    if (
+        /^[0-9]{12}$/.test(
+            normalizedValue
+        )
+    ) {
+
+        return hasValidUpcAChecksum(
+            normalizedValue
+        );
+
+    }
+
+    if (
+        /^[0-9]{13}$/.test(
+            normalizedValue
+        )
+    ) {
+
+        return hasValidEan13Checksum(
+            normalizedValue
+        );
+
+    }
+
+    return false;
+
+}
+
+function hasValidIsbn10Checksum(value) {
+
+    let sum =
+        0;
+
+    for (
+        let index = 0;
+        index < 10;
+        index += 1
+    ) {
+
+        const character =
+            value[index];
+
+        const digit =
+            character === 'X'
+                ? 10
+                : Number(character);
+
+        sum += digit * (10 - index);
+
+    }
+
+    return sum % 11 === 0;
+
+}
+
+function hasValidEan13Checksum(value) {
+
+    let sum =
+        0;
+
+    for (
+        let index = 0;
+        index < 12;
+        index += 1
+    ) {
+
+        const digit =
+            Number(
+                value[index]
+            );
+
+        sum += index % 2 === 0
+            ? digit
+            : digit * 3;
+
+    }
+
+    const checkDigit =
+        (10 - (sum % 10)) % 10;
+
+    return checkDigit === Number(value[12]);
+
+}
+
+function hasValidUpcAChecksum(value) {
+
+    let sum =
+        0;
+
+    for (
+        let index = 0;
+        index < 11;
+        index += 1
+    ) {
+
+        const digit =
+            Number(
+                value[index]
+            );
+
+        sum += index % 2 === 0
+            ? digit * 3
+            : digit;
+
+    }
+
+    const checkDigit =
+        (10 - (sum % 10)) % 10;
+
+    return checkDigit === Number(value[11]);
 
 }
 

@@ -1,5 +1,13 @@
 [
   {
+    "name": "isbn",
+    "label": "ISBN",
+    "type": "isbn",
+    "required": false,
+    "searchable": true,
+    "filterable": true
+  },
+  {
     "name": "author",
     "label": "Auteur",
     "type": "text",
