@@ -1,4 +1,8 @@
 import {
+    AcquisitionCache
+} from '../acquisition/acquisition-cache.js';
+
+import {
     AcquisitionProviderRegistry
 } from '../acquisition/provider-registry.js';
 
@@ -10,6 +14,10 @@ import {
     AcquisitionError
 } from '../acquisition/errors.js';
 
+import {
+    AcquisitionCacheRepository
+} from '../repositories/acquisition-cache-repository.js';
+
 export default async function (
     fastify
 ) {
@@ -18,9 +26,23 @@ export default async function (
         fastify.acquisitionProviderRegistry ??
         new AcquisitionProviderRegistry();
 
+    const acquisitionCache =
+        fastify.acquisitionCache ??
+        (
+            fastify.db
+                ? new AcquisitionCache({
+                    repository:
+                        new AcquisitionCacheRepository(
+                            fastify.db
+                        )
+                })
+                : null
+        );
+
     const service =
         fastify.acquisitionService ??
         new AcquisitionService({
+            acquisitionCache,
             providerRegistry:
                 registry
         });

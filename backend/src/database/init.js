@@ -19,7 +19,7 @@ const CURRENT_DIR =
     );
 
 const SCHEMA_VERSION =
-    2;
+    3;
 
 export async function initializeDatabase() {
 
@@ -125,19 +125,6 @@ function migrateDatabase(
                 .get();
 
         if (
-            row?.version < SCHEMA_VERSION
-        ) {
-
-            db
-                .prepare(`
-                    UPDATE schema_info
-                    SET version = ?
-                `)
-                .run(
-                    SCHEMA_VERSION
-                );
-
-        } else if (
             !row
         ) {
 
@@ -151,6 +138,121 @@ function migrateDatabase(
                 );
 
         }
+
+    }
+
+    migrateAcquisitionCache(
+        db
+    );
+
+    updateSchemaVersion(
+        db
+    );
+
+}
+
+function migrateAcquisitionCache(
+    db
+) {
+
+    const acquisitionCacheExists =
+        db
+            .prepare(`
+                SELECT name
+                FROM sqlite_master
+                WHERE type = 'table'
+                    AND name = 'acquisition_cache'
+            `)
+            .get();
+
+    if (
+        !acquisitionCacheExists
+    ) {
+
+        db.exec(`
+            CREATE TABLE acquisition_cache (
+                cache_key TEXT PRIMARY KEY,
+                plugin TEXT NOT NULL,
+                capability TEXT NOT NULL,
+                identifier TEXT NOT NULL,
+                provider_id TEXT NOT NULL,
+                mapping_version INTEGER NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('success', 'empty')),
+                response_json TEXT NOT NULL CHECK(json_valid(response_json)),
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                expires_at DATETIME NOT NULL
+            );
+        `);
+
+    }
+
+    db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_acquisition_cache_expires_at
+        ON acquisition_cache(expires_at);
+    `);
+
+}
+
+function updateSchemaVersion(
+    db
+) {
+
+    const schemaInfoExists =
+        db
+            .prepare(`
+                SELECT name
+                FROM sqlite_master
+                WHERE type = 'table'
+                    AND name = 'schema_info'
+            `)
+            .get();
+
+    if (
+        !schemaInfoExists
+    ) {
+
+        return;
+
+    }
+
+    const row =
+        db
+            .prepare(`
+                SELECT version
+                FROM schema_info
+                LIMIT 1
+            `)
+            .get();
+
+    if (
+        !row
+    ) {
+
+        db
+            .prepare(`
+                INSERT INTO schema_info(version)
+                VALUES (?)
+            `)
+            .run(
+                SCHEMA_VERSION
+            );
+
+        return;
+
+    }
+
+    if (
+        row.version < SCHEMA_VERSION
+    ) {
+
+        db
+            .prepare(`
+                UPDATE schema_info
+                SET version = ?
+            `)
+            .run(
+                SCHEMA_VERSION
+            );
 
     }
 

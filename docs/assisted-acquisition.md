@@ -73,6 +73,17 @@ Cette orchestration prepare les providers multiples, un futur fallback, le cache
 et les quotas sans modifier l'API publique existante ni activer de fallback dans
 ce lot.
 
+Le lookup ISBN utilise un cache backend SQLite transparent :
+
+- la reponse API publique ne change pas ;
+- aucun champ `cached` n'est expose ;
+- seules les reponses normalisees `{ query, results }` sont stockees ;
+- les reponses brutes provider ne sont jamais stockees ;
+- les resultats avec suggestions sont caches 7 jours ;
+- les resultats vides sont caches 24 heures ;
+- les erreurs provider, timeouts et ISBN invalides ne sont pas caches ;
+- aucune image binaire n'est stockee dans le cache.
+
 Provider livre :
 
 - `openlibrary`
