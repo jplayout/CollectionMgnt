@@ -33,13 +33,25 @@
                 </label>
             </div>
 
-            <DynamicField
+            <template
                 v-for="field in supportedFields"
                 :key="field.name"
-                v-model="metadata[field.name]"
-                :error="frontendErrors[field.name]"
-                :field="field"
-            />
+            >
+                <AcquisitionLookupField
+                    v-if="isAcquisitionLookupField(field)"
+                    v-model="metadata[field.name]"
+                    :error="frontendErrors[field.name]"
+                    :field="field"
+                    @apply-suggestion="applyAcquisitionSuggestion"
+                />
+
+                <DynamicField
+                    v-else
+                    v-model="metadata[field.name]"
+                    :error="frontendErrors[field.name]"
+                    :field="field"
+                />
+            </template>
         </div>
 
         <div
@@ -75,6 +87,9 @@ import {
 
 import DynamicField
 from './DynamicField.vue';
+
+import AcquisitionLookupField
+from './AcquisitionLookupField.vue';
 
 const SUPPORTED_TYPES =
     new Set([
@@ -385,6 +400,103 @@ function buildPayload() {
         metadata:
             payloadMetadata
     };
+
+}
+
+function isAcquisitionLookupField(field) {
+
+    return props.pluginId === 'books' &&
+        field.name === 'isbn' &&
+        field.type === 'isbn';
+
+}
+
+function applyAcquisitionSuggestion(suggestion) {
+
+    if (
+        !isEmptyValue(suggestion?.title) &&
+        isEmptyValue(title.value)
+    ) {
+
+        title.value =
+            suggestion.title;
+
+    }
+
+    if (
+        !isEmptyValue(suggestion?.description) &&
+        isEmptyValue(description.value)
+    ) {
+
+        description.value =
+            suggestion.description;
+
+    }
+
+    applyMetadataSuggestion(
+        'isbn',
+        suggestion?.metadata?.isbn,
+        {
+            replace:
+                true
+        }
+    );
+
+    applyMetadataSuggestion(
+        'author',
+        suggestion?.metadata?.author
+    );
+
+    applyMetadataSuggestion(
+        'publisher',
+        suggestion?.metadata?.publisher
+    );
+
+    applyMetadataSuggestion(
+        'publication_date',
+        suggestion?.metadata?.publication_date
+    );
+
+}
+
+function applyMetadataSuggestion(
+    fieldName,
+    value,
+    {
+        replace = false
+    } = {}
+) {
+
+    if (
+        isEmptyValue(value) ||
+        !hasSupportedField(
+            fieldName
+        )
+    ) {
+
+        return;
+
+    }
+
+    if (
+        replace ||
+        isEmptyValue(
+            metadata[fieldName]
+        )
+    ) {
+
+        metadata[fieldName] =
+            value;
+
+    }
+
+}
+
+function hasSupportedField(fieldName) {
+
+    return supportedFields.value.some(
+        field => field.name === fieldName
+    );
 
 }
 

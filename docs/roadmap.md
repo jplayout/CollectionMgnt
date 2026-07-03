@@ -27,7 +27,7 @@ Capacités disponibles :
 - Administration MVP avec export global, import, backup ZIP, audit média, cleanup média et résumé système.
 - Layout authentifié, responsive de base et tests backend d'intégration.
 - Playwright E2E MVP côté frontend avec Chromium, dataset de démonstration et `DATA_DIR` temporaire.
-- CI GitHub Actions, CodeQL, Dependabot, publication GHCR multi-architecture et builds Docker/Podman documentés.
+- CI GitHub Actions, CodeQL, Semgrep, Dependabot, publication GHCR multi-architecture et builds Docker/Podman documentés.
 - Base Compose Synology disponible avec images GHCR `linux/amd64` et `linux/arm64`, volume persistant explicite configurable et backend non exposé sur l'hôte.
 - Guide de déploiement Synology DSM / Container Manager disponible.
 - Guide HTTPS / Reverse Proxy DSM disponible, avec recommandation de proxy vers le frontend uniquement.
@@ -74,6 +74,7 @@ Limites majeures connues :
 - Lot 10.3.0 Security & CI Hardening livré : CodeQL, Dependabot, Helmet et validation stricte de `JWT_SECRET`.
 - Lot 10.3.1 Migration `@fastify/jwt` livré : dette sécurité `fast-jwt` traitée par mise à jour vers `@fastify/jwt` `10.1.0`.
 - Lot 10.3.2 Trivy Security Scanning livré : scans dépendances et images conteneur en mode non bloquant.
+- Lot 11.0.1 Semgrep SAST GitHub Action livré : scan SAST complémentaire à CodeQL en mode observation non bloquant.
 - Lot 10.5.3 HTTPS / Reverse Proxy DSM livré : documentation HTTPS DSM avec backend non exposé.
 - Détail complet conservé dans `Historique des lots livrés > Sécurité`.
 
@@ -100,6 +101,8 @@ Priorité moyenne :
 
 - Dependabot livré pour backend npm, frontend npm et GitHub Actions.
 - CodeQL livré pour l'analyse JavaScript.
+- Semgrep livré comme scan SAST complémentaire à CodeQL, en mode observatoire non bloquant et sans obligation de `SEMGREP_APP_TOKEN`.
+- Connexion future possible à Semgrep App via le secret `SEMGREP_APP_TOKEN`.
 - Trivy livré en mode observatoire non bloquant pour les dépendances backend/frontend et les images conteneur.
 - `npm audit` en CI.
 - Politique de blocage automatique sur vulnérabilités à définir dans un lot futur.
@@ -232,7 +235,7 @@ Objectif :
 
 Phase 1 — Identifiants standard :
 
-- Fondations identifiants ISBN / EAN / UPC livrées dans les plugins standards pertinents ; lookup et scan restent futurs.
+- Fondations identifiants ISBN / EAN / UPC livrées dans les plugins standards pertinents ; lookup ISBN livres livré, lookup code-barres et scan restent futurs.
 - Validation et stockage des identifiants.
 - Ne pas se limiter à un simple champ texte si un type dédié devient pertinent.
 
@@ -263,6 +266,15 @@ Phase 5 — Extension progressive :
 
 - Étendre ensuite aux jeux vidéo, films, consoles et autres collections.
 - Création semi-automatique avec validation utilisateur avant enregistrement.
+
+#### Lot 11.1.1 - Frontend ISBN Lookup - Livré
+
+- Bouton `Rechercher` disponible sur le champ ISBN des livres.
+- Lookup via le backend CollectionMgnt uniquement, sans appel provider direct depuis le frontend.
+- Suggestions provider-agnostic affichées dans le formulaire.
+- Pré-remplissage local après action explicite `Utiliser`.
+- Aucun écrasement automatique des champs déjà renseignés, sauf normalisation de `metadata.isbn`.
+- Aucune sauvegarde automatique et aucun import d'image dans ce lot.
 
 Contraintes :
 
