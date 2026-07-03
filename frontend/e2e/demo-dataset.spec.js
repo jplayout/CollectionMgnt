@@ -36,13 +36,30 @@ async function loginAsAdmin(page) {
         adminPassword
     );
 
-    await page.getByRole(
-        'button',
-        {
-            name:
-                'Sign in'
-        }
-    ).click();
+    const [
+        loginResponse
+    ] =
+        await Promise.all([
+            page.waitForResponse(
+                response => response.url().includes(
+                    '/api/auth/login'
+                ) &&
+                    response.request().method() === 'POST'
+            ),
+            page.getByRole(
+                'button',
+                {
+                    name:
+                        'Sign in'
+                }
+            ).click()
+        ]);
+
+    expect(
+        loginResponse.status()
+    ).toBe(
+        200
+    );
 
     await expect(
         page

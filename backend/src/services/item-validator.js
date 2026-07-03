@@ -232,7 +232,7 @@ function validateIdentifier(
 
 }
 
-function normalizeIdentifier(value) {
+export function normalizeIdentifier(value) {
 
     return String(value)
         .replaceAll(
@@ -243,7 +243,7 @@ function normalizeIdentifier(value) {
 
 }
 
-function isValidIsbn(value) {
+export function isValidIsbn(value) {
 
     const normalizedValue =
         normalizeIdentifier(
