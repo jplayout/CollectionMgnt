@@ -1,0 +1,26 @@
+name: Semgrep SAST
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Semgrep
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Scan JavaScript, Vue and Node sources
+        continue-on-error: true
+        run: semgrep scan --config p/default --metrics=off --include='*.js' --include='*.mjs' --include='*.cjs' --include='*.vue' .
