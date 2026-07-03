@@ -67,20 +67,10 @@ export class AcquisitionProviderRegistry {
     }) {
 
         const provider =
-            this.providers.find(
-                candidate => {
-
-                    const description =
-                        candidate.describe();
-
-                    return description.enabled &&
-                        description.plugin === plugin &&
-                        description.capabilities.includes(
-                            capability
-                        );
-
-                }
-            );
+            this.getProvidersFor({
+                capability,
+                plugin
+            })[0];
 
         if (
             !provider
@@ -94,5 +84,26 @@ export class AcquisitionProviderRegistry {
 
     }
 
-}
+    getProvidersFor({
+        capability,
+        plugin
+    }) {
 
+        return this.providers.filter(
+            candidate => {
+
+                const description =
+                    candidate.describe();
+
+                return description.enabled &&
+                    description.plugin === plugin &&
+                    description.capabilities.includes(
+                        capability
+                    );
+
+            }
+        );
+
+    }
+
+}

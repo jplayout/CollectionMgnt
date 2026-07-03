@@ -4,6 +4,7 @@ import {
 } from 'node:test';
 
 import { AcquisitionCache } from '../../src/acquisition/acquisition-cache.js';
+import { AcquisitionError } from '../../src/acquisition/errors.js';
 import { AcquisitionService } from '../../src/acquisition/acquisition-service.js';
 import { AcquisitionProviderRegistry } from '../../src/acquisition/provider-registry.js';
 
@@ -63,6 +64,70 @@ test(
                     }
                 ]
             }
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService uses the first implicit provider with results and does not call the next provider',
+    async () => {
+
+        const firstProvider =
+            createProvider({
+                id:
+                    'first-provider',
+                results: [
+                    {
+                        provider:
+                            'first-provider',
+                        title:
+                            'First result'
+                    }
+                ]
+            });
+
+        const secondProvider =
+            createProvider({
+                id:
+                    'second-provider',
+                results: [
+                    {
+                        provider:
+                            'second-provider',
+                        title:
+                            'Second result'
+                    }
+                ]
+            });
+
+        const service =
+            createService([
+                firstProvider,
+                secondProvider
+            ]);
+
+        const result =
+            await service.lookupBookByIsbn({
+                isbn:
+                    '9780140328721'
+            });
+
+        assert.deepEqual(
+            firstProvider.calls,
+            [
+                '9780140328721'
+            ]
+        );
+
+        assert.deepEqual(
+            secondProvider.calls,
+            []
+        );
+
+        assert.equal(
+            result.results[0].provider,
+            'first-provider'
         );
 
     }
@@ -292,7 +357,7 @@ test(
 );
 
 test(
-    'AcquisitionService keeps provider selection deterministic without fallback',
+    'AcquisitionService falls back to the next implicit provider when the first returns no results',
     async () => {
 
         const firstProvider =
@@ -338,12 +403,417 @@ test(
 
         assert.deepEqual(
             secondProvider.calls,
+            [
+                '9780140328721'
+            ]
+        );
+
+        assert.equal(
+            result.results[0].provider,
+            'second-provider'
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService ignores empty cache from one implicit provider and calls the next provider',
+    async () => {
+
+        const firstProvider =
+            createProvider({
+                id:
+                    'first-provider',
+                results: [
+                    {
+                        provider:
+                            'first-provider',
+                        title:
+                            'Should not be called'
+                    }
+                ]
+            });
+
+        const secondProvider =
+            createProvider({
+                id:
+                    'second-provider',
+                results: [
+                    {
+                        provider:
+                            'second-provider',
+                        title:
+                            'Fallback result'
+                    }
+                ]
+            });
+
+        const {
+            cache
+        } =
+            createCache();
+
+        cache.set({
+            capability:
+                'isbnLookup',
+            identifier:
+                '9780140328721',
+            plugin:
+                'books',
+            providerId:
+                'first-provider',
+            response:
+                createLookupResponse(
+                    '9780140328721',
+                    []
+                )
+        });
+
+        const service =
+            createService(
+                [
+                    firstProvider,
+                    secondProvider
+                ],
+                {
+                    acquisitionCache:
+                        cache
+                }
+            );
+
+        const result =
+            await service.lookupBookByIsbn({
+                isbn:
+                    '9780140328721'
+            });
+
+        assert.deepEqual(
+            firstProvider.calls,
             []
         );
 
         assert.deepEqual(
-            result.results,
+            secondProvider.calls,
+            [
+                '9780140328721'
+            ]
+        );
+
+        assert.equal(
+            result.results[0].provider,
+            'second-provider'
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService ignores disabled implicit providers',
+    async () => {
+
+        const disabledProvider =
+            createProvider({
+                enabled:
+                    false,
+                id:
+                    'disabled-provider',
+                results: [
+                    {
+                        provider:
+                            'disabled-provider',
+                        title:
+                            'Disabled result'
+                    }
+                ]
+            });
+
+        const enabledProvider =
+            createProvider({
+                id:
+                    'enabled-provider',
+                results: [
+                    {
+                        provider:
+                            'enabled-provider',
+                        title:
+                            'Enabled result'
+                    }
+                ]
+            });
+
+        const service =
+            createService([
+                disabledProvider,
+                enabledProvider
+            ]);
+
+        const result =
+            await service.lookupBookByIsbn({
+                isbn:
+                    '9780140328721'
+            });
+
+        assert.deepEqual(
+            disabledProvider.calls,
             []
+        );
+
+        assert.deepEqual(
+            enabledProvider.calls,
+            [
+                '9780140328721'
+            ]
+        );
+
+        assert.equal(
+            result.results[0].provider,
+            'enabled-provider'
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService tries the next implicit provider after provider timeout or error',
+    async () => {
+
+        const failingProvider =
+            createProvider({
+                error:
+                    new AcquisitionError(
+                        504,
+                        'provider_timeout',
+                        'Provider timeout'
+                    ),
+                id:
+                    'timeout-provider'
+            });
+
+        const nextProvider =
+            createProvider({
+                id:
+                    'next-provider',
+                results: [
+                    {
+                        provider:
+                            'next-provider',
+                        title:
+                            'Recovered result'
+                    }
+                ]
+            });
+
+        const service =
+            createService([
+                failingProvider,
+                nextProvider
+            ]);
+
+        const result =
+            await service.lookupBookByIsbn({
+                isbn:
+                    '9780140328721'
+            });
+
+        assert.deepEqual(
+            failingProvider.calls,
+            [
+                '9780140328721'
+            ]
+        );
+
+        assert.deepEqual(
+            nextProvider.calls,
+            [
+                '9780140328721'
+            ]
+        );
+
+        assert.equal(
+            result.results[0].provider,
+            'next-provider'
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService returns empty results when all implicit providers are empty',
+    async () => {
+
+        const firstProvider =
+            createProvider({
+                id:
+                    'first-provider',
+                results:
+                    []
+            });
+
+        const secondProvider =
+            createProvider({
+                id:
+                    'second-provider',
+                results:
+                    []
+            });
+
+        const service =
+            createService([
+                firstProvider,
+                secondProvider
+            ]);
+
+        const result =
+            await service.lookupBookByIsbn({
+                isbn:
+                    '9780140328721'
+            });
+
+        assert.deepEqual(
+            firstProvider.calls,
+            [
+                '9780140328721'
+            ]
+        );
+
+        assert.deepEqual(
+            secondProvider.calls,
+            [
+                '9780140328721'
+            ]
+        );
+
+        assert.deepEqual(
+            result,
+            createLookupResponse(
+                '9780140328721',
+                []
+            )
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService returns a stable error when all implicit providers fail technically',
+    async () => {
+
+        const firstProvider =
+            createProvider({
+                error:
+                    new AcquisitionError(
+                        504,
+                        'provider_timeout',
+                        'Provider timeout'
+                    ),
+                id:
+                    'timeout-provider'
+            });
+
+        const secondProvider =
+            createProvider({
+                error:
+                    new AcquisitionError(
+                        503,
+                        'provider_error',
+                        'Provider lookup failed'
+                    ),
+                id:
+                    'error-provider'
+            });
+
+        const service =
+            createService([
+                firstProvider,
+                secondProvider
+            ]);
+
+        await assert.rejects(
+            () => service.lookupBookByIsbn({
+                isbn:
+                    '9780140328721'
+            }),
+            {
+                code:
+                    'provider_error',
+                statusCode:
+                    503
+            }
+        );
+
+        assert.deepEqual(
+            firstProvider.calls,
+            [
+                '9780140328721'
+            ]
+        );
+
+        assert.deepEqual(
+            secondProvider.calls,
+            [
+                '9780140328721'
+            ]
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService returns empty results when one implicit provider fails and another is empty',
+    async () => {
+
+        const failingProvider =
+            createProvider({
+                error:
+                    new AcquisitionError(
+                        504,
+                        'provider_timeout',
+                        'Provider timeout'
+                    ),
+                id:
+                    'timeout-provider'
+            });
+
+        const emptyProvider =
+            createProvider({
+                id:
+                    'empty-provider',
+                results:
+                    []
+            });
+
+        const service =
+            createService([
+                failingProvider,
+                emptyProvider
+            ]);
+
+        const result =
+            await service.lookupBookByIsbn({
+                isbn:
+                    '9780140328721'
+            });
+
+        assert.deepEqual(
+            result,
+            createLookupResponse(
+                '9780140328721',
+                []
+            )
+        );
+
+        assert.deepEqual(
+            failingProvider.calls,
+            [
+                '9780140328721'
+            ]
+        );
+
+        assert.deepEqual(
+            emptyProvider.calls,
+            [
+                '9780140328721'
+            ]
         );
 
     }
