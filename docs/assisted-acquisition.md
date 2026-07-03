@@ -105,6 +105,9 @@ Provider livre :
   - configuration obligatoire : non
   - secret requis : aucun
 
+Voir `docs/acquisition-providers.md` pour le contrat technique des providers,
+les responsabilites des couches acquisition et les bonnes pratiques de tests.
+
 ## API Acquisition
 
 ### `GET /api/acquisition/providers`
