@@ -235,7 +235,7 @@ Objectif :
 
 Phase 1 — Identifiants standard :
 
-- Fondations identifiants ISBN / EAN / UPC livrées dans les plugins standards pertinents ; lookup et scan restent futurs.
+- Fondations identifiants ISBN / EAN / UPC livrées dans les plugins standards pertinents ; lookup ISBN livres livré, lookup code-barres et scan restent futurs.
 - Validation et stockage des identifiants.
 - Ne pas se limiter à un simple champ texte si un type dédié devient pertinent.
 
@@ -266,6 +266,15 @@ Phase 5 — Extension progressive :
 
 - Étendre ensuite aux jeux vidéo, films, consoles et autres collections.
 - Création semi-automatique avec validation utilisateur avant enregistrement.
+
+#### Lot 11.1.1 - Frontend ISBN Lookup - Livré
+
+- Bouton `Rechercher` disponible sur le champ ISBN des livres.
+- Lookup via le backend CollectionMgnt uniquement, sans appel provider direct depuis le frontend.
+- Suggestions provider-agnostic affichées dans le formulaire.
+- Pré-remplissage local après action explicite `Utiliser`.
+- Aucun écrasement automatique des champs déjà renseignés, sauf normalisation de `metadata.isbn`.
+- Aucune sauvegarde automatique et aucun import d'image dans ce lot.
 
 Contraintes :
 

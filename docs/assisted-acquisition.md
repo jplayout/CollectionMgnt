@@ -1,10 +1,12 @@
 # Assisted Acquisition
 
-Etat courant : fondations identifiants et premier lookup backend ISBN livres.
+Etat courant : fondations identifiants, lookup backend ISBN livres et
+pre-remplissage frontend local pour les livres.
 
 Ce lot pose les bases de l'acquisition assistee sans automatisation externe. Les identifiants sont des champs metadata declares par plugin et stockes dans `items.metadata`.
 
-Aucune table SQLite, migration, camera, scan mobile, pre-remplissage automatique, import d'image ou dedoublonnage global n'est ajoute dans cette phase.
+Aucune table SQLite, migration, camera, scan mobile, sauvegarde automatique,
+import d'image ou dedoublonnage global n'est ajoute dans cette phase.
 
 ## Champs Supportes
 
@@ -159,10 +161,44 @@ lot futur. La sauvegarde reste assuree par les routes items existantes
 `POST /api/items` et `PATCH /api/items/:id`, avec validation et normalisation
 backend habituelles.
 
+## Lookup Frontend ISBN
+
+Le formulaire dynamique affiche un bouton `Rechercher` adjacent au champ ISBN
+pour le plugin `books`.
+
+Flux utilisateur :
+
+1. l'utilisateur saisit un ISBN ;
+2. le frontend appelle le backend CollectionMgnt ;
+3. le backend interroge le provider actif ;
+4. le frontend affiche les suggestions retournees ;
+5. l'utilisateur choisit `Utiliser` ;
+6. le formulaire est pre-rempli localement ;
+7. l'utilisateur controle et sauvegarde manuellement.
+
+Le frontend ne contacte jamais Open Library ou un autre provider externe
+directement. Il consomme uniquement les routes `/api/acquisition/*`.
+
+Regles de pre-remplissage :
+
+- `title`, `description`, `author`, `publisher` et `publication_date` sont
+  renseignes uniquement si le champ courant est vide ;
+- `metadata.isbn` peut etre remplace par la valeur normalisee retournee par le
+  backend ;
+- aucune valeur absente n'est inventee ;
+- aucun item n'est cree ou modifie tant que l'utilisateur ne soumet pas le
+  formulaire ;
+- les URLs de couverture peuvent etre affichees en previsualisation distante,
+  mais aucune image n'est importee ou sauvegardee.
+
+Les erreurs de lookup (`invalid_isbn`, `provider_unavailable`,
+`provider_timeout`, erreur generique) sont affichees sans bloquer la saisie
+manuelle.
+
 ## Hors Perimetre Actuel
 
-Cette phase capture les identifiants et ajoute le lookup backend ISBN livres via
-Open Library.
+Cette phase capture les identifiants, ajoute le lookup backend ISBN livres via
+Open Library et expose le pre-remplissage local cote frontend pour les livres.
 
 Non livre dans ce lot :
 
@@ -171,7 +207,7 @@ Non livre dans ce lot :
 - lecture automatique de code-barres
 - lookup code-barres
 - lookup films ou jeux video
-- pre-remplissage automatique cote frontend
+- pre-remplissage avec sauvegarde automatique
 - import ou telechargement d'image
 - cache persistant
 - dedoublonnage global
