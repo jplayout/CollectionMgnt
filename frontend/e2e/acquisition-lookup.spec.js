@@ -9,39 +9,54 @@ const adminUsername =
 const adminPassword =
     'e2e-admin-password';
 
-async function loginAsAdmin(page) {
+let adminToken;
 
-    await page.goto(
-        '/login'
-    );
+test.beforeAll(
+    async ({ request }) => {
 
-    await page.getByLabel(
-        'Username'
-    ).fill(
-        adminUsername
-    );
+        const response =
+            await request.post(
+                '/api/auth/login',
+                {
+                    data: {
+                        password:
+                            adminPassword,
+                        username:
+                            adminUsername
+                    }
+                }
+            );
 
-    await page.getByLabel(
-        'Password'
-    ).fill(
-        adminPassword
-    );
+        expect(
+            response.ok()
+        ).toBeTruthy();
 
-    await page.getByRole(
-        'button',
-        {
-            name:
-                'Sign in'
-        }
-    ).click();
+        const body =
+            await response.json();
 
-    await expect(
-        page
-    ).toHaveURL(
-        /\/collections$/
-    );
+        adminToken =
+            body.token;
 
-}
+    }
+);
+
+test.beforeEach(
+    async ({ page }) => {
+
+        await page.addInitScript(
+            token => {
+
+                window.sessionStorage.setItem(
+                    'auth_token',
+                    token
+                );
+
+            },
+            adminToken
+        );
+
+    }
+);
 
 async function mockProviders(page) {
 
@@ -79,10 +94,6 @@ async function mockProviders(page) {
 }
 
 async function openBookCreatePage(page) {
-
-    await loginAsAdmin(
-        page
-    );
 
     await page.goto(
         '/collections/books/items/new'
