@@ -43,7 +43,7 @@ after(async () => {
 });
 
 test(
-    'GET /api/acquisition/providers returns Open Library enabled',
+    'GET /api/acquisition/providers returns Open Library and Google Books enabled',
     async () => {
 
         fetchHandler =
@@ -82,9 +82,208 @@ test(
                             'books',
                         requiresConfiguration:
                             false
+                    },
+                    {
+                        capabilities: [
+                            'isbnLookup'
+                        ],
+                        enabled:
+                            true,
+                        id:
+                            'googlebooks',
+                        name:
+                            'Google Books',
+                        plugin:
+                            'books',
+                        requiresConfiguration:
+                            false
                     }
                 ]
             }
+        );
+
+    }
+);
+
+test(
+    'POST /api/acquisition/books/isbn/lookup falls back to Google Books when Open Library is empty',
+    async () => {
+
+        const calls =
+            [];
+
+        fetchHandler =
+            async url => {
+
+                const urlString =
+                    String(
+                        url
+                    );
+
+                calls.push(
+                    urlString
+                );
+
+                let hostname;
+
+                try {
+
+                    hostname =
+                        new URL(
+                            urlString
+                        ).hostname;
+
+                } catch {
+
+                    hostname =
+                        '';
+
+                }
+
+                if (
+                    hostname ===
+                    'openlibrary.org'
+                ) {
+
+                    return createJsonResponse({});
+
+                }
+
+                return createJsonResponse(
+                    googleBooksFixture(
+                        '9780140328721'
+                    )
+                );
+
+            };
+
+        const response =
+            await lookupIsbn(
+                '9780140328721'
+            );
+
+        assert.equal(
+            response.statusCode,
+            200
+        );
+
+        assert.equal(
+            response.json().results[0].provider,
+            'googlebooks'
+        );
+
+        assert.equal(
+            calls.length,
+            2
+        );
+
+        assert.match(
+            calls[0],
+            /openlibrary\.org/
+        );
+
+        assert.match(
+            calls[1],
+            /googleapis\.com\/books\/v1\/volumes/
+        );
+
+    }
+);
+
+test(
+    'POST /api/acquisition/books/isbn/lookup does not call Google Books when Open Library returns a result',
+    async () => {
+
+        const calls =
+            [];
+
+        fetchHandler =
+            async url => {
+
+                calls.push(
+                    String(
+                        url
+                    )
+                );
+
+                return createJsonResponse(
+                    openLibraryFixture(
+                        '9780131103627'
+                    )
+                );
+
+            };
+
+        const response =
+            await lookupIsbn(
+                '9780131103627'
+            );
+
+        assert.equal(
+            response.statusCode,
+            200
+        );
+
+        assert.equal(
+            response.json().results[0].provider,
+            'openlibrary'
+        );
+
+        assert.equal(
+            calls.length,
+            1
+        );
+
+    }
+);
+
+test(
+    'POST /api/acquisition/books/isbn/lookup uses explicit Google Books without calling Open Library',
+    async () => {
+
+        let requestedUrl =
+            '';
+
+        fetchHandler =
+            async url => {
+
+                requestedUrl =
+                    String(
+                        url
+                    );
+
+                return createJsonResponse(
+                    googleBooksFixture(
+                        '9780132350884'
+                    )
+                );
+
+            };
+
+        const response =
+            await lookupIsbn(
+                '9780132350884',
+                'googlebooks'
+            );
+
+        assert.equal(
+            response.statusCode,
+            200
+        );
+
+        assert.equal(
+            response.json().results[0].provider,
+            'googlebooks'
+        );
+
+        assert.match(
+            requestedUrl,
+            /googleapis\.com\/books\/v1\/volumes/
+        );
+
+        assert.doesNotMatch(
+            requestedUrl,
+            /openlibrary\.org/
         );
 
     }
@@ -287,11 +486,11 @@ test(
 
                 assert.match(
                     String(url),
-                    /bibkeys=ISBN%3A9780140328721/
+                    /bibkeys=ISBN%3A9780201633610/
                 );
 
                 return createJsonResponse({
-                    'ISBN:9780140328721': {
+                    'ISBN:9780201633610': {
                         authors: [
                             {
                                 name:
@@ -321,7 +520,7 @@ test(
 
         const response =
             await lookupIsbn(
-                '978-0-140-32872-1'
+                '978-0-201-63361-0'
             );
 
         assert.equal(
@@ -337,8 +536,8 @@ test(
                         'books',
                     type:
                         'isbn',
-                    value:
-                        '9780140328721'
+                        value:
+                            '9780201633610'
                 },
                 results: [
                     {
@@ -360,7 +559,7 @@ test(
                             author:
                                 'Roald Dahl',
                             isbn:
-                                '9780140328721',
+                                '9780201633610',
                             publication_date:
                                 '1988-01-01',
                             publisher:
@@ -412,19 +611,96 @@ test(
     }
 );
 
-async function lookupIsbn(isbn) {
+async function lookupIsbn(
+    isbn,
+    provider = null
+) {
+
+    const payload = {
+        isbn
+    };
+
+    if (
+        provider
+    ) {
+
+        payload.provider =
+            provider;
+
+    }
 
     return context.app.inject({
         headers:
             authHeaders(),
         method:
             'POST',
-        payload: {
-            isbn
-        },
+        payload,
         url:
             '/api/acquisition/books/isbn/lookup'
     });
+
+}
+
+function openLibraryFixture(isbn) {
+
+    return {
+        [`ISBN:${isbn}`]: {
+            authors: [
+                {
+                    name:
+                        'Roald Dahl'
+                }
+            ],
+            publish_date:
+                'October 1, 1988',
+            publishers: [
+                {
+                    name:
+                        'Puffin'
+                }
+            ],
+            title:
+                'Fantastic Mr. Fox'
+        }
+    };
+
+}
+
+function googleBooksFixture(isbn) {
+
+    return {
+        items: [
+            {
+                volumeInfo: {
+                    authors: [
+                        'Roald Dahl'
+                    ],
+                    description:
+                        '<p>A clever fox outwits three farmers.</p>',
+                    imageLinks: {
+                        thumbnail:
+                            'http://books.google.com/books/content?id=abc&img=1'
+                    },
+                    industryIdentifiers: [
+                        {
+                            identifier:
+                                isbn,
+                            type:
+                                'ISBN_13'
+                        }
+                    ],
+                    infoLink:
+                        'https://books.google.com/books?id=abc',
+                    publishedDate:
+                        '1988',
+                    publisher:
+                        'Puffin',
+                    title:
+                        'Fantastic Mr. Fox'
+                }
+            }
+        ]
+    };
 
 }
 

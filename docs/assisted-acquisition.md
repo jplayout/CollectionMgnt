@@ -1,12 +1,13 @@
 # Assisted Acquisition
 
 Etat courant : fondations identifiants, lookup backend ISBN livres,
-pre-remplissage frontend local pour les livres, orchestration backend et cache
-SQLite acquisition.
+pre-remplissage frontend local pour les livres, orchestration backend,
+resolution multi-provider et cache SQLite acquisition.
 
 Les identifiants sont des champs metadata declares par plugin et stockes dans
 `items.metadata`. Le lookup ISBN livres est disponible via le backend
-CollectionMgnt avec Open Library comme premier provider.
+CollectionMgnt avec Open Library comme provider principal et Google Books comme
+provider secondaire.
 
 Aucune camera, scan mobile, sauvegarde automatique, import d'image ou
 dedoublonnage global n'est disponible a ce stade.
@@ -63,7 +64,7 @@ Principes :
 - les routes acquisition restent minces et deleguent les cas d'usage a un
   `AcquisitionService` backend ;
 - `AcquisitionService` porte la validation metier, la normalisation, la
-  selection provider et la construction du resultat API ;
+  resolution provider et la construction du resultat API ;
 - les providers sont isoles derriere un registre backend ;
 - le registre provider reste responsable de l'inventaire et de la selection ;
 - le mapping provider vers resultat CollectionMgnt est centralise dans le provider ;
@@ -83,8 +84,10 @@ Frontend
   -> Provider
 ```
 
-Cette orchestration prepare les providers multiples, un futur fallback et les
-quotas sans modifier l'API publique existante ni activer de fallback a ce stade.
+Cette orchestration supporte les providers multiples sans modifier l'API
+publique existante. En mode implicite, Open Library est essaye d'abord, puis
+Google Books est tente seulement si le provider precedent ne fournit aucun
+resultat exploitable ou echoue techniquement.
 
 Le lookup ISBN utilise un cache backend SQLite transparent :
 
@@ -104,6 +107,12 @@ Provider livre :
   - capacite : `isbnLookup`
   - configuration obligatoire : non
   - secret requis : aucun
+- `googlebooks`
+  - plugin : `books`
+  - capacite : `isbnLookup`
+  - configuration obligatoire : non
+  - secret requis : aucun
+  - cle API optionnelle : `GOOGLE_BOOKS_API_KEY`
 
 Voir `docs/acquisition-providers.md` pour le contrat technique des providers,
 les responsabilites des couches acquisition et les bonnes pratiques de tests.
@@ -126,6 +135,14 @@ Exemple :
       "capabilities": ["isbnLookup"],
       "enabled": true,
       "requiresConfiguration": false
+    },
+    {
+      "id": "googlebooks",
+      "name": "Google Books",
+      "plugin": "books",
+      "capabilities": ["isbnLookup"],
+      "enabled": true,
+      "requiresConfiguration": false
     }
   ]
 }
@@ -144,8 +161,10 @@ Body :
 }
 ```
 
-Le champ `provider` est optionnel. S'il est absent, le backend utilise le
-provider actif par defaut pour `books` / `isbnLookup`.
+Le champ `provider` est optionnel. S'il est absent, le backend utilise la
+resolution implicite pour `books` / `isbnLookup` : Open Library d'abord, puis
+Google Books si necessaire. Si un provider est explicite, seul ce provider est
+appele.
 
 Reponse :
 
@@ -189,7 +208,7 @@ Erreurs stables :
 - `provider_timeout` : timeout provider ;
 - `provider_error` : erreur provider non exploitable.
 
-Si Open Library ne trouve aucun resultat, la route retourne `200` avec
+Si aucun provider actif ne trouve de resultat, la route retourne `200` avec
 `results: []`.
 
 Les suggestions servent a pre-remplir localement le formulaire cote frontend
@@ -206,13 +225,13 @@ Flux utilisateur :
 
 1. l'utilisateur saisit un ISBN ;
 2. le frontend appelle le backend CollectionMgnt ;
-3. le backend interroge le provider actif ;
+3. le backend interroge les providers selon la strategie de resolution ;
 4. le frontend affiche les suggestions retournees ;
 5. l'utilisateur choisit `Utiliser` ;
 6. le formulaire est pre-rempli localement ;
 7. l'utilisateur controle et sauvegarde manuellement.
 
-Le frontend ne contacte jamais Open Library ou un autre provider externe
+Le frontend ne contacte jamais Open Library, Google Books ou un autre provider externe
 directement. Il consomme uniquement les routes `/api/acquisition/*`.
 
 Regles de pre-remplissage :
@@ -234,7 +253,8 @@ manuelle.
 ## Hors Perimetre Actuel
 
 Cette phase capture les identifiants, ajoute le lookup backend ISBN livres via
-Open Library et expose le pre-remplissage local cote frontend pour les livres.
+Open Library et Google Books, puis expose le pre-remplissage local cote frontend
+pour les livres.
 
 Non livre dans ce lot :
 
@@ -251,7 +271,6 @@ Non livre dans ce lot :
 
 Les phases suivantes pourront s'appuyer sur ces champs :
 
-- fallback Google Books pour les livres
 - import image ou couverture apres validation utilisateur
 - provider TMDb pour les films
 - provider IGDB ou RAWG pour les jeux video

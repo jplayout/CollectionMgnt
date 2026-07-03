@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot11.3.
-- Dernier lot livré : Lot 11.3 - Acquisition Cache Backend.
+- Version actuelle : v0.12-lot11.4.1.
+- Dernier lot livré : Lot 11.4.1 - Google Books Provider.
 
 Capacités disponibles :
 
@@ -22,9 +22,10 @@ Capacités disponibles :
 - Script de pack média de démonstration avec images PNG générées et uploadées via l'API média.
 - CRUD items, validation dynamique, recherche, filtres, pagination, tri et vues cartes/liste.
 - Fondations identifiants `isbn` / `barcode` livrées pour livres, jeux, films et autres.
-- Lookup ISBN livre livré via Open Library, backend uniquement.
+- Lookup ISBN livre livré via Open Library et Google Books, backend uniquement.
 - Pré-remplissage frontend local disponible dans le formulaire livre.
 - Orchestration acquisition livrée via `AcquisitionService`.
+- Résolution multi-provider acquisition livrée côté backend.
 - Cache SQLite backend livré pour les réponses de lookup acquisition normalisées.
 - Préférences d'affichage par collection/plugin.
 - Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
@@ -54,7 +55,6 @@ Limites majeures connues :
 
 ### Haute priorité
 
-- Google Books fallback pour le lookup livres.
 - Import image/couverture après validation utilisateur.
 - Restauration ZIP guidée.
 - Import CSV CollectionMgnt.
@@ -296,7 +296,7 @@ Phase 3 — Lookup livres :
 
 - Premier cas cible livré : livres.
 - Recherche via Open Library livrée.
-- Google Books reste prévu comme fallback futur.
+- Google Books livré comme provider secondaire et fallback implicite.
 - Pré-remplissage disponible :
   - titre
   - auteur
@@ -307,6 +307,7 @@ Phase 3 — Lookup livres :
 Phase 4 — Architecture fournisseurs :
 
 - Architecture backend extensible livrée via `AcquisitionService`, registre provider et providers isolés.
+- Résolution multi-provider livrée : provider explicite seul, sinon providers actifs essayés dans l'ordre stable du registre.
 - Cache SQLite acquisition livré pour les réponses normalisées.
 - Ne pas verrouiller CollectionMgnt sur un seul service externe.
 - Gérer les erreurs, quotas, indisponibilités et différences de qualité des sources.
@@ -356,12 +357,22 @@ Phase 5 — Extension progressive :
 - Erreurs provider, timeouts, ISBN invalides, réponses brutes provider et images binaires non cachés.
 - Aucun fallback actif, aucun provider supplémentaire et aucun changement frontend dans ce lot.
 
-#### Lot 11.4 - Google Books Fallback - Prévu
+#### Lot 11.4.0 - Provider Resolution Strategy - Livré
 
-- Ajouter Google Books comme source livre complémentaire.
-- Préparer un fallback contrôlé Open Library -> Google Books.
-- Gérer la clé API comme configuration optionnelle si nécessaire.
-- Conserver le contrat API public existant.
+- Résolution multi-provider ajoutée dans `AcquisitionService`.
+- Provider explicite conservé sans fallback.
+- En mode implicite, les providers actifs compatibles sont essayés dans l'ordre stable du registre.
+- Résultat vide, timeout ou erreur technique d'un provider implicite permettent d'essayer le provider suivant.
+- Cache conservé par provider, sans cache global post-orchestration.
+- Aucune fusion automatique et aucun changement d'API publique.
+
+#### Lot 11.4.1 - Google Books Provider - Livré
+
+- Google Books ajouté comme source livre complémentaire.
+- Fallback implicite Open Library -> Google Books actif pour le lookup ISBN livres.
+- `GOOGLE_BOOKS_API_KEY` disponible comme configuration optionnelle.
+- Contrat API public conservé, sans changement frontend.
+- Aucun import image, aucune fusion automatique et aucun cache global ajoutés.
 
 #### Lot 11.5 - Import Image - Prévu
 

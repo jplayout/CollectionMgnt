@@ -1163,19 +1163,19 @@ test(
 );
 
 test(
-    'AcquisitionService separates default and explicit provider cache keys',
+    'AcquisitionService separates Open Library and Google Books cache keys',
     async () => {
 
         const defaultProvider =
             createProvider({
                 id:
-                    'default-provider',
+                    'openlibrary',
                 results: [
                     {
                         provider:
-                            'default-provider',
+                            'openlibrary',
                         title:
-                            'Default result'
+                            'Open Library result'
                     }
                 ]
             });
@@ -1183,13 +1183,13 @@ test(
         const explicitProvider =
             createProvider({
                 id:
-                    'explicit-provider',
+                    'googlebooks',
                 results: [
                     {
                         provider:
-                            'explicit-provider',
+                            'googlebooks',
                         title:
-                            'Explicit result'
+                            'Google Books result'
                     }
                 ]
             });
@@ -1221,7 +1221,7 @@ test(
             isbn:
                 '9780140328721',
             providerId:
-                'explicit-provider'
+                'googlebooks'
         });
 
         assert.deepEqual(
@@ -1243,8 +1243,8 @@ test(
                 repository.rows.keys()
             ).sort(),
             [
-                'books:isbnLookup:default-provider:mapping_v1:9780140328721',
-                'books:isbnLookup:explicit-provider:mapping_v1:9780140328721'
+                'books:isbnLookup:googlebooks:mapping_v1:9780140328721',
+                'books:isbnLookup:openlibrary:mapping_v1:9780140328721'
             ]
         );
 
