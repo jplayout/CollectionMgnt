@@ -130,6 +130,18 @@ Exemples :
 - `backup-service.js` genere l'archive ZIP ;
 - `display-preferences-service.js` gere les preferences d'affichage.
 
+L'acquisition assistee utilise aussi une couche dediee dans
+`backend/src/acquisition` :
+
+- `acquisition-service.js` orchestre les cas d'usage acquisition, dont le lookup
+  ISBN livre ;
+- `provider-registry.js` inventorie et selectionne les providers disponibles ;
+- `providers/*` contient les adaptateurs vers les fournisseurs externes.
+
+Les routes `/api/acquisition/*` restent responsables du HTTP et deleguent la
+validation metier, la normalisation, le choix du provider et la construction de
+la reponse a `AcquisitionService`.
+
 ### Repositories
 
 Les repositories vivent dans `backend/src/repositories`.
