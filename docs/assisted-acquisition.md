@@ -57,12 +57,21 @@ frontend ne doit pas appeler les providers directement.
 Principes :
 
 - les routes acquisition sont protegees par JWT comme les routes items utilisateur ;
+- les routes acquisition restent minces et deleguent les cas d'usage a un
+  `AcquisitionService` backend ;
+- `AcquisitionService` porte la validation metier, la normalisation, la
+  selection provider et la construction du resultat API ;
 - les providers sont isoles derriere un registre backend ;
+- le registre provider reste responsable de l'inventaire et de la selection ;
 - le mapping provider vers resultat CollectionMgnt est centralise dans le provider ;
 - aucune route acquisition ne cree ou modifie un item ;
 - aucune image n'est telechargee dans ce lot ;
 - les URLs de couverture peuvent etre retournees comme previsualisation distante ;
 - aucun secret provider n'est expose cote frontend.
+
+Cette orchestration prepare les providers multiples, un futur fallback, le cache
+et les quotas sans modifier l'API publique existante ni activer de fallback dans
+ce lot.
 
 Provider livre :
 

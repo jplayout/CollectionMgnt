@@ -258,7 +258,7 @@ Phase 3 — Lookup livres :
 
 Phase 4 — Architecture fournisseurs :
 
-- Prévoir une architecture extensible de fournisseurs de métadonnées.
+- Architecture backend extensible livrée via `AcquisitionService`, registre provider et providers isolés.
 - Ne pas verrouiller CollectionMgnt sur un seul service externe.
 - Gérer les erreurs, quotas, indisponibilités et différences de qualité des sources.
 
@@ -275,6 +275,14 @@ Phase 5 — Extension progressive :
 - Pré-remplissage local après action explicite `Utiliser`.
 - Aucun écrasement automatique des champs déjà renseignés, sauf normalisation de `metadata.isbn`.
 - Aucune sauvegarde automatique et aucun import d'image dans ce lot.
+
+#### Lot 11.2 - Acquisition Orchestration Backend - Livré
+
+- Couche `AcquisitionService` ajoutée entre les routes acquisition et les providers.
+- Routes acquisition conservées sans changement d'API publique.
+- Validation métier ISBN, normalisation, choix provider et construction `{ query, results }` centralisés côté service.
+- `ProviderRegistry` conservé comme inventaire/sélection des providers.
+- Aucun fallback actif, aucun cache et aucun provider supplémentaire dans ce lot.
 
 Contraintes :
 
