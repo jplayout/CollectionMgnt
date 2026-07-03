@@ -47,7 +47,7 @@ Limites majeures connues :
 - Gestion utilisateurs avancée, permissions fines et page profil non livrées.
 - Audit sécurité conteneur et hardening Docker encore à traiter.
 - Scénarios avancés d'accès distant, VPN/tunnel et guides Caddy/Traefik/Nginx dédiés encore à traiter.
-- Recherche globale multi-collections, FTS, normalisation Unicode et filtres range non livrés.
+- Recherche globale multi-collections, recherche par metadata métier, FTS, normalisation Unicode, recherche tolérante et filtres range non livrés.
 - Tests frontend unitaires, E2E exhaustifs, couverture de code et tooling qualité avancé non livrés.
 
 ## Prochaines priorités
@@ -64,6 +64,9 @@ Limites majeures connues :
 
 - Providers films et jeux vidéo : TMDb, IGDB ou RAWG.
 - Scan caméra mobile en contexte HTTPS.
+- Recherche enrichie par auteur, éditeur, série, tags et tolérance aux fautes.
+- Navigation de grandes collections par groupes configurables.
+- Consultation mobile rapide avant achat et premiers usages hors connexion.
 - Import CSV externe depuis une autre application de gestion de collection.
 - Support backend des types plugin avancés restant à livrer : multiselect, url, email.
 - Gestion utilisateurs avancée et permissions fines.
@@ -74,6 +77,7 @@ Limites majeures connues :
 - Installation plugins ZIP.
 - Catalogue de plugins.
 - Recherche globale multi-collections et recherche approximative.
+- Choix avancé du mode de recherche : LIKE, stricte ou FTS.
 
 ## Sécurité
 
@@ -179,7 +183,10 @@ Lien roadmap :
 - Optimisation SQLite.
 - Optimisation recherche.
 - SQLite FTS5.
-- Recherche approximative.
+- Recherche approximative et tolérante aux fautes.
+- Recherche metadata dédiée par auteur, éditeur, série et tags.
+- Normalisation des articles de tri/recherche : `Le`, `La`, `Les`, `L'`, `The`, `A`, `An`.
+- Possibilité future de choisir le mode de recherche : LIKE, stricte ou FTS.
 - Pas encore de normalisation complète des accents ou de l'Unicode.
 - Pas encore de filtres range.
 - Pas de recherche metadata globale multi-plugins.
@@ -215,6 +222,15 @@ Lien roadmap :
 - Documentation des commandes locales et du workflow PR.
 - Ne pas se limiter à traduire le README pour l'internationalisation.
 
+#### Documentation vivante / Living documentation
+
+- Chaque lot significatif doit inclure la mise à jour de la documentation concernée.
+- La documentation utilisateur et développeur évoluent avec le produit.
+- Les ADR documentent les décisions d'architecture structurantes.
+- Significant batches should update the related documentation.
+- User and developer documentation evolve with the product.
+- ADRs are used to document structural architecture decisions.
+
 ## Backlog produit
 
 ### Collections et items
@@ -230,9 +246,31 @@ Lien roadmap :
 - Configuration des colonnes affichées dans les listes.
 - Choix des métadonnées mises en avant dans les cartes items.
 - Préférences d’affichage par collection/plugin.
+- Vue par défaut configurable par collection : liste, cartes ou vue groupée.
+- Colonnes visibles configurables par collection.
+- Groupement par défaut configurable par collection.
+- Regroupement par série, auteur, éditeur, plateforme ou genre.
+- Navigation alphabétique pour les grandes collections.
+- Groupes repliables.
+- Vues groupées configurables.
+- Configurable default view per collection: list, cards or grouped view.
+- Configurable visible columns and default grouping.
+- Grouping by series, author, publisher, platform or genre.
+- Alphabetical navigation and collapsible groups for large collections.
 - Gestion des prêts.
 - Historique.
 - Tags globaux.
+
+#### Tags
+
+- Tags utilisateur.
+- Recherche par tag.
+- Filtres par tag.
+- Collections intelligentes basées sur les tags.
+- User tags.
+- Search by tag.
+- Tag filters.
+- Smart collections based on tags.
 
 ### Acquisition assistée
 
@@ -400,6 +438,35 @@ La langue de l’interface et la langue des métadonnées sont deux concepts dis
 - Gérer les formats de date, nombres et préférences régionales.
 - Préparer les différences de pays pour les providers et codes-barres.
 
+#### 12.4 - Community translations
+
+- Préparer une structure de traduction facilement maintenable.
+- Faciliter les contributions communautaires aux traductions.
+- Maintenir la séparation entre langue UI et langue des métadonnées.
+- Prepare a translation structure that is easy to maintain.
+- Make community translation contributions straightforward.
+- Keep UI language and metadata language separate.
+
+### 13 — Résilience et consultation hors connexion / Resilience and offline consultation
+
+Objectif :
+
+- Améliorer la consultation lorsque le serveur est temporairement indisponible, sans concevoir une architecture offline-first complète dans ce lot.
+- Improve consultation when the server is temporarily unavailable, without designing a full offline-first architecture in this batch.
+
+Travaux futurs :
+
+- Conservation locale des dernières données synchronisées.
+- Consultation possible lorsque le serveur est temporairement indisponible.
+- Reprise automatique lorsque le serveur redevient disponible.
+- Indication visuelle lorsque les données sont consultées hors connexion.
+- Synchronisation incrémentale comme évolution future.
+- Local retention of the latest synchronized data.
+- Read-only consultation when the server is temporarily unavailable.
+- Automatic recovery when the server becomes available again.
+- Visual indication when data is viewed offline.
+- Incremental synchronization as a future evolution.
+
 ### Médias
 
 - Outils d’audit et maintenance média.
@@ -428,12 +495,26 @@ La langue de l’interface et la langue des métadonnées sont deux concepts dis
 
 - Recherche globale.
 - Recherche avancée.
+- Recherche par auteur.
+- Recherche par éditeur.
+- Recherche par série.
+- Recherche par tag.
 - Filtres automatiques.
 - Facettes.
 - Multi-collections.
 - Recherche configurable.
+- Normalisation des articles : `Le`, `La`, `Les`, `L'`, `The`, `A`, `An`.
+- Recherche tolérante aux fautes de frappe.
+- Choix futur du mode de recherche : LIKE, stricte ou FTS.
 - SQLite FTS5.
 - Recherche approximative.
+- Search by author.
+- Search by publisher.
+- Search by series.
+- Search by tag.
+- Article normalization: `Le`, `La`, `Les`, `L'`, `The`, `A`, `An`.
+- Typo-tolerant search.
+- Future search mode choice: LIKE, strict or FTS.
 
 ### Plugins
 
@@ -456,6 +537,14 @@ La langue de l’interface et la langue des métadonnées sont deux concepts dis
   - listes avec scroll/colonnes simplifiées
   - administration utilisable sur petit écran
   - formulaires confortables au tactile
+  - consultation rapide avant achat
+  - recherche rapide en mobilité
+  - scan ISBN / code-barres
+  - ajout mobile progressif
+  - quick consultation before purchase
+  - fast search on mobile
+  - ISBN / barcode scan
+  - progressive mobile item creation
 
 ## Historique des lots livrés
 
