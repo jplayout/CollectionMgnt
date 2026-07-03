@@ -29,6 +29,8 @@ Workflow attendu :
 
 La branche `main` est protégée. Le développement se fait sur une branche dédiée, puis passe par une Pull Request avant d'être fusionné.
 
+Pour les détails pratiques de développement, consultez `docs/development.md`.
+
 Workflow recommandé :
 
 ```bash
@@ -42,6 +44,10 @@ Puis :
 - pousser la branche vers le dépôt distant ;
 - ouvrir une Pull Request vers `main` ;
 - attendre la review avant le merge.
+
+Les Pull Requests doivent rester petites : une intention principale, un diff
+lisible et des tests adaptés. Évitez de mélanger fonctionnalité, refactor et
+documentation non liée.
 
 Titre recommandé pour la Pull Request :
 
@@ -73,6 +79,10 @@ git diff --check
 ```
 
 La CI de Pull Request exécute les tests backend d'intégration avec le Node Test Runner natif, le build frontend Vite et la vérification whitespace. Les tests backend utilisent une base SQLite et un `DATA_DIR` temporaires.
+
+Aucun test ne doit dépendre d'Internet ou d'un service tiers réel. Les providers
+externes, registres, API et réponses réseau doivent être mockés ou couverts par
+des fixtures locales.
 
 ## Documentation
 
@@ -151,6 +161,8 @@ Expected workflow:
 
 The `main` branch is protected. Development happens on a dedicated branch, then goes through a Pull Request before it is merged.
 
+For practical development details, read `docs/development.md`.
+
 Recommended workflow:
 
 ```bash
@@ -164,6 +176,9 @@ Then:
 - push the branch to the remote repository;
 - open a Pull Request targeting `main`;
 - wait for review before merging.
+
+Pull Requests should stay small: one main intent, a readable diff and relevant
+tests. Avoid mixing features, refactors and unrelated documentation.
 
 Recommended Pull Request title:
 
@@ -195,6 +210,10 @@ git diff --check
 ```
 
 The Pull Request CI runs backend integration tests with the native Node Test Runner, the Vite frontend build and the whitespace check. Backend tests use a temporary SQLite database and `DATA_DIR`.
+
+No test should depend on the Internet or a real third-party service. External
+providers, registries, APIs and network responses must be mocked or covered by
+local fixtures.
 
 ## Documentation
 
