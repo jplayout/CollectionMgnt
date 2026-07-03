@@ -178,6 +178,9 @@ via un repository dedie. Il ne stocke ni reponse brute provider, ni erreur, ni
 image binaire. En cas de miss, d'expiration ou d'entree corrompue, le service
 appelle le provider selectionne.
 
+Voir `docs/acquisition-providers.md` pour le contrat provider, les responsabilites
+des couches acquisition et les bonnes pratiques de tests.
+
 ### Repositories
 
 Les repositories vivent dans `backend/src/repositories`.
