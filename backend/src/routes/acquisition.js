@@ -1,15 +1,14 @@
 import {
-    AcquisitionError
-} from '../acquisition/errors.js';
-
-import {
     AcquisitionProviderRegistry
 } from '../acquisition/provider-registry.js';
 
 import {
-    isValidIsbn,
-    normalizeIdentifier
-} from '../services/item-validator.js';
+    AcquisitionService
+} from '../acquisition/acquisition-service.js';
+
+import {
+    AcquisitionError
+} from '../acquisition/errors.js';
 
 export default async function (
     fastify
@@ -19,11 +18,18 @@ export default async function (
         fastify.acquisitionProviderRegistry ??
         new AcquisitionProviderRegistry();
 
+    const service =
+        fastify.acquisitionService ??
+        new AcquisitionService({
+            providerRegistry:
+                registry
+        });
+
     fastify.get(
         '/api/acquisition/providers',
         async () => ({
             providers:
-                registry.listProviders()
+                service.listProviders()
         })
     );
 
@@ -34,62 +40,14 @@ export default async function (
             reply
         ) => {
 
-            const isbn =
-                request.body?.isbn;
-
-            if (
-                typeof isbn !== 'string' ||
-                !isValidIsbn(
-                    isbn
-                )
-            ) {
-
-                return sendAcquisitionError(
-                    reply,
-                    new AcquisitionError(
-                        400,
-                        'invalid_isbn',
-                        'ISBN must be a valid ISBN-10 or ISBN-13'
-                    )
-                );
-
-            }
-
-            const normalizedIsbn =
-                normalizeIdentifier(
-                    isbn
-                );
-
             try {
 
-                const provider =
-                    request.body?.provider
-                        ? registry.getProvider(
-                            request.body.provider
-                        )
-                        : registry.getDefaultProviderFor({
-                            capability:
-                                'isbnLookup',
-                            plugin:
-                                'books'
-                        });
-
-                const results =
-                    await provider.lookupIsbn(
-                        normalizedIsbn
-                    );
-
-                return {
-                    query: {
-                        plugin:
-                            'books',
-                        type:
-                            'isbn',
-                        value:
-                            normalizedIsbn
-                    },
-                    results
-                };
+                return await service.lookupBookByIsbn({
+                    isbn:
+                        request.body?.isbn,
+                    providerId:
+                        request.body?.provider ?? null
+                });
 
             } catch (error) {
 
@@ -141,4 +99,3 @@ function sendAcquisitionError(
         });
 
 }
-
