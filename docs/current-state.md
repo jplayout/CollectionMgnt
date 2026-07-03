@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot11.3
+Version : v0.12-lot11.4.1
 
 ## État du projet
 
@@ -25,6 +25,8 @@ Lots acquisition terminés :
 - 11.1.1 : lookup ISBN frontend et pré-remplissage local
 - 11.2 : couche d'orchestration `AcquisitionService`
 - 11.3 : cache SQLite backend pour les lookups acquisition
+- 11.4.0 : résolution multi-provider côté backend
+- 11.4.1 : provider secondaire Google Books pour les livres
 
 ---
 
@@ -45,7 +47,7 @@ Lots acquisition terminés :
   - `consoles`
   - `others`
 - Fondations d'acquisition assistée livrées : champs identifiants `books.isbn`, `games.barcode`, `movies.barcode` et `others.barcode`
-- Lookup ISBN livre livré via backend provider Open Library
+- Lookup ISBN livre livré via backend providers Open Library et Google Books
 - Orchestration acquisition livrée via `AcquisitionService`
 - Cache SQLite acquisition livré via `acquisition_cache`
 - Aucun champ ISBN, EAN, UPC ou code-barres sur le plugin `consoles` à ce stade
@@ -91,10 +93,13 @@ Lots acquisition terminés :
 - Recherche et filtres compatibles avec `isbn` et `barcode`
 - API providers disponible via `GET /api/acquisition/providers`
 - Lookup ISBN livre disponible via `POST /api/acquisition/books/isbn/lookup`
-- Provider livré : `openlibrary`, sans clé API obligatoire
+- Providers livrés :
+  - `openlibrary`, sans clé API obligatoire
+  - `googlebooks`, sans clé API obligatoire, avec `GOOGLE_BOOKS_API_KEY` optionnelle
 - Architecture backend :
   - route acquisition
   - `AcquisitionService`
+  - stratégie de résolution multi-provider
   - `AcquisitionCache`
   - `ProviderRegistry`
   - provider externe
@@ -106,7 +111,7 @@ Lots acquisition terminés :
   - erreurs provider, timeouts et ISBN invalides non cachés
   - aucune réponse brute provider ni image binaire stockée
 - Réponse API inchangée, sans champ `cached`
-- Aucun fallback Google Books actif
+- Fallback implicite Open Library -> Google Books actif pour le lookup ISBN livres
 - Aucun lookup code-barres films/jeux/autres livré
 - Aucun scan caméra livré
 - Aucun import automatique d'image livré
@@ -416,6 +421,7 @@ Variables disponibles pour le déploiement Docker local :
 - `PORT`
 - `DATA_DIR`
 - `PLUGINS_DIR`
+- `GOOGLE_BOOKS_API_KEY` optionnelle pour augmenter les quotas Google Books
 - `FRONTEND_PORT`
 - `BACKEND_PORT`
 
@@ -484,6 +490,7 @@ Variables disponibles :
 - Identifiants acquisition stockés comme champs métier `isbn` / `barcode` dans `items.metadata`
 - Providers acquisition appelés uniquement depuis le backend
 - `AcquisitionService` comme couche d'orchestration entre routes et providers
+- Résolution multi-provider implicite avec cache distinct par provider
 - Cache SQLite acquisition transparent, sans changement d'API publique
 - Déploiement Docker auto-hébergé
 - Plateforme prioritaire/testée/documentée : Synology NAS

@@ -7,10 +7,15 @@ import {
     OpenLibraryProvider
 } from './providers/open-library-provider.js';
 
+import {
+    GoogleBooksProvider
+} from './providers/google-books-provider.js';
+
 export class AcquisitionProviderRegistry {
 
     constructor({
         fetchImpl = globalThis.fetch,
+        googleBooksApiKey = process.env.GOOGLE_BOOKS_API_KEY,
         providers = null,
         timeoutMs
     } = {}) {
@@ -19,6 +24,12 @@ export class AcquisitionProviderRegistry {
             providers ??
             [
                 new OpenLibraryProvider({
+                    fetchImpl,
+                    timeoutMs
+                }),
+                new GoogleBooksProvider({
+                    apiKey:
+                        googleBooksApiKey,
                     fetchImpl,
                     timeoutMs
                 })

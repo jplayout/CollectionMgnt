@@ -1,7 +1,8 @@
 # Acquisition Providers
 
 Etat courant : architecture acquisition backend stabilisee avec Open Library
-comme premier provider livre.
+comme provider principal et Google Books comme provider secondaire pour les
+lookups ISBN livres.
 
 Ce document est destine aux developpeurs qui veulent comprendre, tester ou
 ajouter un provider d'acquisition. Il complete `docs/architecture.md` et
@@ -30,7 +31,7 @@ Rôle des couches :
 - Backend Route : point d'entree HTTP protege par JWT.
 - `AcquisitionService` : orchestration metier du lookup.
 - `AcquisitionCache` : cache transparent des reponses normalisees.
-- `ProviderRegistry` : inventaire et selection des providers.
+- `ProviderRegistry` : inventaire et selection ordonnee des providers.
 - Provider : adaptateur vers une API externe et mapping vers CollectionMgnt.
 
 ## Responsabilites
@@ -66,9 +67,9 @@ Rôle :
 Responsabilites :
 
 - valider et normaliser les identifiants metier, par exemple ISBN ;
-- gerer provider explicite ou provider par defaut ;
+- gerer provider explicite ou resolution implicite multi-provider ;
 - consulter le cache si disponible ;
-- appeler le provider selectionne sur cache miss ;
+- appeler les providers compatibles dans l'ordre du registre sur cache miss ;
 - construire la reponse normalisee `{ query, results }`.
 
 Non-responsabilites :
@@ -76,7 +77,7 @@ Non-responsabilites :
 - formater une reponse Fastify ;
 - executer du SQL directement ;
 - connaitre les details bruts d'une API externe ;
-- activer un fallback non demande.
+- fusionner automatiquement les resultats de plusieurs providers.
 
 ### AcquisitionCache
 
@@ -108,14 +109,15 @@ Responsabilites :
 
 - lister les providers exposes par `GET /api/acquisition/providers` ;
 - retourner un provider explicite par id ;
-- retourner le premier provider actif compatible avec un plugin et une capacite.
+- retourner les providers actifs compatibles avec un plugin et une capacite
+  dans un ordre stable.
 
 Non-responsabilites :
 
 - orchestrer un lookup complet ;
 - appliquer le cache ;
 - mapper des donnees externes ;
-- implementer un fallback metier.
+- implementer la resolution metier ou la strategie de fallback.
 
 ### Provider
 
@@ -157,8 +159,8 @@ Champs attendus :
   necessaire.
 
 `enabled` doit etre `false` si le provider ne peut pas fonctionner dans l'etat
-courant. Par exemple, un provider futur avec cle API absente ne doit pas etre
-selectionne comme provider actif.
+courant. Une cle API optionnelle absente ne doit pas desactiver un provider si
+son API permet un usage non authentifie.
 
 `requiresConfiguration` ne signifie pas que le provider est actif. Il indique
 seulement qu'une configuration externe est attendue pour l'utiliser.
@@ -178,6 +180,32 @@ Comportement attendu :
 Un provider futur pourra exposer d'autres methodes, par exemple lookup
 code-barres, film ou jeu video. Le nom de methode et la capacite doivent rester
 coherents avec le contrat interne.
+
+## Resolution Multi-Provider
+
+En mode implicite, c'est-a-dire sans champ `provider` dans le body, le service
+essaie les providers actifs compatibles dans l'ordre stable du registre.
+
+Pour les livres, l'ordre courant est :
+
+1. `openlibrary`
+2. `googlebooks`
+
+Regles actuelles :
+
+- un provider explicite est appele seul ;
+- un provider explicite inconnu retourne `provider_not_found` ;
+- un provider explicite desactive retourne `provider_unavailable` ;
+- en mode implicite, un resultat vide permet d'essayer le provider suivant ;
+- en mode implicite, une erreur technique ou un timeout permet d'essayer le
+  provider suivant ;
+- le premier provider qui retourne des suggestions gagne ;
+- si tous les providers retournent vide, l'API retourne `200` avec
+  `results: []` ;
+- si tous les providers echouent techniquement, une erreur stable existante est
+  retournee ;
+- aucune fusion automatique n'est effectuee ;
+- la liste des providers essayes n'est pas exposee au frontend.
 
 ## Resultat Normalise
 
@@ -281,6 +309,10 @@ TTL actuel :
 Une reponse trop volumineuse ne doit pas bloquer l'utilisateur : elle peut etre
 retournee normalement sans etre ecrite dans le cache.
 
+Le cache reste par provider. Une entree vide Open Library ne bloque donc pas la
+tentative Google Books en mode implicite, et une entree Google Books ne remplace
+pas une entree Open Library.
+
 ## Tests
 
 Les tests acquisition ne doivent jamais appeler Internet.
@@ -294,6 +326,8 @@ Bonnes pratiques :
 - tester `ProviderRegistry` avec plusieurs providers actifs/desactives ;
 - tester le cache avec un repository SQLite temporaire ;
 - verifier cache hit, cache miss, expiration et entree corrompue ;
+- verifier que les entrees de cache restent distinctes par provider ;
+- verifier les cas de resolution implicite et de provider explicite ;
 - verifier que les erreurs provider et timeouts ne sont pas caches ;
 - verifier que le format public ne change pas entre cache miss et cache hit.
 
@@ -323,12 +357,12 @@ Points d'attention :
 - ne pas rendre obligatoire une cle API si le provider est optionnel ;
 - garder le frontend provider-agnostic.
 
-## Architecture Future
+## Providers Actuels Et Evolutions
 
-Evolutions prevues :
+Etat courant et evolutions prevues :
 
-- Google Books : fallback livre potentiel apres Open Library, avec gestion de
-  cle API optionnelle si necessaire ;
+- Google Books : provider livre secondaire livre apres Open Library, avec cle
+  API optionnelle via `GOOGLE_BOOKS_API_KEY` ;
 - TMDb : provider film futur, probablement avec configuration obligatoire ;
 - IGDB ou RAWG : provider jeux video futur, avec attention aux quotas et aux
   secrets ;
