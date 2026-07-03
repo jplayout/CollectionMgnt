@@ -1,10 +1,10 @@
 # Assisted Acquisition
 
-Etat courant : fondations identifiants uniquement.
+Etat courant : fondations identifiants et premier lookup backend ISBN livres.
 
 Ce lot pose les bases de l'acquisition assistee sans automatisation externe. Les identifiants sont des champs metadata declares par plugin et stockes dans `items.metadata`.
 
-Aucune table SQLite, migration, camera, scan mobile, API externe, lookup, pre-remplissage automatique ou dedoublonnage global n'est ajoute dans cette phase.
+Aucune table SQLite, migration, camera, scan mobile, pre-remplissage automatique, import d'image ou dedoublonnage global n'est ajoute dans cette phase.
 
 ## Champs Supportes
 
@@ -47,18 +47,133 @@ La recherche large `search` peut retrouver une valeur normalisee. Pour les plugi
 
 Les filtres `isbn` et `barcode` valident et normalisent la valeur de query avant comparaison exacte avec `items.metadata`.
 
+## Architecture Backend Providers
+
+Toute communication avec un fournisseur externe passe par le backend. Le
+frontend ne doit pas appeler les providers directement.
+
+Principes :
+
+- les routes acquisition sont protegees par JWT comme les routes items utilisateur ;
+- les providers sont isoles derriere un registre backend ;
+- le mapping provider vers resultat CollectionMgnt est centralise dans le provider ;
+- aucune route acquisition ne cree ou modifie un item ;
+- aucune image n'est telechargee dans ce lot ;
+- les URLs de couverture peuvent etre retournees comme previsualisation distante ;
+- aucun secret provider n'est expose cote frontend.
+
+Provider livre :
+
+- `openlibrary`
+  - plugin : `books`
+  - capacite : `isbnLookup`
+  - configuration obligatoire : non
+  - secret requis : aucun
+
+## API Acquisition
+
+### `GET /api/acquisition/providers`
+
+Retourne les providers disponibles pour le backend.
+
+Exemple :
+
+```json
+{
+  "providers": [
+    {
+      "id": "openlibrary",
+      "name": "Open Library",
+      "plugin": "books",
+      "capabilities": ["isbnLookup"],
+      "enabled": true,
+      "requiresConfiguration": false
+    }
+  ]
+}
+```
+
+### `POST /api/acquisition/books/isbn/lookup`
+
+Recherche des suggestions de metadata livre depuis un ISBN.
+
+Body :
+
+```json
+{
+  "isbn": "9780140328721",
+  "provider": "openlibrary"
+}
+```
+
+Le champ `provider` est optionnel. S'il est absent, le backend utilise le
+provider actif par defaut pour `books` / `isbnLookup`.
+
+Reponse :
+
+```json
+{
+  "query": {
+    "plugin": "books",
+    "type": "isbn",
+    "value": "9780140328721"
+  },
+  "results": [
+    {
+      "provider": "openlibrary",
+      "confidence": "high",
+      "title": "Fantastic Mr. Fox",
+      "description": "",
+      "metadata": {
+        "isbn": "9780140328721",
+        "author": "Roald Dahl",
+        "publisher": "Puffin",
+        "publication_date": "1988-01-01"
+      },
+      "images": [
+        {
+          "url": "https://covers.openlibrary.org/b/id/123-L.jpg",
+          "kind": "cover",
+          "source": "openlibrary"
+        }
+      ],
+      "sourceUrl": "https://openlibrary.org/books/OL7353617M/Fantastic_Mr._Fox"
+    }
+  ]
+}
+```
+
+Erreurs stables :
+
+- `invalid_isbn` : ISBN invalide ;
+- `provider_not_found` : provider demande inconnu ;
+- `provider_unavailable` : aucun provider actif disponible ;
+- `provider_timeout` : timeout provider ;
+- `provider_error` : erreur provider non exploitable.
+
+Si Open Library ne trouve aucun resultat, la route retourne `200` avec
+`results: []`.
+
+Les suggestions sont destinees a pre-remplir un formulaire cote frontend dans un
+lot futur. La sauvegarde reste assuree par les routes items existantes
+`POST /api/items` et `PATCH /api/items/:id`, avec validation et normalisation
+backend habituelles.
+
 ## Hors Perimetre Actuel
 
-Cette phase ne fait que capturer des identifiants.
+Cette phase capture les identifiants et ajoute le lookup backend ISBN livres via
+Open Library.
 
 Non livre dans ce lot :
 
 - scan camera
 - scan mobile
 - lecture automatique de code-barres
-- lookup manuel
-- appel a des fournisseurs externes
-- pre-remplissage automatique de fiche
+- lookup code-barres
+- lookup films ou jeux video
+- pre-remplissage automatique cote frontend
+- import ou telechargement d'image
+- cache persistant
 - dedoublonnage global
 
 ## Phases Futures
