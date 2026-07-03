@@ -17,5 +17,6 @@ backups/
 *.db-wal
 *.log
 *.zip
+.IA/
 Thumbs.db
 TODO.md
