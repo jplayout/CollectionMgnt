@@ -1,6 +1,6 @@
 # Architecture
 
-Etat courant : v0.12-lot10.0.1.
+Etat courant : v0.12-lot11.3.
 
 Ce document est le point d'entree technique pour comprendre CollectionMgnt en
 moins de 30 minutes. Les documents specialises restent la source de detail pour
@@ -58,7 +58,8 @@ Ordre de bootstrap :
    - cree `DATA_DIR` si necessaire ;
    - ouvre `DATA_DIR/collection-manager.db` ;
    - applique `schema.sql` si la base n'existe pas encore ;
-   - applique la migration minimale `users.role` sur les bases existantes.
+   - applique les migrations applicatives minimales sur les bases existantes,
+     dont `users.role` et `acquisition_cache`.
 2. `buildApp()`
    - cree l'instance Fastify.
 3. `registerJwt(app)`
@@ -139,11 +140,43 @@ L'acquisition assistee utilise aussi une couche dediee dans
 - `acquisition-cache.js` gere le cache metier des lookups acquisition ;
 - `providers/*` contient les adaptateurs vers les fournisseurs externes.
 
-Les routes `/api/acquisition/*` restent responsables du HTTP et deleguent la
-validation metier, la normalisation, le choix du provider et la construction de
-la reponse a `AcquisitionService`. Le cache SQLite est optionnel et transparent :
-il stocke uniquement les reponses normalisees `{ query, results }` via un
-repository dedie, sans exposer d'information supplementaire dans l'API publique.
+Flux d'acquisition ISBN :
+
+```text
+Frontend
+    |
+    v
+Backend Route
+    |
+    v
+AcquisitionService
+    |
+    v
+AcquisitionCache
+    |
+    v
+ProviderRegistry
+    |
+    v
+Provider
+```
+
+Responsabilites :
+
+- Route : HTTP uniquement, validation minimale du body et traduction erreur vers
+  reponse HTTP.
+- `AcquisitionService` : orchestration, validation metier, normalisation,
+  selection provider implicite ou explicite et construction `{ query, results }`.
+- `AcquisitionCache` : cache metier transparent des reponses normalisees, sans
+  exposer de champ supplementaire dans l'API.
+- `ProviderRegistry` : inventaire et selection des providers disponibles.
+- Provider : adaptateur externe, appel reseau et mapping vers le contrat
+  CollectionMgnt.
+
+Le cache SQLite stocke uniquement les reponses normalisees `{ query, results }`
+via un repository dedie. Il ne stocke ni reponse brute provider, ni erreur, ni
+image binaire. En cas de miss, d'expiration ou d'entree corrompue, le service
+appelle le provider selectionne.
 
 ### Repositories
 
@@ -162,7 +195,8 @@ Principes :
 - les items partagent la table `items` ;
 - les champs propres aux plugins sont stockes dans `items.metadata` ;
 - les identifiants d'acquisition assistee (`isbn`, `barcode`) restent des champs
-  metadata plugin, sans table dediee ni migration SQLite ;
+  metadata plugin ;
+- le cache acquisition utilise une table dediee `acquisition_cache` ;
 - les medias ont une ligne dans `media` et des fichiers sous `DATA_DIR` ;
 - les preferences applicatives sont stockees dans `settings`.
 
@@ -245,7 +279,8 @@ Les composants reutilisables sont dans `frontend/src/components` :
 
 - navigation : `TopNavigation`, `UserMenu`, `BreadcrumbTrail` ;
 - collections/items : `CollectionCard`, `ItemCard`, `ItemList` ;
-- formulaires dynamiques : `DynamicForm`, `DynamicField` ;
+- formulaires dynamiques : `DynamicForm`, `DynamicField`,
+  `AcquisitionLookupField` ;
 - medias : `MediaGallery`, `MediaThumbnail`, `ImageUploader` ;
 - affichage : `DisplayPreferencesPanel`.
 
@@ -278,9 +313,11 @@ Les fondations responsive utilisent les conventions :
 
 1. Le frontend charge le schema plugin.
 2. `DynamicForm` genere les champs supportes.
-3. La validation frontend reste legere.
-4. Le backend revalide avec le schema avant insertion ou mise a jour.
-5. L'utilisateur est redirige vers la fiche item.
+3. Pour les livres, le champ ISBN peut declencher un lookup backend et
+   pre-remplir localement le formulaire apres choix utilisateur.
+4. La validation frontend reste legere.
+5. Le backend revalide avec le schema avant insertion ou mise a jour.
+6. L'utilisateur est redirige vers la fiche item.
 
 ### Medias
 

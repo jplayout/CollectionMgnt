@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot10.5.4.1.
-- Dernier lot livré : Lot 10.5.4.1 - Update / Rollback Foundations.
+- Version actuelle : v0.12-lot11.3.
+- Dernier lot livré : Lot 11.3 - Acquisition Cache Backend.
 
 Capacités disponibles :
 
@@ -21,6 +21,11 @@ Capacités disponibles :
 - Dataset officiel de démonstration importable via l'import JSON natif.
 - Script de pack média de démonstration avec images PNG générées et uploadées via l'API média.
 - CRUD items, validation dynamique, recherche, filtres, pagination, tri et vues cartes/liste.
+- Fondations identifiants `isbn` / `barcode` livrées pour livres, jeux, films et autres.
+- Lookup ISBN livre livré via Open Library, backend uniquement.
+- Pré-remplissage frontend local disponible dans le formulaire livre.
+- Orchestration acquisition livrée via `AcquisitionService`.
+- Cache SQLite backend livré pour les réponses de lookup acquisition normalisées.
 - Préférences d'affichage par collection/plugin.
 - Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
 - Exports JSON natifs, export CSV collection et import JSON natif non destructif.
@@ -49,12 +54,16 @@ Limites majeures connues :
 
 ### Haute priorité
 
+- Google Books fallback pour le lookup livres.
+- Import image/couverture après validation utilisateur.
 - Restauration ZIP guidée.
 - Import CSV CollectionMgnt.
 - Amélioration des rapports et historiques d'administration.
 
 ### Priorité moyenne
 
+- Providers films et jeux vidéo : TMDb, IGDB ou RAWG.
+- Scan caméra mobile en contexte HTTPS.
 - Import CSV externe depuis une autre application de gestion de collection.
 - Support backend des types plugin avancés restant à livrer : multiselect, url, email.
 - Gestion utilisateurs avancée et permissions fines.
@@ -247,18 +256,20 @@ Phase 2 — Scan mobile et tablette :
 
 Phase 3 — Lookup livres :
 
-- Premier cas cible recommandé : livres.
-- Recherche via Open Library et/ou Google Books.
-- Pré-remplissage possible :
+- Premier cas cible livré : livres.
+- Recherche via Open Library livrée.
+- Google Books reste prévu comme fallback futur.
+- Pré-remplissage disponible :
   - titre
   - auteur
   - éditeur
   - date de publication
-  - couverture
+- couverture en prévisualisation distante uniquement
 
 Phase 4 — Architecture fournisseurs :
 
 - Architecture backend extensible livrée via `AcquisitionService`, registre provider et providers isolés.
+- Cache SQLite acquisition livré pour les réponses normalisées.
 - Ne pas verrouiller CollectionMgnt sur un seul service externe.
 - Gérer les erreurs, quotas, indisponibilités et différences de qualité des sources.
 
@@ -266,6 +277,20 @@ Phase 5 — Extension progressive :
 
 - Étendre ensuite aux jeux vidéo, films, consoles et autres collections.
 - Création semi-automatique avec validation utilisateur avant enregistrement.
+
+#### Lot 11.0 - Acquisition Identifier Foundations - Livré
+
+- Champs `isbn` et `barcode` ajoutés aux plugins standards pertinents.
+- Validation et normalisation backend ISBN-10, ISBN-13, EAN-13 et UPC-A.
+- Recherche, filtres, import/export et UI alignés avec ces types.
+- Aucun champ identifiant ajouté aux consoles.
+
+#### Lot 11.1 - Backend Acquisition Provider Foundation - Livré
+
+- Routes backend acquisition introduites.
+- Provider Open Library livré pour le lookup ISBN livres.
+- Frontend non modifié dans ce lot.
+- Aucun secret obligatoire, aucune clé API requise.
 
 #### Lot 11.1.1 - Frontend ISBN Lookup - Livré
 
@@ -293,6 +318,37 @@ Phase 5 — Extension progressive :
 - Erreurs provider, timeouts, ISBN invalides, réponses brutes provider et images binaires non cachés.
 - Aucun fallback actif, aucun provider supplémentaire et aucun changement frontend dans ce lot.
 
+#### Lot 11.4 - Google Books Fallback - Prévu
+
+- Ajouter Google Books comme source livre complémentaire.
+- Préparer un fallback contrôlé Open Library -> Google Books.
+- Gérer la clé API comme configuration optionnelle si nécessaire.
+- Conserver le contrat API public existant.
+
+#### Lot 11.5 - Import Image - Prévu
+
+- Permettre l'import de couverture après validation utilisateur.
+- Passer par le système média existant.
+- Ne pas importer automatiquement une image sans action explicite.
+
+#### Lot 11.6 - TMDb - Prévu
+
+- Ajouter un provider films via TMDb.
+- Mapper les résultats vers les champs existants du plugin `movies`.
+- Gérer proprement secret API, quotas et erreurs.
+
+#### Lot 11.7 - IGDB / RAWG - Prévu
+
+- Ajouter un provider jeux vidéo via IGDB ou RAWG.
+- Mapper les résultats vers les champs existants du plugin `games`.
+- Choisir le provider selon qualité, contraintes API et facilité d'auto-hébergement.
+
+#### Lot 11.8 - Scan caméra - Prévu
+
+- Ajouter le scan caméra mobile en contexte HTTPS.
+- Séparer strictement scan et lookup : le scan remplit `isbn` ou `barcode`, puis le backend effectue le lookup.
+- Prévoir `BarcodeDetector` quand disponible et un fallback JavaScript si nécessaire.
+
 Contraintes :
 
 - Fonctionnalité optionnelle.
@@ -316,6 +372,33 @@ Contraintes :
 - Sauvegarde automatique.
 - Export complet.
 - Politique de rétention.
+
+### 12 — Internationalization & Localization
+
+La langue de l’interface et la langue des métadonnées sont deux concepts distincts.
+
+#### 12.0 - Foundation
+
+- Clarifier le modèle i18n existant.
+- Définir le stockage des préférences de langue.
+- Distinguer langue UI, formats régionaux et langue des métadonnées.
+
+#### 12.1 - UI translations
+
+- Brancher les traductions UI existantes.
+- Permettre le changement de langue dans l'interface.
+- Couvrir les libellés principaux des pages, formulaires et erreurs.
+
+#### 12.2 - Metadata language preferences
+
+- Permettre de choisir une langue préférée pour les métadonnées récupérées.
+- Préparer les providers qui acceptent une langue ou une région.
+- Conserver les données déjà saisies par l'utilisateur.
+
+#### 12.3 - Regional preferences
+
+- Gérer les formats de date, nombres et préférences régionales.
+- Préparer les différences de pays pour les providers et codes-barres.
 
 ### Médias
 
@@ -364,19 +447,6 @@ Contraintes :
 - Figurines.
 - LEGO.
 - Cartes Pokémon.
-
-### Internationalisation
-
-- Support multilingue.
-- Français.
-- Anglais.
-- Changement de langue.
-- Préférences utilisateur.
-- Internationalisation / changement de langue :
-  - option dans le menu utilisateur ou administration
-  - probablement FR / EN au départ
-  - préférence persistée côté utilisateur ou settings
-  - ne pas se limiter à traduire le README
 
 ### Responsive
 
