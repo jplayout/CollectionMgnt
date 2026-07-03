@@ -40,6 +40,13 @@ manuel.
 Le workflow CodeQL `.github/workflows/codeql.yml` analyse le code JavaScript sur
 push `main`, pull request et declenchement manuel.
 
+Le workflow Semgrep `.github/workflows/semgrep.yml` execute un scan SAST
+complementaire a CodeQL sur push `main`, pull request et declenchement manuel.
+Il utilise `semgrep scan` avec les regles par defaut Semgrep, cible les sources
+JavaScript/Vue/Node et reste en mode observation non bloquant avec
+`continue-on-error`. Le workflow ne requiert pas `SEMGREP_APP_TOKEN` ; une
+connexion future a Semgrep App pourra etre ajoutee via ce secret.
+
 Le workflow Trivy `.github/workflows/trivy.yml` execute des scans de securite
 non bloquants sur push `main`, pull request et declenchement manuel :
 
@@ -103,6 +110,12 @@ docker build -t collectionmgnt-backend:trivy ./backend
 docker build -t collectionmgnt-frontend:trivy ./frontend
 trivy image --scanners vuln --vuln-type os,library collectionmgnt-backend:trivy
 trivy image --scanners vuln --vuln-type os,library collectionmgnt-frontend:trivy
+```
+
+Semgrep local, si le binaire est installe :
+
+```bash
+semgrep scan --config p/default --metrics=off --include='*.js' --include='*.mjs' --include='*.cjs' --include='*.vue' .
 ```
 
 Qualite Git :

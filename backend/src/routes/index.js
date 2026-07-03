@@ -13,6 +13,9 @@ from '../media/routes.js';
 import exportsRoutes
 from './exports.js';
 
+import acquisitionRoutes
+from './acquisition.js';
+
 import adminMediaAuditRoutes
 from './admin-media-audit.js';
 
@@ -58,6 +61,10 @@ export async function registerRoutes(
 
             await protectedRoutes.register(
                 exportsRoutes
+            );
+
+            await protectedRoutes.register(
+                acquisitionRoutes
             );
 
             await protectedRoutes.register(
