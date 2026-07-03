@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot10.5.4.1
+Version : v0.12-lot11.3
 
 ## État du projet
 
@@ -16,6 +16,15 @@ Frontend :
 - Édition item : formulaire dynamique frontend disponible
 - Suppression item : disponible depuis la fiche item
 - Médias : backend disponible, galerie frontend minimale disponible
+- Acquisition assistée livres : lookup ISBN et pré-remplissage local disponibles
+
+Lots acquisition terminés :
+
+- 11.0 : fondations identifiants `isbn` / `barcode`
+- 11.1 : fondation backend providers avec Open Library
+- 11.1.1 : lookup ISBN frontend et pré-remplissage local
+- 11.2 : couche d'orchestration `AcquisitionService`
+- 11.3 : cache SQLite backend pour les lookups acquisition
 
 ---
 
@@ -36,6 +45,9 @@ Frontend :
   - `consoles`
   - `others`
 - Fondations d'acquisition assistée livrées : champs identifiants `books.isbn`, `games.barcode`, `movies.barcode` et `others.barcode`
+- Lookup ISBN livre livré via backend provider Open Library
+- Orchestration acquisition livrée via `AcquisitionService`
+- Cache SQLite acquisition livré via `acquisition_cache`
 - Aucun champ ISBN, EAN, UPC ou code-barres sur le plugin `consoles` à ce stade
 - Dataset officiel de démonstration disponible dans `demo/datasets/collectionmgnt-demo-v1.json`
 - Dataset de démonstration importable via l'import JSON natif existant
@@ -63,6 +75,41 @@ Frontend :
 - Export CSV simple par collection
 - Neutralisation des cellules CSV commencant par `=`, `+`, `-` ou `@` pour limiter l'interpretation comme formule par les tableurs
 - Dataset de démonstration : 5 collections, 94 items, quelques ISBN/codes-barres checksum-valides et tableaux `media` vides
+
+### Acquisition assistée
+
+- Champs identifiants standards :
+  - `books.isbn`
+  - `games.barcode`
+  - `movies.barcode`
+  - `others.barcode`
+- Validation et normalisation backend :
+  - ISBN-10
+  - ISBN-13
+  - EAN-13
+  - UPC-A
+- Recherche et filtres compatibles avec `isbn` et `barcode`
+- API providers disponible via `GET /api/acquisition/providers`
+- Lookup ISBN livre disponible via `POST /api/acquisition/books/isbn/lookup`
+- Provider livré : `openlibrary`, sans clé API obligatoire
+- Architecture backend :
+  - route acquisition
+  - `AcquisitionService`
+  - `AcquisitionCache`
+  - `ProviderRegistry`
+  - provider externe
+- Cache SQLite transparent :
+  - table `acquisition_cache`
+  - clé incluant plugin, capacité, provider, version de mapping et identifiant normalisé
+  - résultats avec suggestions cachés 7 jours
+  - résultats vides cachés 24 heures
+  - erreurs provider, timeouts et ISBN invalides non cachés
+  - aucune réponse brute provider ni image binaire stockée
+- Réponse API inchangée, sans champ `cached`
+- Aucun fallback Google Books actif
+- Aucun lookup code-barres films/jeux/autres livré
+- Aucun scan caméra livré
+- Aucun import automatique d'image livré
 
 ### Médias
 
@@ -208,6 +255,14 @@ Frontend :
   - création via `POST /api/items`
   - édition via `PATCH /api/items/:id`
   - redirection vers `/items/:id` après création ou édition
+- Lookup ISBN dans le formulaire livre :
+  - bouton `Rechercher` adjacent au champ ISBN
+  - appel du backend CollectionMgnt uniquement
+  - aucun appel direct à Open Library depuis le frontend
+  - suggestions provider-agnostic
+  - bouton `Utiliser` pour appliquer une suggestion
+  - pré-remplissage local sans sauvegarde automatique
+  - champs déjà remplis conservés, sauf normalisation possible de `metadata.isbn`
 - Galerie médias frontend minimale
 - Page Administration MVP avec sections Données, Sauvegarde, Médias et Système
 - Accès Administration depuis le menu utilisateur
@@ -332,6 +387,11 @@ Frontend :
 - `GET /api/admin/system-summary`
 - `POST /api/admin/imports/native-json`
 
+### Acquisition
+
+- `GET /api/acquisition/providers`
+- `POST /api/acquisition/books/isbn/lookup`
+
 ### Exports
 
 - `GET /api/exports/application.json`
@@ -421,6 +481,10 @@ Variables disponibles :
 - JWT pour l'authentification
 - Plugins dynamiques comme unité fonctionnelle
 - Métadonnées stockées en JSON
+- Identifiants acquisition stockés comme champs métier `isbn` / `barcode` dans `items.metadata`
+- Providers acquisition appelés uniquement depuis le backend
+- `AcquisitionService` comme couche d'orchestration entre routes et providers
+- Cache SQLite acquisition transparent, sans changement d'API publique
 - Déploiement Docker auto-hébergé
 - Plateforme prioritaire/testée/documentée : Synology NAS
 - Compatible avec tout environnement Docker disposant d'un volume persistant

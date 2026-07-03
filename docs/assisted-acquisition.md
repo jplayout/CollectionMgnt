@@ -1,12 +1,15 @@
 # Assisted Acquisition
 
-Etat courant : fondations identifiants, lookup backend ISBN livres et
-pre-remplissage frontend local pour les livres.
+Etat courant : fondations identifiants, lookup backend ISBN livres,
+pre-remplissage frontend local pour les livres, orchestration backend et cache
+SQLite acquisition.
 
-Ce lot pose les bases de l'acquisition assistee sans automatisation externe. Les identifiants sont des champs metadata declares par plugin et stockes dans `items.metadata`.
+Les identifiants sont des champs metadata declares par plugin et stockes dans
+`items.metadata`. Le lookup ISBN livres est disponible via le backend
+CollectionMgnt avec Open Library comme premier provider.
 
-Aucune table SQLite, migration, camera, scan mobile, sauvegarde automatique,
-import d'image ou dedoublonnage global n'est ajoute dans cette phase.
+Aucune camera, scan mobile, sauvegarde automatique, import d'image ou
+dedoublonnage global n'est disponible a ce stade.
 
 ## Champs Supportes
 
@@ -69,9 +72,19 @@ Principes :
 - les URLs de couverture peuvent etre retournees comme previsualisation distante ;
 - aucun secret provider n'est expose cote frontend.
 
-Cette orchestration prepare les providers multiples, un futur fallback, le cache
-et les quotas sans modifier l'API publique existante ni activer de fallback dans
-ce lot.
+Flux interne :
+
+```text
+Frontend
+  -> Backend Route
+  -> AcquisitionService
+  -> AcquisitionCache
+  -> ProviderRegistry
+  -> Provider
+```
+
+Cette orchestration prepare les providers multiples, un futur fallback et les
+quotas sans modifier l'API publique existante ni activer de fallback a ce stade.
 
 Le lookup ISBN utilise un cache backend SQLite transparent :
 
@@ -176,10 +189,10 @@ Erreurs stables :
 Si Open Library ne trouve aucun resultat, la route retourne `200` avec
 `results: []`.
 
-Les suggestions sont destinees a pre-remplir un formulaire cote frontend dans un
-lot futur. La sauvegarde reste assuree par les routes items existantes
-`POST /api/items` et `PATCH /api/items/:id`, avec validation et normalisation
-backend habituelles.
+Les suggestions servent a pre-remplir localement le formulaire cote frontend
+apres choix explicite de l'utilisateur. La sauvegarde reste assuree par les
+routes items existantes `POST /api/items` et `PATCH /api/items/:id`, avec
+validation et normalisation backend habituelles.
 
 ## Lookup Frontend ISBN
 
@@ -229,15 +242,16 @@ Non livre dans ce lot :
 - lookup films ou jeux video
 - pre-remplissage avec sauvegarde automatique
 - import ou telechargement d'image
-- cache persistant
 - dedoublonnage global
 
 ## Phases Futures
 
 Les phases suivantes pourront s'appuyer sur ces champs :
 
-- lookup manuel depuis une fiche ou un formulaire
+- fallback Google Books pour les livres
+- import image ou couverture apres validation utilisateur
+- provider TMDb pour les films
+- provider IGDB ou RAWG pour les jeux video
 - fournisseurs externes configurables
 - scan camera mobile en contexte HTTPS
-- aide au pre-remplissage controlee par l'utilisateur
 - dedoublonnage assiste par collection ou multi-collections

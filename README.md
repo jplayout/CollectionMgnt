@@ -31,7 +31,7 @@ Cas d'usage :
 ## Fonctionnalités
 
 - Plugins de collections déclaratifs.
-- Schémas dynamiques avec champs `text`, `textarea`, `select`, `checkbox`, `date`, `number` et `rating`.
+- Schémas dynamiques avec champs `text`, `textarea`, `select`, `checkbox`, `date`, `number`, `rating`, `isbn` et `barcode`.
 - CRUD items : création, consultation, modification et suppression.
 - Recherche large sur titre, description et champs déclarés `searchable`.
 - Filtres dynamiques sur les champs déclarés `filterable`.
@@ -47,6 +47,7 @@ Cas d'usage :
 - Audit média global en lecture seule.
 - Nettoyage média manuel guidé des candidats disque sûrs.
 - Sauvegarde ZIP complète téléchargeable.
+- Acquisition assistée pour les livres : lookup ISBN via le backend, suggestions provider-agnostic et pré-remplissage local du formulaire.
 
 ## Démonstration
 
@@ -56,11 +57,13 @@ Le dataset contient 94 items répartis entre jeux vidéo, livres, films, console
 
 ## État du projet
 
-Version actuelle : **v0.12-lot10.5.1**
+Version actuelle : **v0.12-lot11.3**
 
-Le projet est utilisable pour des collections réelles, mais reste en développement actif. Certaines fonctions avancées sont encore prévues, notamment la restauration ZIP guidée, les imports CSV avancés, la gestion utilisateur plus fine et l'amélioration des rapports d'administration.
+Le projet est utilisable pour des collections réelles, avec un socle mature : authentification, médias, export/import, sauvegarde ZIP, déploiement Docker/Podman/Synology, CI, E2E Playwright et scans sécurité. Certaines fonctions avancées restent prévues, notamment la restauration ZIP guidée, les imports CSV avancés, la gestion utilisateur plus fine, l'amélioration des rapports d'administration et l'extension progressive de l'acquisition assistée au-delà des livres.
 
 Après connexion, l'utilisateur arrive directement sur `/collections`. Les routes authentifiées utilisent un layout global avec une barre supérieure persistante, la marque `CollectionMgnt` cliquable vers Collections et un menu utilisateur donnant accès à Administration, Mon compte (à venir) et Déconnexion. La route `/dashboard` reste disponible uniquement comme compatibilité et redirige vers `/collections`.
+
+L'acquisition assistée est disponible pour les livres : le champ ISBN propose un bouton `Rechercher`, le frontend appelle uniquement le backend CollectionMgnt, puis l'utilisateur choisit explicitement une suggestion pour pré-remplir le formulaire. Aucune sauvegarde automatique ni import d'image automatique n'est effectué.
 
 ## Captures d'écran
 
@@ -193,7 +196,7 @@ Des images prébuildées sont publiées sur GitHub Container Registry :
 - Vue Router
 - Pinia
 - Vite
-- Interface authentifiée avec layout global, collections, items, médias et administration
+- Interface authentifiée avec layout global, collections, items, médias, administration et lookup ISBN pour les livres
 
 ### Backend
 
@@ -203,10 +206,32 @@ Des images prébuildées sont publiées sur GitHub Container Registry :
 - `better-sqlite3`
 - Sharp pour la validation et génération d'images
 - Archiver pour les sauvegardes ZIP
+- AcquisitionService pour l'orchestration des lookups assistés
+- Providers backend uniquement, avec Open Library comme premier provider livre
 
 ### SQLite
 
-La base locale contient les utilisateurs, plugins synchronisés, settings, items et métadonnées média. En développement, elle est stockée sous `backend/data/collection-manager.db` par défaut.
+La base locale contient les utilisateurs, plugins synchronisés, settings, items, métadonnées média et cache d'acquisition assistée. En développement, elle est stockée sous `backend/data/collection-manager.db` par défaut.
+
+### Acquisition assistée
+
+Le lookup ISBN suit une architecture backend :
+
+```text
+Frontend
+  ↓
+Backend Route
+  ↓
+AcquisitionService
+  ↓
+AcquisitionCache SQLite
+  ↓
+ProviderRegistry
+  ↓
+Provider externe
+```
+
+Le cache stocke uniquement les réponses normalisées `{ query, results }`, jamais les réponses brutes provider ni les images binaires.
 
 ### Plugins
 
@@ -242,11 +267,13 @@ Elle contient :
 - `media/uploads/items/...` si des médias existent ;
 - `plugins/...` si le dossier plugins est disponible.
 
-La copie SQLite est créée de façon cohérente avant archivage. La sauvegarde ZIP ne fournit pas encore de restauration dans `v0.12-lot10.0.1`.
+La copie SQLite est créée de façon cohérente avant archivage. La sauvegarde ZIP ne fournit pas encore de restauration.
 
 Pour les mises à jour, le rollback le plus sûr repose sur la conservation du tag ou digest image, une copie complète du volume persistant et la configuration runtime. Voir `docs/deployment/update-rollback.md`.
 
 ## Données locales et sécurité
+
+La qualité et la sécurité sont vérifiées par GitHub Actions : tests backend, build frontend, Playwright E2E, CodeQL, Semgrep SAST, Trivy en mode observation et Dependabot.
 
 Ne jamais publier :
 
@@ -320,7 +347,7 @@ Use cases:
 ## Features
 
 - Declarative collection plugins.
-- Dynamic schemas with `text`, `textarea`, `select`, `checkbox`, `date`, `number` and `rating` fields.
+- Dynamic schemas with `text`, `textarea`, `select`, `checkbox`, `date`, `number`, `rating`, `isbn` and `barcode` fields.
 - Item CRUD: create, read, update and delete.
 - Broad search on title, description and fields marked as `searchable`.
 - Dynamic filters on fields marked as `filterable`.
@@ -336,6 +363,7 @@ Use cases:
 - Read-only global media audit.
 - Guided manual media cleanup for safe filesystem candidates.
 - Downloadable full ZIP backup.
+- Assisted acquisition for books: backend ISBN lookup, provider-agnostic suggestions and local form prefill.
 
 ## Demo
 
@@ -345,11 +373,13 @@ The dataset contains 94 items across video games, books, movies, consoles and mi
 
 ## Project Status
 
-Current version: **v0.12-lot10.5.1**
+Current version: **v0.12-lot11.3**
 
-The project is usable for real collections, but it is still under active development. Planned areas include guided ZIP restore, advanced CSV imports, finer user management and improved administration reports.
+The project is usable for real collections and now has a mature foundation: authentication, media, export/import, ZIP backup, Docker/Podman/Synology deployment, CI, Playwright E2E and security scans. Planned areas include guided ZIP restore, advanced CSV imports, finer user management, improved administration reports and assisted acquisition beyond books.
 
 After login, users land directly on `/collections`. Authenticated routes use a global layout with a persistent top bar, the `CollectionMgnt` brand linking to Collections, and a user menu with Administration, a coming-soon account entry and sign out. The `/dashboard` route remains only as a compatibility redirect to `/collections`.
+
+Assisted acquisition is available for books: the ISBN field exposes a `Rechercher` button, the frontend only calls the CollectionMgnt backend, and the user explicitly selects a suggestion to prefill the form. No automatic save or automatic image import is performed.
 
 ## Screenshots
 
@@ -459,7 +489,7 @@ Prebuilt images are published on GitHub Container Registry:
 - Vue Router
 - Pinia
 - Vite
-- Authenticated interface with global layout, collections, items, media and administration pages
+- Authenticated interface with global layout, collections, items, media, administration pages and ISBN lookup for books
 
 ### Backend
 
@@ -469,10 +499,32 @@ Prebuilt images are published on GitHub Container Registry:
 - `better-sqlite3`
 - Sharp for image validation and generation
 - Archiver for ZIP backups
+- AcquisitionService for assisted lookup orchestration
+- Backend-only providers, with Open Library as the first book provider
 
 ### SQLite
 
-The local database stores users, synchronized plugins, settings, items and media metadata. In development, it defaults to `backend/data/collection-manager.db`.
+The local database stores users, synchronized plugins, settings, items, media metadata and the assisted acquisition cache. In development, it defaults to `backend/data/collection-manager.db`.
+
+### Assisted Acquisition
+
+ISBN lookup uses a backend architecture:
+
+```text
+Frontend
+  ↓
+Backend Route
+  ↓
+AcquisitionService
+  ↓
+AcquisitionCache SQLite
+  ↓
+ProviderRegistry
+  ↓
+External provider
+```
+
+The cache stores only normalized `{ query, results }` responses, never raw provider responses or binary images.
 
 ### Plugins
 
@@ -508,11 +560,13 @@ It contains:
 - `media/uploads/items/...` when media files exist;
 - `plugins/...` when the plugins directory is available.
 
-The SQLite copy is created consistently before archiving. ZIP restore is not implemented yet in `v0.12-lot10.0.1`.
+The SQLite copy is created consistently before archiving. ZIP restore is not implemented yet.
 
 For updates, the safest rollback path relies on keeping the image tag or digest, a full persistent volume copy and the runtime configuration. See `docs/deployment/update-rollback.md`.
 
 ## Local Data and Security
+
+Quality and security are checked through GitHub Actions: backend tests, frontend build, Playwright E2E, CodeQL, Semgrep SAST, Trivy in observation mode and Dependabot.
 
 Never publish:
 
