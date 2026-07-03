@@ -284,6 +284,15 @@ Phase 5 — Extension progressive :
 - `ProviderRegistry` conservé comme inventaire/sélection des providers.
 - Aucun fallback actif, aucun cache et aucun provider supplémentaire dans ce lot.
 
+#### Lot 11.3 - Acquisition Cache Backend - Livré
+
+- Cache SQLite backend ajouté pour les lookups acquisition.
+- Réponses API publiques inchangées, sans champ `cached`.
+- Seules les réponses normalisées `{ query, results }` sont stockées.
+- Résultats avec suggestions cachés 7 jours, résultats vides cachés 24 heures.
+- Erreurs provider, timeouts, ISBN invalides, réponses brutes provider et images binaires non cachés.
+- Aucun fallback actif, aucun provider supplémentaire et aucun changement frontend dans ce lot.
+
 Contraintes :
 
 - Fonctionnalité optionnelle.

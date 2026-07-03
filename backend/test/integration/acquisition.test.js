@@ -157,7 +157,7 @@ test(
 
         const response =
             await lookupIsbn(
-                '9780140328721'
+                '9780306406157'
             );
 
         assert.equal(
@@ -174,10 +174,100 @@ test(
                     type:
                         'isbn',
                     value:
-                        '9780140328721'
+                        '9780306406157'
                 },
                 results: []
             }
+        );
+
+    }
+);
+
+test(
+    'POST /api/acquisition/books/isbn/lookup keeps the public response unchanged on cache hit',
+    async () => {
+
+        let calls =
+            0;
+
+        fetchHandler =
+            async url => {
+
+                calls += 1;
+
+                assert.match(
+                    String(url),
+                    /bibkeys=ISBN%3A9780590353427/
+                );
+
+                return createJsonResponse({
+                    'ISBN:9780590353427': {
+                        authors: [
+                            {
+                                name:
+                                    'J. K. Rowling'
+                            }
+                        ],
+                        publish_date:
+                            'September 1, 1998',
+                        publishers: [
+                            {
+                                name:
+                                    'Scholastic'
+                            }
+                        ],
+                        title:
+                            'Harry Potter and the Sorcerer\'s Stone'
+                    }
+                });
+
+            };
+
+        const firstResponse =
+            await lookupIsbn(
+                '9780590353427'
+            );
+
+        fetchHandler =
+            async () => {
+
+                throw new Error(
+                    'fetch should not be called on cache hit'
+                );
+
+            };
+
+        const secondResponse =
+            await lookupIsbn(
+                '9780590353427'
+            );
+
+        assert.equal(
+            firstResponse.statusCode,
+            200
+        );
+
+        assert.equal(
+            secondResponse.statusCode,
+            200
+        );
+
+        assert.equal(
+            calls,
+            1
+        );
+
+        assert.deepEqual(
+            secondResponse.json(),
+            firstResponse.json()
+        );
+
+        assert.equal(
+            Object.hasOwn(
+                secondResponse.json(),
+                'cached'
+            ),
+            false
         );
 
     }
@@ -306,7 +396,7 @@ test(
 
         const response =
             await lookupIsbn(
-                '9780140328721'
+                '9783161484100'
             );
 
         assert.equal(
@@ -370,4 +460,3 @@ function authHeaders() {
     };
 
 }
-

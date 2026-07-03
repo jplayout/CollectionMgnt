@@ -136,11 +136,14 @@ L'acquisition assistee utilise aussi une couche dediee dans
 - `acquisition-service.js` orchestre les cas d'usage acquisition, dont le lookup
   ISBN livre ;
 - `provider-registry.js` inventorie et selectionne les providers disponibles ;
+- `acquisition-cache.js` gere le cache metier des lookups acquisition ;
 - `providers/*` contient les adaptateurs vers les fournisseurs externes.
 
 Les routes `/api/acquisition/*` restent responsables du HTTP et deleguent la
 validation metier, la normalisation, le choix du provider et la construction de
-la reponse a `AcquisitionService`.
+la reponse a `AcquisitionService`. Le cache SQLite est optionnel et transparent :
+il stocke uniquement les reponses normalisees `{ query, results }` via un
+repository dedie, sans exposer d'information supplementaire dans l'API publique.
 
 ### Repositories
 

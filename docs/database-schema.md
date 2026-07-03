@@ -1,6 +1,6 @@
 # Database Schema
 
-Etat courant : v0.12-lot10.0.1.
+Etat courant : v0.12-lot11.3.
 
 La source de verite SQL est `backend/src/database/schema.sql`.
 Ce document explique le modele pour comprendre la base sans ouvrir le fichier
@@ -31,6 +31,7 @@ plugins 1 --- n items 1 --- n media
 items 1 --- n loans
 users 1 --- n audit_logs
 settings : cle/valeur applicative
+acquisition_cache : cache backend des lookups acquisition
 schema_info : version de schema
 ```
 
@@ -185,6 +186,27 @@ Journal d'audit prevu pour evolutions futures.
 Cette table existe dans le schema mais n'est pas encore au coeur des flux
 fonctionnels.
 
+### acquisition_cache
+
+Cache backend transparent pour les lookups d'acquisition assistee.
+
+| Champ | Type | Contraintes | Description |
+| --- | --- | --- | --- |
+| cache_key | TEXT | PRIMARY KEY | Cle stable du lookup |
+| plugin | TEXT | NOT NULL | Plugin concerne, par exemple `books` |
+| capability | TEXT | NOT NULL | Capacite provider, par exemple `isbnLookup` |
+| identifier | TEXT | NOT NULL | Identifiant normalise, par exemple ISBN sans tirets |
+| provider_id | TEXT | NOT NULL | Provider utilise |
+| mapping_version | INTEGER | NOT NULL | Version du mapping normalise |
+| status | TEXT | NOT NULL, CHECK IN `success`, `empty` | Type de resultat cache |
+| response_json | TEXT | NOT NULL, CHECK(json_valid(response_json)) | Reponse normalisee `{ query, results }` |
+| created_at | DATETIME | NOT NULL DEFAULT CURRENT_TIMESTAMP | Date d'ecriture |
+| expires_at | DATETIME | NOT NULL | Date d'expiration |
+
+Le cache ne stocke pas les reponses brutes provider, les erreurs, les timeouts,
+les ISBN invalides ou les images binaires. Il est ignore si une entree est
+expiree ou non parsable.
+
 ### schema_info
 
 Version du schema SQLite.
@@ -197,12 +219,12 @@ Valeur initiale :
 
 ```sql
 INSERT INTO schema_info(version)
-VALUES (2);
+VALUES (3);
 ```
 
 Le schema dispose d'une migration applicative minimale pour ajouter `users.role`
-aux bases existantes. Il n'existe pas encore de systeme de migrations
-versionnees complet.
+aux bases existantes et creer `acquisition_cache` sur les bases v2. Il n'existe
+pas encore de systeme de migrations versionnees complet.
 
 ## Index Principaux
 
@@ -216,10 +238,12 @@ Index declares :
 - `idx_audit_logs_created_at` sur `audit_logs(created_at)` ;
 - `idx_audit_logs_entity` sur `audit_logs(entity_type, entity_id)` ;
 - `idx_audit_logs_user` sur `audit_logs(user_id)` ;
-- `idx_items_title` sur `items(title)`.
+- `idx_items_title` sur `items(title)` ;
+- `idx_acquisition_cache_expires_at` sur `acquisition_cache(expires_at)`.
 
 Ces index soutiennent les listes par plugin, les medias par item, les prets, les
-tags et les futurs audits applicatifs.
+tags, les futurs audits applicatifs et le nettoyage des entrees de cache
+expirees.
 
 ## Contraintes Importantes
 

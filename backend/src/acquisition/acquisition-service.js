@@ -10,8 +10,12 @@ import {
 export class AcquisitionService {
 
     constructor({
+        acquisitionCache = null,
         providerRegistry
     }) {
+
+        this.acquisitionCache =
+            acquisitionCache;
 
         this.providerRegistry =
             providerRegistry;
@@ -61,12 +65,39 @@ export class AcquisitionService {
                         'books'
                 });
 
+        const resolvedProviderId =
+            provider.describe().id;
+
+        const cacheContext = {
+            capability:
+                'isbnLookup',
+            identifier:
+                normalizedIsbn,
+            plugin:
+                'books',
+            providerId:
+                resolvedProviderId
+        };
+
+        const cachedResponse =
+            this.acquisitionCache?.get(
+                cacheContext
+            );
+
+        if (
+            cachedResponse
+        ) {
+
+            return cachedResponse;
+
+        }
+
         const results =
             await provider.lookupIsbn(
                 normalizedIsbn
             );
 
-        return {
+        const response = {
             query: {
                 plugin:
                     'books',
@@ -78,7 +109,13 @@ export class AcquisitionService {
             results
         };
 
+        this.acquisitionCache?.set({
+            ...cacheContext,
+            response
+        });
+
+        return response;
+
     }
 
 }
-

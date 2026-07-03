@@ -82,12 +82,25 @@ CREATE TABLE audit_logs (
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
+CREATE TABLE acquisition_cache (
+    cache_key TEXT PRIMARY KEY,
+    plugin TEXT NOT NULL,
+    capability TEXT NOT NULL,
+    identifier TEXT NOT NULL,
+    provider_id TEXT NOT NULL,
+    mapping_version INTEGER NOT NULL,
+    status TEXT NOT NULL CHECK(status IN ('success', 'empty')),
+    response_json TEXT NOT NULL CHECK(json_valid(response_json)),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL
+);
+
 CREATE TABLE schema_info (
     version INTEGER NOT NULL
 );
 
 INSERT INTO schema_info(version)
-VALUES (2);
+VALUES (3);
 
 CREATE INDEX idx_items_plugin_id ON items(plugin_id);
 CREATE INDEX idx_item_tags_tag_id ON item_tags(tag_id);
@@ -98,3 +111,4 @@ CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
 CREATE INDEX idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
 CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
 CREATE INDEX idx_items_title ON items(title);
+CREATE INDEX idx_acquisition_cache_expires_at ON acquisition_cache(expires_at);
