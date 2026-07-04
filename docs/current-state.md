@@ -200,9 +200,11 @@ Lots acquisition terminés :
 - Workflow Project Conventions disponible pour rendre bloquants les titres de PR,
   les noms de branche en PR, la vérification whitespace du diff de PR,
   markdownlint et les liens Markdown internes
-- Lot 14.1 en cours : durcissement des workflows existants avec concurrence,
+- Durcissement 14.1 disponible : workflows existants avec concurrence,
   permissions minimales, Semgrep bloquant et Trivy bloquant sur `HIGH` /
   `CRITICAL`
+- Gouvernance GitHub 14.2 en cours : CODEOWNERS, template PR, politique de
+  sécurité et documentation des réglages GitHub versionnés ou non versionnables
 - Contrôles de conventions indépendants du code applicatif et des tests
   fonctionnels
 
@@ -530,6 +532,8 @@ Variables disponibles :
 - Workflow CodeQL `.github/workflows/codeql.yml` pour l'analyse JavaScript
 - Workflow Semgrep `.github/workflows/semgrep.yml` pour le scan SAST complémentaire à CodeQL
 - Workflow Trivy `.github/workflows/trivy.yml` pour les scans de sécurité bloquants selon la politique `HIGH` / `CRITICAL`
+- CODEOWNERS minimal, template Pull Request et politique de sécurité disponibles
+- Documentation de gouvernance GitHub dans `docs/github-governance.md`
 - Dependabot configuré dans `.github/dependabot.yml` pour backend npm, frontend npm et GitHub Actions
 - Dette sécurité `@fastify/jwt` / `fast-jwt` traitée par migration vers `@fastify/jwt` `10.1.0`
 - Node 22 utilisé pour les vérifications backend et frontend

@@ -37,6 +37,7 @@ Capacités disponibles :
 - Playwright E2E MVP côté frontend avec Chromium, dataset de démonstration et `DATA_DIR` temporaire.
 - CI GitHub Actions, CodeQL, Semgrep, Dependabot, publication GHCR multi-architecture et builds Docker/Podman documentés.
 - Workflow GitHub Actions Project Conventions livré pour bloquer les écarts de conventions PR, branches, whitespace, Markdown et liens internes.
+- Gouvernance GitHub en cours de documentation : CODEOWNERS, template PR, politique de sécurité et règles GitHub à configurer.
 - Base Compose Synology disponible avec images GHCR `linux/amd64` et `linux/arm64`, volume persistant explicite configurable et backend non exposé sur l'hôte.
 - Guide de déploiement Synology DSM / Container Manager disponible.
 - Guide HTTPS / Reverse Proxy DSM disponible, avec recommandation de proxy vers le frontend uniquement.
@@ -90,7 +91,8 @@ Limites majeures connues :
 - Lot 10.3.1 Migration `@fastify/jwt` livré : dette sécurité `fast-jwt` traitée par mise à jour vers `@fastify/jwt` `10.1.0`.
 - Lot 10.3.2 Trivy Security Scanning livré : scans dépendances et images conteneur en mode non bloquant.
 - Lot 11.0.1 Semgrep SAST GitHub Action livré : scan SAST complémentaire à CodeQL en mode observation non bloquant.
-- Lot 14.1 CI Hardening en cours : Semgrep et Trivy deviennent bloquants selon une politique explicite.
+- Lot 14.1 CI Hardening livré : Semgrep et Trivy deviennent bloquants selon une politique explicite.
+- Lot 14.2 GitHub Governance en cours : CODEOWNERS, template PR, politique de sécurité et documentation de gouvernance GitHub.
 - Lot 10.5.3 HTTPS / Reverse Proxy DSM livré : documentation HTTPS DSM avec backend non exposé.
 - Détail complet conservé dans `Historique des lots livrés > Sécurité`.
 
@@ -493,15 +495,21 @@ Travaux futurs :
 - Vérifier les titres de Pull Request, les noms de branche, `git diff --check`, le lint Markdown et les liens Markdown internes.
 - Conserver ces contrôles indépendants du code applicatif et des tests fonctionnels.
 
-#### Lot 14.1 - CI hardening - En cours
+#### Lot 14.1 - CI hardening - Livré
 
 - Rendre Semgrep bloquant sur les findings détectés par les règles configurées.
 - Rendre Trivy bloquant sur les vulnérabilités `HIGH` et `CRITICAL`.
 - Ajouter permissions minimales et concurrence aux workflows existants.
 
+#### Lot 14.2 - GitHub governance - En cours
+
+- Ajouter un CODEOWNERS minimal.
+- Ajouter un template de Pull Request léger.
+- Ajouter une politique de sécurité bilingue.
+- Documenter les règles GitHub versionnées, configurées dans GitHub et non versionnables.
+
 #### Lots suivants - Prévus
 
-- Durcir progressivement les règles de protection de branche et de Pull Request.
 - Structurer la gouvernance sécurité et qualité du projet.
 
 ### Médias
