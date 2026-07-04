@@ -1395,6 +1395,393 @@ test(
     }
 );
 
+test(
+    'AcquisitionService searches movies with normalized text query options',
+    async () => {
+
+        const provider =
+            createMovieSearchProvider({
+                id:
+                    'movie-provider',
+                results: [
+                    {
+                        provider:
+                            'movie-provider',
+                        title:
+                            'Blade Runner'
+                    }
+                ]
+            });
+
+        const service =
+            createService([
+                provider
+            ]);
+
+        const result =
+            await service.searchMovies({
+                language:
+                    ' fr-FR ',
+                query:
+                    '  Blade   Runner  ',
+                region:
+                    ' FR ',
+                year:
+                    ' 1982 '
+            });
+
+        assert.deepEqual(
+            provider.calls,
+            [
+                {
+                    language:
+                        'fr-FR',
+                    query:
+                        'Blade Runner',
+                    region:
+                        'FR',
+                    year:
+                        '1982'
+                }
+            ]
+        );
+
+        assert.deepEqual(
+            result,
+            {
+                query: {
+                    language:
+                        'fr-FR',
+                    plugin:
+                        'movies',
+                    region:
+                        'FR',
+                    type:
+                        'text',
+                    value:
+                        'Blade Runner',
+                    year:
+                        '1982'
+                },
+                results: [
+                    {
+                        provider:
+                            'movie-provider',
+                        title:
+                            'Blade Runner'
+                    }
+                ]
+            }
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService rejects empty movie search queries before provider lookup',
+    async () => {
+
+        const provider =
+            createMovieSearchProvider({
+                id:
+                    'movie-provider'
+            });
+
+        const service =
+            createService([
+                provider
+            ]);
+
+        await assert.rejects(
+            () => service.searchMovies({
+                query:
+                    '   '
+            }),
+            {
+                code:
+                    'invalid_search_query',
+                statusCode:
+                    400
+            }
+        );
+
+        assert.deepEqual(
+            provider.calls,
+            []
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService falls back between implicit movie search providers',
+    async () => {
+
+        const emptyProvider =
+            createMovieSearchProvider({
+                id:
+                    'empty-provider',
+                results:
+                    []
+            });
+
+        const resultProvider =
+            createMovieSearchProvider({
+                id:
+                    'result-provider',
+                results: [
+                    {
+                        provider:
+                            'result-provider',
+                        title:
+                            'Alien'
+                    }
+                ]
+            });
+
+        const service =
+            createService([
+                emptyProvider,
+                resultProvider
+            ]);
+
+        const result =
+            await service.searchMovies({
+                query:
+                    'Alien'
+            });
+
+        assert.equal(
+            result.results[0].provider,
+            'result-provider'
+        );
+
+        assert.equal(
+            emptyProvider.calls.length,
+            1
+        );
+
+        assert.equal(
+            resultProvider.calls.length,
+            1
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService tries the next implicit movie search provider after technical errors',
+    async () => {
+
+        const failingProvider =
+            createMovieSearchProvider({
+                error:
+                    new AcquisitionError(
+                        503,
+                        'provider_error',
+                        'Provider lookup failed'
+                    ),
+                id:
+                    'failing-provider'
+            });
+
+        const nextProvider =
+            createMovieSearchProvider({
+                id:
+                    'next-provider',
+                results: [
+                    {
+                        provider:
+                            'next-provider',
+                        title:
+                            'Heat'
+                    }
+                ]
+            });
+
+        const service =
+            createService([
+                failingProvider,
+                nextProvider
+            ]);
+
+        const result =
+            await service.searchMovies({
+                query:
+                    'Heat'
+            });
+
+        assert.equal(
+            result.results[0].provider,
+            'next-provider'
+        );
+
+        assert.equal(
+            failingProvider.calls.length,
+            1
+        );
+
+        assert.equal(
+            nextProvider.calls.length,
+            1
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService uses explicit movie search providers without fallback',
+    async () => {
+
+        const defaultProvider =
+            createMovieSearchProvider({
+                id:
+                    'default-provider',
+                results: [
+                    {
+                        provider:
+                            'default-provider',
+                        title:
+                            'Default result'
+                    }
+                ]
+            });
+
+        const explicitProvider =
+            createMovieSearchProvider({
+                id:
+                    'explicit-provider',
+                results:
+                    []
+            });
+
+        const service =
+            createService([
+                defaultProvider,
+                explicitProvider
+            ]);
+
+        const result =
+            await service.searchMovies({
+                providerId:
+                    'explicit-provider',
+                query:
+                    'Dune'
+            });
+
+        assert.deepEqual(
+            result.results,
+            []
+        );
+
+        assert.deepEqual(
+            defaultProvider.calls,
+            []
+        );
+
+        assert.equal(
+            explicitProvider.calls.length,
+            1
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService keeps movie search cache keys distinct by language region and year',
+    async () => {
+
+        const provider =
+            createMovieSearchProvider({
+                id:
+                    'movie-provider',
+                results: [
+                    {
+                        provider:
+                            'movie-provider',
+                        title:
+                            'The Thing'
+                    }
+                ]
+            });
+
+        const {
+            cache,
+            repository
+        } =
+            createCache();
+
+        const service =
+            createService(
+                [
+                    provider
+                ],
+                {
+                    acquisitionCache:
+                        cache
+                }
+            );
+
+        await service.searchMovies({
+            language:
+                'en-US',
+            query:
+                'The Thing',
+            region:
+                'US',
+            year:
+                '1982'
+        });
+
+        await service.searchMovies({
+            language:
+                'fr-FR',
+            query:
+                'The Thing',
+            region:
+                'FR',
+            year:
+                '1982'
+        });
+
+        assert.equal(
+            provider.calls.length,
+            2
+        );
+
+        assert.deepEqual(
+            [
+                ...repository.rows.keys()
+            ].sort(),
+            [
+                'movies:movies/search:movie-provider:mapping_v1:language=en-US&query=The+Thing&region=US&year=1982',
+                'movies:movies/search:movie-provider:mapping_v1:language=fr-FR&query=The+Thing&region=FR&year=1982'
+            ]
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService does not expose a movie barcode lookup contract',
+    async () => {
+
+        const service =
+            createService([
+                createMovieSearchProvider({
+                    id:
+                        'movie-provider'
+                })
+            ]);
+
+        assert.equal(
+            typeof service.lookupMovieByBarcode,
+            'undefined'
+        );
+
+    }
+);
+
 function createService(
     providers,
     {
@@ -1578,6 +1965,53 @@ function createProvider({
 
             this.calls.push(
                 isbn
+            );
+
+            if (
+                error
+            ) {
+
+                throw error;
+
+            }
+
+            return results;
+
+        }
+    };
+
+}
+
+function createMovieSearchProvider({
+    enabled = true,
+    error = null,
+    id,
+    results = []
+}) {
+
+    return {
+        calls: [],
+        describe() {
+
+            return {
+                capabilities: [
+                    'movies/search'
+                ],
+                enabled,
+                id,
+                name:
+                    id,
+                plugin:
+                    'movies',
+                requiresConfiguration:
+                    false
+            };
+
+        },
+        async searchMovies(searchQuery) {
+
+            this.calls.push(
+                searchQuery
             );
 
             if (

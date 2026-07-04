@@ -2,7 +2,8 @@
 
 Etat courant : architecture acquisition backend stabilisee avec Open Library
 comme provider principal et Google Books comme provider secondaire pour les
-lookups ISBN livres.
+lookups ISBN livres. Le socle interne `movies/search` est disponible pour les
+futurs providers films, sans provider reel livre a ce stade.
 
 Ce document est destine aux developpeurs qui veulent comprendre, tester ou
 ajouter un provider d'acquisition. Il complete `docs/architecture.md` et
@@ -67,6 +68,7 @@ Rôle :
 Responsabilites :
 
 - valider et normaliser les identifiants metier, par exemple ISBN ;
+- valider et normaliser les recherches texte quand la capability le permet ;
 - gerer provider explicite ou resolution implicite multi-provider ;
 - consulter le cache si disponible ;
 - appeler les providers compatibles dans l'ordre du registre sur cache miss ;
@@ -165,7 +167,7 @@ son API permet un usage non authentifie.
 `requiresConfiguration` ne signifie pas que le provider est actif. Il indique
 seulement qu'une configuration externe est attendue pour l'utiliser.
 
-### Methodes de lookup
+### Methodes de lookup et recherche
 
 La methode actuelle est `lookupIsbn(isbn)` pour la capacite `isbnLookup`.
 
@@ -177,9 +179,18 @@ Comportement attendu :
 - lever une erreur acquisition stable pour timeout ou erreur provider ;
 - ne jamais retourner la reponse brute de l'API externe.
 
-Un provider futur pourra exposer d'autres methodes, par exemple lookup
-code-barres, film ou jeu video. Le nom de methode et la capacite doivent rester
-coherents avec le contrat interne.
+La capability interne `movies/search` prepare les providers films par recherche
+texte. Elle utilise la methode `searchMovies(searchQuery)`, ou `searchQuery`
+contient :
+
+- `query` : texte normalise et obligatoire ;
+- `language` : langue des metadata, optionnelle ;
+- `region` : contexte regional, optionnel ;
+- `year` : annee de sortie attendue, optionnelle.
+
+Cette capability ne cree pas de lookup code-barres film. Un futur lookup
+EAN/UPC devra etre porte par un provider capable de resoudre reellement un
+identifiant produit.
 
 ## Resolution Multi-Provider
 
@@ -221,8 +232,10 @@ La reponse publique d'un lookup reste :
 `query` decrit la recherche effectuee :
 
 - plugin concerne ;
-- type d'identifiant ;
-- valeur normalisee.
+- type de query ou d'identifiant ;
+- valeur normalisee ;
+- contexte optionnel, par exemple langue, region ou annee pour une recherche
+  texte.
 
 `results` est une liste de suggestions provider-agnostic.
 
@@ -279,6 +292,11 @@ Cle de cache :
 ```text
 plugin:capability:provider_id:mapping_v{version}:identifier
 ```
+
+Pour `movies/search`, l'identifiant de cache est construit a partir de la query
+texte normalisee et des options `language`, `region` et `year`. Deux recherches
+avec la meme query mais des langues ou regions differentes restent donc
+distinctes.
 
 Le cache stocke :
 
@@ -363,7 +381,10 @@ Etat courant et evolutions prevues :
 
 - Google Books : provider livre secondaire livre apres Open Library, avec cle
   API optionnelle via `GOOGLE_BOOKS_API_KEY` ;
-- TMDb : provider film futur, probablement avec configuration obligatoire ;
+- `movies/search` : capability interne livree pour preparer les providers films
+  par recherche texte ;
+- TMDb : provider film futur, probablement avec configuration obligatoire, sans
+  lookup code-barres ;
 - IGDB ou RAWG : provider jeux video futur, avec attention aux quotas et aux
   secrets ;
 - scan camera : couche frontend separee qui remplit un ISBN ou code-barres, puis

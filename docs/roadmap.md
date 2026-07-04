@@ -29,6 +29,8 @@ Capacités disponibles :
 - Cache SQLite backend livré pour les réponses de lookup acquisition normalisées.
 - Import sécurisé de couverture provider livré après validation utilisateur et
   création de l'item, via le pipeline média existant.
+- Capability interne `movies/search` livrée pour préparer les providers films
+  par recherche texte.
 - Préférences d'affichage par collection/plugin.
 - Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
 - Exports JSON natifs, export CSV collection et import JSON natif non destructif.
@@ -396,9 +398,19 @@ Phase 5 — Extension progressive :
 - Aucun import automatique, aucune image binaire stockée dans le cache
   acquisition et aucun changement de comportement des providers.
 
-#### Lot 11.6 - TMDb - Prévu
+#### Lot 11.6.0 - Acquisition Search Capabilities - Livré
+
+- Capability interne `movies/search` ajoutée pour les recherches texte films.
+- Cache acquisition préparé pour distinguer query, langue, région et année.
+- Résolution provider explicite/implicite réutilisée pour les recherches texte.
+- Aucun provider TMDb, aucune route publique film et aucun lookup code-barres
+  film ajoutés dans ce lot.
+- ADR-0008 ajouté pour distinguer recherche texte et lookup code-barres.
+
+#### Lot 11.6 - TMDb Provider - Prévu
 
 - Ajouter un provider films via TMDb.
+- Utiliser la capability `movies/search`.
 - Mapper les résultats vers les champs existants du plugin `movies`.
 - Gérer proprement secret API, quotas et erreurs.
 

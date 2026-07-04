@@ -26,6 +26,17 @@ Les ADR permettent de :
 - eviter de rouvrir les memes debats sans contexte ;
 - rendre visibles les compromis acceptes.
 
+## ADR Existants
+
+- ADR-0001 — AGPLv3
+- ADR-0002 — Backend-only acquisition providers
+- ADR-0003 — Business identifiers
+- ADR-0004 — Camera separated from lookup
+- ADR-0005 — Acquisition orchestration
+- ADR-0006 — Provider resolution strategy
+- ADR-0007 — Project quality gates
+- ADR-0008 — Acquisition search capabilities and barcode strategy
+
 ## Format Retenu
 
 Le format reste volontairement simple :
@@ -94,6 +105,17 @@ ADRs help to:
 - help new contributors understand the reasoning;
 - avoid reopening the same discussions without context;
 - make accepted trade-offs visible.
+
+## Existing ADRs
+
+- ADR-0001 — AGPLv3
+- ADR-0002 — Backend-only acquisition providers
+- ADR-0003 — Business identifiers
+- ADR-0004 — Camera separated from lookup
+- ADR-0005 — Acquisition orchestration
+- ADR-0006 — Provider resolution strategy
+- ADR-0007 — Project quality gates
+- ADR-0008 — Acquisition search capabilities and barcode strategy
 
 ## Format
 
