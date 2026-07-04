@@ -1,7 +1,7 @@
 # Assisted Acquisition
 
-Etat courant : fondations identifiants, lookup backend ISBN livres,
-pre-remplissage frontend local pour les livres, orchestration backend,
+Etat courant : fondations identifiants, lookup backend ISBN livres, recherche
+texte films via TMDb, pre-remplissage frontend local, orchestration backend,
 resolution multi-provider, cache SQLite acquisition et import explicite de
 couverture provider vers le systeme media existant.
 
@@ -10,9 +10,10 @@ Les identifiants sont des champs metadata declares par plugin et stockes dans
 CollectionMgnt avec Open Library comme provider principal et Google Books comme
 provider secondaire.
 
-Le backend dispose aussi du contrat interne `movies/search` et du provider TMDb
-pour les films, configure via `TMDB_API_READ_ACCESS_TOKEN`. Aucune route
-publique de recherche film et aucun frontend film ne sont livres a ce stade.
+Le backend expose aussi `movies/search` via TMDb pour les films, configure par
+`TMDB_API_READ_ACCESS_TOKEN`. Le frontend films permet une recherche par titre,
+un choix explicite de suggestion et un pre-remplissage local sans sauvegarde
+automatique.
 
 Aucune camera, scan mobile, sauvegarde automatique ou dedoublonnage global
 n'est disponible a ce stade.
@@ -126,7 +127,7 @@ Provider livre :
   - secret requis : aucun
   - cle API optionnelle : `GOOGLE_BOOKS_API_KEY`
 
-Capability interne preparee :
+Capability film :
 
 - `movies/search`
   - plugin : `movies`
@@ -249,6 +250,70 @@ Les suggestions servent a pre-remplir localement le formulaire cote frontend
 apres choix explicite de l'utilisateur. La sauvegarde reste assuree par les
 routes items existantes `POST /api/items` et `PATCH /api/items/:id`, avec
 validation et normalisation backend habituelles.
+
+### `POST /api/acquisition/movies/search`
+
+Recherche des suggestions de metadata film depuis un titre.
+
+Body :
+
+```json
+{
+  "query": "Blade Runner",
+  "provider": "tmdb",
+  "language": "fr-FR",
+  "region": "FR",
+  "year": "1982"
+}
+```
+
+`query` est obligatoire. `provider`, `language`, `region` et `year` sont
+optionnels. Si `provider` est absent, la resolution implicite utilise les
+providers films actifs dans l'ordre du registre.
+
+Reponse :
+
+```json
+{
+  "query": {
+    "plugin": "movies",
+    "type": "text",
+    "value": "Blade Runner",
+    "language": "fr-FR",
+    "region": "FR",
+    "year": "1982"
+  },
+  "results": [
+    {
+      "provider": "tmdb",
+      "confidence": "high",
+      "title": "Blade Runner",
+      "description": "A blade runner must pursue replicants.",
+      "metadata": {
+        "tmdbId": 78,
+        "originalTitle": "Blade Runner",
+        "releaseDate": "1982-06-25",
+        "releaseYear": "1982",
+        "originalLanguage": "en"
+      },
+      "images": [
+        {
+          "url": "https://image.tmdb.org/t/p/w500/poster.jpg",
+          "kind": "cover",
+          "source": "tmdb"
+        }
+      ],
+      "sourceUrl": "https://www.themoviedb.org/movie/78"
+    }
+  ]
+}
+```
+
+Le frontend films utilise cette route dans le formulaire de creation. Le bouton
+`Utiliser` pre-remplit uniquement les champs vides, conserve les identifiants
+provider normalises et garde l'image proposee en memoire volatile. L'import de
+couverture reste propose uniquement apres creation de l'item et confirmation
+utilisateur.
 
 ### `POST /api/acquisition/images/import`
 

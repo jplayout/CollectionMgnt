@@ -33,6 +33,12 @@
                 </label>
             </div>
 
+            <MovieAcquisitionSearch
+                v-if="isMovieAcquisitionSearchEnabled"
+                :query="title"
+                @apply-suggestion="applyMovieAcquisitionSuggestion"
+            />
+
             <template
                 v-for="field in supportedFields"
                 :key="field.name"
@@ -90,6 +96,9 @@ from './DynamicField.vue';
 
 import AcquisitionLookupField
 from './AcquisitionLookupField.vue';
+
+import MovieAcquisitionSearch
+from './MovieAcquisitionSearch.vue';
 
 const SUPPORTED_TYPES =
     new Set([
@@ -162,6 +171,12 @@ const props =
                 String,
                 Array
             ]
+        },
+        enableAcquisitionSearch: {
+            default:
+                false,
+            type:
+                Boolean
         }
     });
 
@@ -178,6 +193,9 @@ const description =
     ref('');
 
 const metadata =
+    reactive({});
+
+const extraMetadata =
     reactive({});
 
 const frontendErrors =
@@ -264,6 +282,12 @@ const backendMessages =
         }
     );
 
+const isMovieAcquisitionSearchEnabled =
+    computed(
+        () => props.enableAcquisitionSearch &&
+            props.pluginId === 'movies'
+    );
+
 watch(
     [
         supportedFields,
@@ -285,6 +309,7 @@ function resetForm() {
         props.initialValue?.description ?? '';
 
     clearMetadata();
+    clearExtraMetadata();
 
     const initialMetadata =
         props.initialValue?.metadata ?? {};
@@ -331,6 +356,21 @@ function clearMetadata() {
 
 }
 
+function clearExtraMetadata() {
+
+    for (
+        const key
+        of Object.keys(
+            extraMetadata
+        )
+    ) {
+
+        delete extraMetadata[key];
+
+    }
+
+}
+
 function submitForm() {
 
     clearFrontendErrors();
@@ -365,7 +405,9 @@ function submitForm() {
 
 function buildPayload() {
 
-    const payloadMetadata = {};
+    const payloadMetadata = {
+        ...extraMetadata
+    };
 
     for (
         const field
@@ -483,11 +525,96 @@ function applyAcquisitionSuggestion(suggestion) {
 
 }
 
+function applyMovieAcquisitionSuggestion(suggestion) {
+
+    if (
+        !isEmptyValue(suggestion?.title) &&
+        isEmptyValue(title.value)
+    ) {
+
+        title.value =
+            suggestion.title;
+
+    }
+
+    if (
+        !isEmptyValue(suggestion?.description) &&
+        isEmptyValue(description.value)
+    ) {
+
+        description.value =
+            suggestion.description;
+
+    }
+
+    applyMetadataSuggestion(
+        'release_date',
+        suggestion?.metadata?.releaseDate
+    );
+
+    applyExtraMetadataSuggestion(
+        'tmdbId',
+        suggestion?.metadata?.tmdbId
+    );
+
+    applyExtraMetadataSuggestion(
+        'originalTitle',
+        suggestion?.metadata?.originalTitle
+    );
+
+    applyExtraMetadataSuggestion(
+        'originalLanguage',
+        suggestion?.metadata?.originalLanguage
+    );
+
+    const coverImage =
+        getCoverImage(
+            suggestion
+        );
+
+    if (
+        coverImage
+    ) {
+
+        emit(
+            'acquisition-image-selected',
+            {
+                imageUrl:
+                    coverImage.url,
+                provider:
+                    suggestion.provider ?? null,
+                source:
+                    coverImage.source ?? suggestion.provider ?? null
+            }
+        );
+
+    }
+
+}
+
 function getCoverImage(suggestion) {
 
     return suggestion?.images?.find(
         image => image.kind === 'cover' && image.url
     ) ?? null;
+
+}
+
+function applyExtraMetadataSuggestion(
+    fieldName,
+    value
+) {
+
+    if (
+        isEmptyValue(value)
+    ) {
+
+        return;
+
+    }
+
+    extraMetadata[fieldName] =
+        value;
 
 }
 

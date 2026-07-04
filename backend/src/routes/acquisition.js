@@ -96,6 +96,40 @@ export default async function (
     );
 
     fastify.post(
+        '/api/acquisition/movies/search',
+        async (
+            request,
+            reply
+        ) => {
+
+            try {
+
+                return await service.searchMovies({
+                    language:
+                        request.body?.language ?? null,
+                    providerId:
+                        request.body?.provider ?? null,
+                    query:
+                        request.body?.query,
+                    region:
+                        request.body?.region ?? null,
+                    year:
+                        request.body?.year ?? null
+                });
+
+            } catch (error) {
+
+                return sendAcquisitionError(
+                    reply,
+                    error
+                );
+
+            }
+
+        }
+    );
+
+    fastify.post(
         '/api/acquisition/images/import',
         async (
             request,

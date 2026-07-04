@@ -28,6 +28,7 @@
                 v-else
                 :key="pluginId"
                 :backend-error="submitError"
+                enable-acquisition-search
                 :fields="schemaFields"
                 :plugin-id="pluginId"
                 :submitting="submitting"

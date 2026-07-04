@@ -196,7 +196,9 @@ identifiant produit.
 TMDb implemente `movies/search` via une recherche texte film. Il utilise un
 Bearer token backend, ne telecharge aucune image et ne consulte pas le endpoint
 movie details dans le MVP. Les images retournees sont uniquement des URLs poster
-distantes en taille `w500`.
+distantes en taille `w500`. Le frontend appelle cette capability via
+`POST /api/acquisition/movies/search`, puis applique la suggestion choisie au
+formulaire films sans sauvegarde automatique.
 
 ## Resolution Multi-Provider
 
