@@ -85,23 +85,10 @@ jobs:
           echo "workflow_dispatch run: checking the current workspace with git diff --check."
           git diff --check
 
-      - name: Prepare markdownlint configuration
-        run: |
-          set -euo pipefail
-
-          cat > "${RUNNER_TEMP}/markdownlint.json" <<'JSON'
-          {
-            "MD013": false,
-            "MD024": {
-              "siblings_only": true
-            }
-          }
-          JSON
-
       - name: Lint Markdown documentation
         uses: DavidAnson/markdownlint-cli2-action@v24.0.0
         with:
-          config: ${{ runner.temp }}/markdownlint.json
+          config: .markdownlint.json
           globs: |
             **/*.md
             !backend/node_modules/**
