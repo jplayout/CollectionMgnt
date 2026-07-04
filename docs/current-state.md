@@ -191,6 +191,9 @@ Lots acquisition terminés :
 - En-têtes de sécurité HTTP via Helmet avec configuration prudente
 - CSP stricte volontairement non activée dans ce lot
 - En-têtes couverts : `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` et `Permissions-Policy`
+- Limitation de `GET /api/admin/media-audit`,
+  `POST /api/admin/media-cleanup/preview` et
+  `POST /api/admin/media-cleanup/execute` à 5 requêtes par minute
 - Configuration pensée pour ne pas bloquer uploads médias, exports, téléchargements et API existantes
 
 ### Qualité projet

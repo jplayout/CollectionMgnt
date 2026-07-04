@@ -117,6 +117,10 @@ Le cleanup média manuel guidé utilise :
 - `POST /api/admin/media-cleanup/preview`
 - `POST /api/admin/media-cleanup/execute`
 
+L'audit, la preview cleanup et l'exécution cleanup sont limités à 5 requêtes par
+minute pour réduire le risque d'abus sur les opérations qui parcourent le
+filesystem.
+
 La preview filtre uniquement les candidats sûrs :
 
 - `FILE_WITHOUT_MEDIA_ROW`

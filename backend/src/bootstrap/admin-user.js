@@ -55,7 +55,7 @@ export async function createInitialAdmin(
     });
 
     console.log(
-        `Initial admin user created: ${username}`
+        'Initial admin user created.'
     );
 
 }
