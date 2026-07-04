@@ -197,9 +197,12 @@ Lots acquisition terminés :
 
 - CI GitHub Actions existante pour les tests backend, le build frontend,
   Playwright E2E, Docker, CodeQL, Semgrep, Trivy et Dependabot
-- Workflow Project Conventions en cours pour rendre bloquants les titres de PR,
+- Workflow Project Conventions disponible pour rendre bloquants les titres de PR,
   les noms de branche en PR, la vérification whitespace du diff de PR,
   markdownlint et les liens Markdown internes
+- Lot 14.1 en cours : durcissement des workflows existants avec concurrence,
+  permissions minimales, Semgrep bloquant et Trivy bloquant sur `HIGH` /
+  `CRITICAL`
 - Contrôles de conventions indépendants du code applicatif et des tests
   fonctionnels
 
@@ -526,7 +529,7 @@ Variables disponibles :
 - Déclenchement sur push et pull request
 - Workflow CodeQL `.github/workflows/codeql.yml` pour l'analyse JavaScript
 - Workflow Semgrep `.github/workflows/semgrep.yml` pour le scan SAST complémentaire à CodeQL
-- Workflow Trivy `.github/workflows/trivy.yml` pour les scans de sécurité non bloquants
+- Workflow Trivy `.github/workflows/trivy.yml` pour les scans de sécurité bloquants selon la politique `HIGH` / `CRITICAL`
 - Dependabot configuré dans `.github/dependabot.yml` pour backend npm, frontend npm et GitHub Actions
 - Dette sécurité `@fastify/jwt` / `fast-jwt` traitée par migration vers `@fastify/jwt` `10.1.0`
 - Node 22 utilisé pour les vérifications backend et frontend
@@ -539,9 +542,9 @@ Variables disponibles :
 - E2E Chromium uniquement, avec dataset de démonstration et `DATA_DIR` temporaire pour éviter toute dépendance à une base locale existante
 - Qualité : `git diff --check`
 - Docker : build des images backend et frontend après succès des jobs Node
-- Semgrep : scan SAST JavaScript/Vue/Node avec les règles par défaut Semgrep, en mode observation non bloquant et sans obligation de `SEMGREP_APP_TOKEN`
+- Semgrep : scan SAST JavaScript/Vue/Node avec les règles par défaut Semgrep, bloquant sur finding et sans obligation de `SEMGREP_APP_TOKEN`
 - Semgrep App pourra être connectée ultérieurement via le secret `SEMGREP_APP_TOKEN`
-- Trivy : scans dépendances backend/frontend et images conteneur en mode non bloquant, avec rapports visibles dans GitHub Actions
+- Trivy : scans dépendances backend/frontend et images conteneur bloquants sur vulnérabilités `HIGH` et `CRITICAL`
 - Aucune publication d'image par le workflow CI
 - Pas de Vitest frontend, Cypress, couverture de code, Sonar, Codecov ou E2E exhaustifs dans ce lot
 - Workflow GitHub Actions `.github/workflows/publish.yml`

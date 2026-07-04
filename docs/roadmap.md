@@ -36,7 +36,7 @@ Capacités disponibles :
 - Layout authentifié, responsive de base et tests backend d'intégration.
 - Playwright E2E MVP côté frontend avec Chromium, dataset de démonstration et `DATA_DIR` temporaire.
 - CI GitHub Actions, CodeQL, Semgrep, Dependabot, publication GHCR multi-architecture et builds Docker/Podman documentés.
-- Workflow GitHub Actions Project Conventions en cours de livraison pour bloquer les écarts de conventions PR, branches, whitespace, Markdown et liens internes.
+- Workflow GitHub Actions Project Conventions livré pour bloquer les écarts de conventions PR, branches, whitespace, Markdown et liens internes.
 - Base Compose Synology disponible avec images GHCR `linux/amd64` et `linux/arm64`, volume persistant explicite configurable et backend non exposé sur l'hôte.
 - Guide de déploiement Synology DSM / Container Manager disponible.
 - Guide HTTPS / Reverse Proxy DSM disponible, avec recommandation de proxy vers le frontend uniquement.
@@ -90,6 +90,7 @@ Limites majeures connues :
 - Lot 10.3.1 Migration `@fastify/jwt` livré : dette sécurité `fast-jwt` traitée par mise à jour vers `@fastify/jwt` `10.1.0`.
 - Lot 10.3.2 Trivy Security Scanning livré : scans dépendances et images conteneur en mode non bloquant.
 - Lot 11.0.1 Semgrep SAST GitHub Action livré : scan SAST complémentaire à CodeQL en mode observation non bloquant.
+- Lot 14.1 CI Hardening en cours : Semgrep et Trivy deviennent bloquants selon une politique explicite.
 - Lot 10.5.3 HTTPS / Reverse Proxy DSM livré : documentation HTTPS DSM avec backend non exposé.
 - Détail complet conservé dans `Historique des lots livrés > Sécurité`.
 
@@ -116,11 +117,11 @@ Priorité moyenne :
 
 - Dependabot livré pour backend npm, frontend npm et GitHub Actions.
 - CodeQL livré pour l'analyse JavaScript.
-- Semgrep livré comme scan SAST complémentaire à CodeQL, en mode observatoire non bloquant et sans obligation de `SEMGREP_APP_TOKEN`.
+- Semgrep livré comme scan SAST complémentaire à CodeQL, rendu bloquant par le lot 14.1 et sans obligation de `SEMGREP_APP_TOKEN`.
 - Connexion future possible à Semgrep App via le secret `SEMGREP_APP_TOKEN`.
-- Trivy livré en mode observatoire non bloquant pour les dépendances backend/frontend et les images conteneur.
+- Trivy bloque sur les vulnérabilités `HIGH` et `CRITICAL` des dépendances backend/frontend et des images conteneur.
 - `npm audit` en CI.
-- Politique de blocage automatique sur vulnérabilités à définir dans un lot futur.
+- Les vulnérabilités Trivy `LOW` et `MEDIUM` restent visibles sans bloquer la CI.
 
 ### Infrastructure sécurité
 
@@ -486,16 +487,21 @@ Travaux futurs :
 
 ### 14 — Project Quality & Engineering
 
-#### Lot 14.0 - Project conventions - En cours
+#### Lot 14.0 - Project conventions - Livré
 
 - Ajouter un workflow GitHub Actions bloquant dédié aux conventions du projet.
 - Vérifier les titres de Pull Request, les noms de branche, `git diff --check`, le lint Markdown et les liens Markdown internes.
 - Conserver ces contrôles indépendants du code applicatif et des tests fonctionnels.
 
+#### Lot 14.1 - CI hardening - En cours
+
+- Rendre Semgrep bloquant sur les findings détectés par les règles configurées.
+- Rendre Trivy bloquant sur les vulnérabilités `HIGH` et `CRITICAL`.
+- Ajouter permissions minimales et concurrence aux workflows existants.
+
 #### Lots suivants - Prévus
 
 - Durcir progressivement les règles de protection de branche et de Pull Request.
-- Clarifier les scans consultatifs et bloquants.
 - Structurer la gouvernance sécurité et qualité du projet.
 
 ### Médias
