@@ -30,6 +30,23 @@ versions ne sont pas garanties comme supportées.
 Les GitHub Security Advisories sont le canal préféré pour coordonner les rapports,
 les discussions privées, les correctifs et la divulgation.
 
+## Politique De Sévérité
+
+- Critical : merge interdit tant que le risque n'est pas corrigé ou explicitement
+  neutralisé.
+- High : merge interdit tant que le risque n'est pas corrigé ou explicitement
+  neutralisé.
+- Medium : revue obligatoire avant merge, avec justification si le risque est
+  accepté temporairement.
+- Low : accepté mais suivi, afin de conserver une trace et de traiter le sujet
+  avec une priorité adaptée.
+
+## Security Gates
+
+La politique sécurité du projet s'appuie sur Dependabot, CodeQL, Semgrep, Trivy
+et GitHub Security & Quality. Les résultats bloquants doivent être traités avant
+merge. Les alertes non bloquantes restent visibles et suivies.
+
 ---
 
 # Security Policy
@@ -63,3 +80,19 @@ guaranteed to be supported.
 
 GitHub Security Advisories are the preferred channel for coordinating reports,
 private discussion, fixes and disclosure.
+
+## Severity Policy
+
+- Critical: merge is forbidden until the risk is fixed or explicitly
+  neutralized.
+- High: merge is forbidden until the risk is fixed or explicitly neutralized.
+- Medium: review is required before merge, with justification if the risk is
+  accepted temporarily.
+- Low: accepted but tracked, so the issue remains visible and can be handled
+  with appropriate priority.
+
+## Security Gates
+
+The project's security policy relies on Dependabot, CodeQL, Semgrep, Trivy and
+GitHub Security & Quality. Blocking findings must be handled before merge.
+Non-blocking alerts remain visible and tracked.

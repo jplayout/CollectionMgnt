@@ -16,7 +16,8 @@ consequences elle implique.
 ## Pourquoi Des ADR
 
 CollectionMgnt evolue autour de quelques choix importants : auto-hebergement,
-plugins, acquisition assistee, stockage SQLite, securite et maintenabilite.
+plugins, acquisition assistee, stockage SQLite, securite, quality gates et
+maintenabilite.
 
 Les ADR permettent de :
 
@@ -84,7 +85,8 @@ creates.
 ## Why ADRs
 
 CollectionMgnt is shaped by a few important choices: self-hosting, plugins,
-assisted acquisition, SQLite storage, security and maintainability.
+assisted acquisition, SQLite storage, security, quality gates and
+maintainability.
 
 ADRs help to:
 

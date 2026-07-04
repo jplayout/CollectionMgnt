@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot11.5
+Version : v0.12-lot14.4
 
 ## État du projet
 
@@ -203,8 +203,13 @@ Lots acquisition terminés :
 - Durcissement 14.1 disponible : workflows existants avec concurrence,
   permissions minimales, Semgrep bloquant et Trivy bloquant sur `HIGH` /
   `CRITICAL`
-- Gouvernance GitHub 14.2 en cours : CODEOWNERS, template PR, politique de
+- Gouvernance GitHub 14.2 livrée : CODEOWNERS, template PR, politique de
   sécurité et documentation des réglages GitHub versionnés ou non versionnables
+- Gate Documentation & Architecture 14.3 livré dans Project Conventions pour
+  bloquer les oublis documentaires les plus directs
+- Gouvernance sécurité 14.4 livrée : politique de sévérité, Security Gates et
+  ADR-0007 Project Quality Gates
+- Epic 14 Project Quality & Engineering terminé
 - Contrôles de conventions indépendants du code applicatif et des tests
   fonctionnels
 
