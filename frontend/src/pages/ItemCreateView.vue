@@ -31,6 +31,7 @@
                 :fields="schemaFields"
                 :plugin-id="pluginId"
                 :submitting="submitting"
+                @acquisition-image-selected="selectAcquisitionImage"
                 @submit="submitItem"
             />
         </section>
@@ -68,6 +69,10 @@ import {
     getPluginSchema
 } from '../services/plugin-api.js';
 
+import {
+    setPendingAcquisitionImage
+} from '../services/pending-acquisition-image.js';
+
 const route =
     useRoute();
 
@@ -87,6 +92,9 @@ const loadError =
     ref('');
 
 const submitError =
+    ref(null);
+
+const selectedAcquisitionImage =
     ref(null);
 
 const pluginId =
@@ -156,6 +164,9 @@ async function loadSchema() {
     submitError.value =
         null;
 
+    selectedAcquisitionImage.value =
+        null;
+
     try {
 
         schema.value =
@@ -199,6 +210,17 @@ async function submitItem(
                 payload
             );
 
+        if (
+            selectedAcquisitionImage.value
+        ) {
+
+            setPendingAcquisitionImage(
+                createdItem.id,
+                selectedAcquisitionImage.value
+            );
+
+        }
+
         await router.push({
             name:
                 'item-details',
@@ -221,6 +243,13 @@ async function submitItem(
             false;
 
     }
+
+}
+
+function selectAcquisitionImage(image) {
+
+    selectedAcquisitionImage.value =
+        image;
 
 }
 </script>

@@ -20,6 +20,24 @@
             @uploaded="handleUploaded"
         />
 
+        <section
+            v-if="acquisitionImage"
+            class="provider-import"
+        >
+            <div>
+                <p class="eyebrow">Acquisition</p>
+                <h3>Couverture proposée</h3>
+            </div>
+
+            <button
+                :disabled="importingProviderImage"
+                type="button"
+                @click="importProviderImage"
+            >
+                {{ importingProviderImage ? 'Import en cours...' : 'Importer la couverture proposée' }}
+            </button>
+        </section>
+
         <p
             v-if="error"
             class="error-message"
@@ -81,6 +99,10 @@ import {
     setPrimaryMedia
 } from '../../services/media-api.js';
 
+import {
+    importAcquisitionImage
+} from '../../services/acquisition-api.js';
+
 import ImageUploader
 from './ImageUploader.vue';
 
@@ -89,6 +111,12 @@ from './MediaThumbnail.vue';
 
 const props =
     defineProps({
+        acquisitionImage: {
+            default:
+                null,
+            type:
+                Object
+        },
         itemId: {
             required:
                 true,
@@ -98,6 +126,11 @@ const props =
             ]
         }
     });
+
+const emit =
+    defineEmits([
+        'acquisition-image-imported'
+    ]);
 
 const mediaList =
     ref([]);
@@ -116,6 +149,9 @@ const settingPrimaryId =
 
 const deletingId =
     ref(null);
+
+const importingProviderImage =
+    ref(false);
 
 onMounted(
     loadMedia
@@ -197,6 +233,74 @@ async function handleSetPrimary(
 
         settingPrimaryId.value =
             null;
+
+    }
+
+}
+
+async function importProviderImage() {
+
+    if (
+        !props.acquisitionImage?.imageUrl ||
+        importingProviderImage.value
+    ) {
+
+        return;
+
+    }
+
+    const confirmed =
+        window.confirm(
+            'Importer cette couverture dans la galerie de l’item ?'
+        );
+
+    if (
+        !confirmed
+    ) {
+
+        return;
+
+    }
+
+    importingProviderImage.value =
+        true;
+
+    actionError.value =
+        '';
+
+    try {
+
+        await importAcquisitionImage({
+            imageUrl:
+                props.acquisitionImage.imageUrl,
+            isPrimary:
+                mediaList.value.length === 0,
+            itemId:
+                props.itemId,
+            provider:
+                props.acquisitionImage.provider,
+            source:
+                props.acquisitionImage.source
+        });
+
+        emit(
+            'acquisition-image-imported'
+        );
+
+        await loadMedia();
+
+    } catch (importError) {
+
+        actionError.value =
+            getMediaErrorMessage(
+                importError,
+                'Impossible d’importer cette couverture'
+            );
+
+    } finally {
+
+        importingProviderImage.value =
+            false;
 
     }
 
@@ -306,8 +410,35 @@ h2 {
     margin: 0;
 }
 
+.provider-import {
+    align-items: center;
+    border: 1px solid #d8dee8;
+    border-radius: 8px;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    padding: 16px;
+}
+
+.provider-import h3 {
+    font-size: 1rem;
+    margin: 0;
+}
+
 .gallery-header button {
     background: #172033;
+    border: 0;
+    border-radius: 6px;
+    color: #ffffff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+    min-height: 44px;
+    padding: 10px 14px;
+}
+
+.provider-import button {
+    background: #2357a4;
     border: 0;
     border-radius: 6px;
     color: #ffffff;
@@ -357,7 +488,13 @@ button:disabled {
         flex-direction: column;
     }
 
-    .gallery-header button {
+    .provider-import {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .gallery-header button,
+    .provider-import button {
         width: 100%;
     }
 }

@@ -167,6 +167,7 @@ const props =
 
 const emit =
     defineEmits([
+        'acquisition-image-selected',
         'submit'
     ]);
 
@@ -456,6 +457,37 @@ function applyAcquisitionSuggestion(suggestion) {
         'publication_date',
         suggestion?.metadata?.publication_date
     );
+
+    const coverImage =
+        getCoverImage(
+            suggestion
+        );
+
+    if (
+        coverImage
+    ) {
+
+        emit(
+            'acquisition-image-selected',
+            {
+                imageUrl:
+                    coverImage.url,
+                provider:
+                    suggestion.provider ?? null,
+                source:
+                    coverImage.source ?? suggestion.provider ?? null
+            }
+        );
+
+    }
+
+}
+
+function getCoverImage(suggestion) {
+
+    return suggestion?.images?.find(
+        image => image.kind === 'cover' && image.url
+    ) ?? null;
 
 }
 

@@ -35,6 +35,8 @@ Fonctionnalités disponibles :
 - Suppression d'image depuis le frontend
 - Affichage de l'image principale dans les cartes items
 - Chargement des thumbnails des cartes items via `Blob` authentifié
+- Import explicite d'une couverture provider via l'acquisition apres creation
+  d'un item
 - Nettoyage automatique du dossier média d'un item lors de sa suppression
 - Audit média global lecture seule entre SQLite et le disque
 - Cleanup média manuel guidé des candidats disque sûrs depuis l'Administration
@@ -107,6 +109,7 @@ Miniature :
 Routes disponibles :
 
 - `POST /api/media`
+- `POST /api/acquisition/images/import`
 - `GET /api/items/:id/media`
 - `GET /api/media/:id`
 - `GET /api/media/:id/file`
@@ -118,6 +121,27 @@ Routes disponibles :
 - `POST /api/admin/media-cleanup/preview`
 - `POST /api/admin/media-cleanup/execute`
 - `GET /api/admin/backup.zip`
+
+## Import Depuis L'acquisition
+
+Les suggestions provider peuvent contenir une URL de couverture distante. Le
+frontend peut l'afficher en previsualisation distante, mais l'image n'est jamais
+telechargee automatiquement.
+
+Apres creation de l'item, l'utilisateur peut confirmer l'import depuis la fiche
+item. Le backend telecharge alors l'image de maniere bornee et securisee, puis
+appelle `MediaService.createOriginalMedia()`.
+
+Le pipeline media reste donc identique a l'upload manuel :
+
+- validation MIME et taille ;
+- validation du contenu image avec Sharp ;
+- stockage de l'original ;
+- generation de l'image WebP optimisee ;
+- generation de la miniature WebP ;
+- association a l'item via la table `media`.
+
+Les images binaires ne sont pas stockees dans le cache acquisition.
 
 ## Suppression d'un item
 

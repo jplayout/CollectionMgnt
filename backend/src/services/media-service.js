@@ -12,7 +12,7 @@ import {
     getUploadPath
 } from '../config/paths.js';
 
-const ALLOWED_MIME_TYPES = new Map([
+export const ALLOWED_MEDIA_MIME_TYPES = new Map([
     [
         'image/jpeg',
         'jpg'
@@ -558,7 +558,7 @@ async function generateThumbnail(
 function validateUpload(data) {
 
     if (
-        !ALLOWED_MIME_TYPES.has(data.mimeType)
+        !ALLOWED_MEDIA_MIME_TYPES.has(data.mimeType)
     ) {
 
         throw new MediaError(
@@ -594,7 +594,7 @@ function validateUpload(data) {
 
 function getExtension(mimeType) {
 
-    return ALLOWED_MIME_TYPES.get(
+    return ALLOWED_MEDIA_MIME_TYPES.get(
         mimeType
     );
 

@@ -27,3 +27,27 @@ export function lookupBookByIsbn({
 
 }
 
+export function importAcquisitionImage({
+    imageUrl,
+    isPrimary = false,
+    itemId,
+    provider = null,
+    source = null
+}) {
+
+    return apiFetch(
+        '/api/acquisition/images/import',
+        {
+            method:
+                'POST',
+            body: {
+                imageUrl,
+                isPrimary,
+                itemId,
+                provider,
+                source
+            }
+        }
+    );
+
+}
