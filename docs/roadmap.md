@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot11.4.1.
-- Dernier lot livré : Lot 11.4.1 - Google Books Provider.
+- Version actuelle : v0.12-lot11.5.
+- Dernier lot livré : Lot 11.5 - Provider Image Import.
 
 Capacités disponibles :
 
@@ -27,6 +27,8 @@ Capacités disponibles :
 - Orchestration acquisition livrée via `AcquisitionService`.
 - Résolution multi-provider acquisition livrée côté backend.
 - Cache SQLite backend livré pour les réponses de lookup acquisition normalisées.
+- Import sécurisé de couverture provider livré après validation utilisateur et
+  création de l'item, via le pipeline média existant.
 - Préférences d'affichage par collection/plugin.
 - Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
 - Exports JSON natifs, export CSV collection et import JSON natif non destructif.
@@ -55,7 +57,6 @@ Limites majeures connues :
 
 ### Haute priorité
 
-- Import image/couverture après validation utilisateur.
 - Restauration ZIP guidée.
 - Import CSV CollectionMgnt.
 - Amélioration des rapports et historiques d'administration.
@@ -374,11 +375,15 @@ Phase 5 — Extension progressive :
 - Contrat API public conservé, sans changement frontend.
 - Aucun import image, aucune fusion automatique et aucun cache global ajoutés.
 
-#### Lot 11.5 - Import Image - Prévu
+#### Lot 11.5 - Provider Image Import - Livré
 
-- Permettre l'import de couverture après validation utilisateur.
-- Passer par le système média existant.
-- Ne pas importer automatiquement une image sans action explicite.
+- Import de couverture provider disponible après validation utilisateur.
+- Import limité aux items déjà créés, sans file temporaire persistante.
+- Téléchargement backend sécurisé avec protections SSRF, redirects bornés,
+  timeout, limite de taille et validation de contenu.
+- Réutilisation du système média existant via `MediaService`.
+- Aucun import automatique, aucune image binaire stockée dans le cache
+  acquisition et aucun changement de comportement des providers.
 
 #### Lot 11.6 - TMDb - Prévu
 

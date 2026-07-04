@@ -141,6 +141,9 @@ Le pipeline media reste donc identique a l'upload manuel :
 - generation de la miniature WebP ;
 - association a l'item via la table `media`.
 
+Il n'existe qu'une seule pipeline media. Les uploads manuels et les imports
+depuis providers passent tous par `MediaService.createOriginalMedia()`.
+
 Les images binaires ne sont pas stockees dans le cache acquisition.
 
 ## Suppression d'un item
