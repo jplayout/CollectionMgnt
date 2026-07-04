@@ -321,14 +321,19 @@ Les fondations responsive utilisent les conventions :
 4. La validation frontend reste legere.
 5. Le backend revalide avec le schema avant insertion ou mise a jour.
 6. L'utilisateur est redirige vers la fiche item.
+7. Si une couverture provider a ete proposee, l'utilisateur peut confirmer son
+   import depuis la fiche item.
 
 ### Medias
 
 1. `ImageUploader` envoie un `multipart/form-data` a `/api/media`.
-2. Le backend valide le contenu avec Sharp.
-3. Le backend stocke l'original, une image optimisee WebP et une miniature WebP.
-4. Les fichiers sont lies a une ligne `media`.
-5. La galerie et les cartes chargent les thumbnails via des blobs authentifies.
+2. `POST /api/acquisition/images/import` peut importer une couverture provider
+   apres confirmation utilisateur et creation de l'item.
+3. Les deux flux appellent `MediaService.createOriginalMedia()`.
+4. Le backend valide le contenu avec Sharp.
+5. Le backend stocke l'original, une image optimisee WebP et une miniature WebP.
+6. Les fichiers sont lies a une ligne `media`.
+7. La galerie et les cartes chargent les thumbnails via des blobs authentifies.
 
 Voir `docs/media-management.md`.
 

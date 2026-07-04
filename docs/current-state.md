@@ -16,7 +16,8 @@ Frontend :
 - Édition item : formulaire dynamique frontend disponible
 - Suppression item : disponible depuis la fiche item
 - Médias : backend disponible, galerie frontend minimale disponible
-- Acquisition assistée livres : lookup ISBN et pré-remplissage local disponibles
+- Acquisition assistée livres : lookup ISBN, pré-remplissage local et import
+  explicite de couverture après création disponibles
 
 Lots acquisition terminés :
 
@@ -27,6 +28,7 @@ Lots acquisition terminés :
 - 11.3 : cache SQLite backend pour les lookups acquisition
 - 11.4.0 : résolution multi-provider côté backend
 - 11.4.1 : provider secondaire Google Books pour les livres
+- 11.5 : import explicite de couverture provider vers le système média existant
 
 ---
 
@@ -93,6 +95,8 @@ Lots acquisition terminés :
 - Recherche et filtres compatibles avec `isbn` et `barcode`
 - API providers disponible via `GET /api/acquisition/providers`
 - Lookup ISBN livre disponible via `POST /api/acquisition/books/isbn/lookup`
+- Import explicite de couverture provider disponible via
+  `POST /api/acquisition/images/import`
 - Providers livrés :
   - `openlibrary`, sans clé API obligatoire
   - `googlebooks`, sans clé API obligatoire, avec `GOOGLE_BOOKS_API_KEY` optionnelle
@@ -112,9 +116,12 @@ Lots acquisition terminés :
   - aucune réponse brute provider ni image binaire stockée
 - Réponse API inchangée, sans champ `cached`
 - Fallback implicite Open Library -> Google Books actif pour le lookup ISBN livres
+- Import image uniquement après confirmation utilisateur et création de l'item,
+  via `MediaService.createOriginalMedia()`
 - Aucun lookup code-barres films/jeux/autres livré
 - Aucun scan caméra livré
 - Aucun import automatique d'image livré
+- Aucun cache local/offline d'images livré
 
 ### Médias
 
@@ -396,6 +403,7 @@ Lots acquisition terminés :
 
 - `GET /api/acquisition/providers`
 - `POST /api/acquisition/books/isbn/lookup`
+- `POST /api/acquisition/images/import`
 
 ### Exports
 

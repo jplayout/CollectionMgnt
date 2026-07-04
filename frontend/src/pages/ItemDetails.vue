@@ -124,7 +124,9 @@
 
         <MediaGallery
             v-if="item"
+            :acquisition-image="pendingAcquisitionImage"
             :item-id="itemId"
+            @acquisition-image-imported="clearAcquisitionImage"
         />
     </main>
 </template>
@@ -163,6 +165,11 @@ import {
 } from '../services/plugin-api.js';
 
 import {
+    clearPendingAcquisitionImage,
+    getPendingAcquisitionImage
+} from '../services/pending-acquisition-image.js';
+
+import {
     formatMetadataValue,
     isEmptyMetadataValue
 } from '../utils/metadata-formatters.js';
@@ -198,6 +205,9 @@ const deleting =
 
 const deleteError =
     ref('');
+
+const pendingAcquisitionImage =
+    ref(null);
 
 const itemId =
     computed(
@@ -501,6 +511,11 @@ async function loadItem() {
     item.value =
         null;
 
+    pendingAcquisitionImage.value =
+        getPendingAcquisitionImage(
+            itemId.value
+        );
+
     schema.value =
         null;
 
@@ -551,6 +566,17 @@ async function loadItem() {
             false;
 
     }
+
+}
+
+function clearAcquisitionImage() {
+
+    clearPendingAcquisitionImage(
+        itemId.value
+    );
+
+    pendingAcquisitionImage.value =
+        null;
 
 }
 

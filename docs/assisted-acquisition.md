@@ -2,15 +2,16 @@
 
 Etat courant : fondations identifiants, lookup backend ISBN livres,
 pre-remplissage frontend local pour les livres, orchestration backend,
-resolution multi-provider et cache SQLite acquisition.
+resolution multi-provider, cache SQLite acquisition et import explicite de
+couverture provider vers le systeme media existant.
 
 Les identifiants sont des champs metadata declares par plugin et stockes dans
 `items.metadata`. Le lookup ISBN livres est disponible via le backend
 CollectionMgnt avec Open Library comme provider principal et Google Books comme
 provider secondaire.
 
-Aucune camera, scan mobile, sauvegarde automatique, import d'image ou
-dedoublonnage global n'est disponible a ce stade.
+Aucune camera, scan mobile, sauvegarde automatique ou dedoublonnage global
+n'est disponible a ce stade.
 
 ## Champs Supportes
 
@@ -69,8 +70,10 @@ Principes :
 - le registre provider reste responsable de l'inventaire et de la selection ;
 - le mapping provider vers resultat CollectionMgnt est centralise dans le provider ;
 - aucune route acquisition ne cree ou modifie un item ;
-- aucune image n'est telechargee dans ce lot ;
 - les URLs de couverture peuvent etre retournees comme previsualisation distante ;
+- l'import d'une couverture provider passe par une confirmation utilisateur et
+  un item deja cree ;
+- l'import d'image reutilise le `MediaService` existant ;
 - aucun secret provider n'est expose cote frontend.
 
 Flux interne :
@@ -216,6 +219,37 @@ apres choix explicite de l'utilisateur. La sauvegarde reste assuree par les
 routes items existantes `POST /api/items` et `PATCH /api/items/:id`, avec
 validation et normalisation backend habituelles.
 
+### `POST /api/acquisition/images/import`
+
+Importe une image distante proposee par un provider vers la galerie media d'un
+item deja cree.
+
+Body :
+
+```json
+{
+  "itemId": 123,
+  "imageUrl": "https://covers.openlibrary.org/b/id/123-L.jpg",
+  "provider": "openlibrary",
+  "source": "openlibrary",
+  "isPrimary": true
+}
+```
+
+Regles :
+
+- `itemId` et `imageUrl` sont obligatoires ;
+- `provider`, `source` et `isPrimary` sont optionnels ;
+- aucun import n'est lance sans confirmation explicite de l'utilisateur ;
+- le backend telecharge l'image, valide l'URL et le contenu, puis appelle
+  `MediaService.createOriginalMedia()` ;
+- l'original, l'image WebP optimisee et la miniature sont generes par le systeme
+  media existant ;
+- aucune image binaire n'est stockee dans `acquisition_cache`.
+
+La route refuse les URLs non HTTPS, locales ou privees, revalide les redirects
+et borne le telechargement avec la meme limite de taille que les uploads media.
+
 ## Lookup Frontend ISBN
 
 Le formulaire dynamique affiche un bouton `Rechercher` adjacent au champ ISBN
@@ -243,8 +277,9 @@ Regles de pre-remplissage :
 - aucune valeur absente n'est inventee ;
 - aucun item n'est cree ou modifie tant que l'utilisateur ne soumet pas le
   formulaire ;
-- les URLs de couverture peuvent etre affichees en previsualisation distante,
-  mais aucune image n'est importee ou sauvegardee.
+- les URLs de couverture peuvent etre affichees en previsualisation distante ;
+- l'import d'une couverture proposee n'est disponible qu'apres creation de
+  l'item, depuis la fiche item.
 
 Les erreurs de lookup (`invalid_isbn`, `provider_unavailable`,
 `provider_timeout`, erreur generique) sont affichees sans bloquer la saisie
@@ -264,7 +299,7 @@ Non livre dans ce lot :
 - lookup code-barres
 - lookup films ou jeux video
 - pre-remplissage avec sauvegarde automatique
-- import ou telechargement d'image
+- import d'image avant creation d'un item
 - dedoublonnage global
 
 ## Phases Futures
