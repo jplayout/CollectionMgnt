@@ -25,6 +25,22 @@ Workflow attendu :
 - pousser la branche ;
 - ouvrir une Pull Request vers `main`.
 
+## Development workflow
+
+Workflow officiel :
+
+```text
+Analysis
+  -> Architecture
+  -> Implementation
+  -> Self-review
+  -> Documentation
+  -> Pull Request
+  -> Merge
+```
+
+Pour les conventions détaillées, consultez `docs/development.md`.
+
 ## Pull Requests
 
 La branche `main` est protégée. Le développement se fait sur une branche dédiée, puis passe par une Pull Request avant d'être fusionné.
@@ -156,6 +172,22 @@ Expected workflow:
 - create a commit;
 - push the branch;
 - open a Pull Request targeting `main`.
+
+## Development Workflow
+
+Official workflow:
+
+```text
+Analysis
+  -> Architecture
+  -> Implementation
+  -> Self-review
+  -> Documentation
+  -> Pull Request
+  -> Merge
+```
+
+For detailed conventions, read `docs/development.md`.
 
 ## Pull Requests
 

@@ -86,6 +86,84 @@ Le cache SQLite stocke uniquement les reponses normalisees `{ query, results }`.
 Il ne stocke pas les reponses brutes provider, les erreurs, les secrets ou les
 images binaires.
 
+## Development conventions / Conventions de developpement
+
+Le cycle officiel d'un lot est :
+
+```text
+Analysis
+  -> Architecture
+  -> Implementation
+  -> Self-review
+  -> Documentation
+  -> Pull Request
+  -> Merge
+```
+
+Un lot est termine quand les points suivants sont traites :
+
+- implementation terminee ;
+- tests ajoutes ou mis a jour quand necessaire ;
+- auto-revue effectuee avant PR ;
+- documentation concernee mise a jour ;
+- `docs/roadmap.md` mis a jour ;
+- `docs/current-state.md` mis a jour ;
+- ADR cree ou mis a jour seulement si une decision d'architecture durable le
+  justifie.
+
+Toute implementation doit etre accompagnee de la documentation pertinente avant
+fusion. Pendant une auto-revue, ne creez aucun commit : corrigez si necessaire,
+puis laissez la PR porter le diff final.
+
+## Branch naming
+
+Utiliser un prefixe explicite :
+
+- `analysis/*`
+- `feature/*`
+- `docs/*`
+- `fix/*`
+- `security/*`
+- `refactor/*`
+- `test/*`
+- `ci/*`
+- `chore/*`
+
+## Pull Request conventions
+
+Prefixes de titre recommandes :
+
+- `feat:`
+- `fix:`
+- `docs:`
+- `security:`
+- `refactor:`
+- `test:`
+- `ci:`
+- `perf:`
+- `chore:`
+
+Les descriptions de PR doivent rester courtes et utiliser ce format :
+
+```markdown
+## Summary
+
+...
+```
+
+## Testing expectations
+
+- Aucun test ne doit effectuer un appel Internet reel.
+- Les providers externes doivent etre testes avec mocks ou fixtures.
+- Les tests doivent etre ajoutes ou mis a jour quand le comportement change.
+- `git diff --check` doit etre execute avant d'ouvrir une PR.
+
+## Documentation
+
+Toute fonctionnalite terminee doit mettre a jour la documentation concernee
+avant fusion. Verifier au minimum `docs/current-state.md` et `docs/roadmap.md`,
+puis les docs specialisees impactees.
+
 ## Variables D'environnement
 
 Principales variables backend :
@@ -294,6 +372,84 @@ only consumes `/api/acquisition/*` routes.
 
 The SQLite cache stores only normalized `{ query, results }` responses. It does
 not store raw provider responses, errors, secrets or binary images.
+
+## Development Conventions
+
+The official batch workflow is:
+
+```text
+Analysis
+  -> Architecture
+  -> Implementation
+  -> Self-review
+  -> Documentation
+  -> Pull Request
+  -> Merge
+```
+
+A batch is complete when the following points are covered:
+
+- implementation is complete;
+- tests are added or updated when needed;
+- self-review is done before PR;
+- affected documentation is updated;
+- `docs/roadmap.md` is updated;
+- `docs/current-state.md` is updated;
+- an ADR is created or updated only when a durable architecture decision
+  requires it.
+
+Every implementation must include the relevant documentation before merge.
+During self-review, do not create commits: fix what is needed, then let the PR
+carry the final diff.
+
+## Branch Naming
+
+Use an explicit prefix:
+
+- `analysis/*`
+- `feature/*`
+- `docs/*`
+- `fix/*`
+- `security/*`
+- `refactor/*`
+- `test/*`
+- `ci/*`
+- `chore/*`
+
+## Pull Request Conventions
+
+Recommended title prefixes:
+
+- `feat:`
+- `fix:`
+- `docs:`
+- `security:`
+- `refactor:`
+- `test:`
+- `ci:`
+- `perf:`
+- `chore:`
+
+PR descriptions should stay short and use this format:
+
+```markdown
+## Summary
+
+...
+```
+
+## Testing Expectations
+
+- No test should make a real Internet call.
+- External providers must be tested with mocks or fixtures.
+- Tests should be added or updated when behavior changes.
+- `git diff --check` must be run before opening a PR.
+
+## Documentation
+
+Every completed feature must update the affected documentation before merge.
+Check at least `docs/current-state.md` and `docs/roadmap.md`, then the impacted
+specialized docs.
 
 ## Environment Variables
 
