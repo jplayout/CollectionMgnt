@@ -306,7 +306,6 @@ Non livre dans ce lot :
 
 Les phases suivantes pourront s'appuyer sur ces champs :
 
-- import image ou couverture apres validation utilisateur
 - provider TMDb pour les films
 - provider IGDB ou RAWG pour les jeux video
 - fournisseurs externes configurables

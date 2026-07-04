@@ -1,6 +1,6 @@
 # CollectionMgnt
 
-Version : v0.12-lot11.4.1
+Version : v0.12-lot11.5
 
 ## État du projet
 
@@ -51,6 +51,7 @@ Lots acquisition terminés :
 - Fondations d'acquisition assistée livrées : champs identifiants `books.isbn`, `games.barcode`, `movies.barcode` et `others.barcode`
 - Lookup ISBN livre livré via backend providers Open Library et Google Books
 - Orchestration acquisition livrée via `AcquisitionService`
+- Import sécurisé des couvertures provider livré après création de l'item
 - Cache SQLite acquisition livré via `acquisition_cache`
 - Aucun champ ISBN, EAN, UPC ou code-barres sur le plugin `consoles` à ce stade
 - Dataset officiel de démonstration disponible dans `demo/datasets/collectionmgnt-demo-v1.json`
@@ -116,8 +117,8 @@ Lots acquisition terminés :
   - aucune réponse brute provider ni image binaire stockée
 - Réponse API inchangée, sans champ `cached`
 - Fallback implicite Open Library -> Google Books actif pour le lookup ISBN livres
-- Import image uniquement après confirmation utilisateur et création de l'item,
-  via `MediaService.createOriginalMedia()`
+- Import image sécurisé uniquement après confirmation utilisateur et création
+  de l'item, via `MediaService.createOriginalMedia()`
 - Aucun lookup code-barres films/jeux/autres livré
 - Aucun scan caméra livré
 - Aucun import automatique d'image livré
@@ -127,6 +128,8 @@ Lots acquisition terminés :
 
 - Upload d'images originales
 - Association d'images aux items
+- Images issues des providers importées via le même pipeline que les uploads
+  manuels : original, WebP optimisé et miniature
 - Pack média de démonstration générant une image PNG principale par item importé via l'API média existante
 - Pack média capable de compléter les médias manquants d'un dataset déjà importé, sans réimporter une nouvelle copie
 - Stockage disque dans `backend/data/uploads/items/{itemId}`

@@ -335,6 +335,17 @@ Les fondations responsive utilisent les conventions :
 6. Les fichiers sont lies a une ligne `media`.
 7. La galerie et les cartes chargent les thumbnails via des blobs authentifies.
 
+Flux d'import d'une image provider :
+
+```text
+Provider
+  -> AcquisitionImageImportService
+  -> MediaService
+  -> Original
+  -> WebP
+  -> Thumbnail
+```
+
 Voir `docs/media-management.md`.
 
 ### Administration
