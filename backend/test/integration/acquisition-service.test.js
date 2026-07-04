@@ -1782,6 +1782,221 @@ test(
     }
 );
 
+test(
+    'AcquisitionService can use TMDb as an explicit movie search provider',
+    async () => {
+
+        const service =
+            createConfiguredTmdbService({
+                fetchImpl:
+                    async () => createJsonResponse({
+                        results: [
+                            {
+                                id:
+                                    78,
+                                original_language:
+                                    'en',
+                                original_title:
+                                    'Blade Runner',
+                                overview:
+                                    'Deckard hunts replicants.',
+                                release_date:
+                                    '1982-06-25',
+                                title:
+                                    'Blade Runner'
+                            }
+                        ]
+                    })
+            });
+
+        const result =
+            await service.searchMovies({
+                providerId:
+                    'tmdb',
+                query:
+                    'Blade Runner'
+            });
+
+        assert.equal(
+            result.results[0].provider,
+            'tmdb'
+        );
+
+        assert.equal(
+            result.results[0].metadata.tmdbId,
+            78
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService rejects explicit TMDb searches when TMDb is not configured',
+    async () => {
+
+        const service =
+            new AcquisitionService({
+                providerRegistry:
+                    new AcquisitionProviderRegistry({
+                        fetchImpl:
+                            async () => {
+
+                                throw new Error(
+                                    'Unexpected network call'
+                                );
+
+                            },
+                        tmdbApiReadAccessToken:
+                            ''
+                    })
+            });
+
+        await assert.rejects(
+            () => service.searchMovies({
+                providerId:
+                    'tmdb',
+                query:
+                    'Blade Runner'
+            }),
+            {
+                code:
+                    'provider_unavailable',
+                statusCode:
+                    503
+            }
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService can use TMDb as the implicit movie search provider',
+    async () => {
+
+        let calls =
+            0;
+
+        const service =
+            createConfiguredTmdbService({
+                fetchImpl:
+                    async () => {
+
+                        calls +=
+                            1;
+
+                        return createJsonResponse({
+                            results: [
+                                {
+                                    id:
+                                        603,
+                                    original_title:
+                                        'The Matrix',
+                                    title:
+                                        'The Matrix'
+                                }
+                            ]
+                        });
+
+                    }
+            });
+
+        const result =
+            await service.searchMovies({
+                query:
+                    'The Matrix'
+            });
+
+        assert.equal(
+            result.results[0].provider,
+            'tmdb'
+        );
+
+        assert.equal(
+            calls,
+            1
+        );
+
+    }
+);
+
+test(
+    'AcquisitionService caches TMDb movie search responses without another fetch',
+    async () => {
+
+        let calls =
+            0;
+
+        const {
+            cache,
+            repository
+        } =
+            createCache();
+
+        const service =
+            createConfiguredTmdbService({
+                acquisitionCache:
+                    cache,
+                fetchImpl:
+                    async () => {
+
+                        calls +=
+                            1;
+
+                        return createJsonResponse({
+                            results: [
+                                {
+                                    id:
+                                        78,
+                                    original_title:
+                                        'Blade Runner',
+                                    title:
+                                        'Blade Runner'
+                                }
+                            ]
+                        });
+
+                    }
+            });
+
+        await service.searchMovies({
+            language:
+                'en-US',
+            query:
+                'Blade Runner',
+            region:
+                'US',
+            year:
+                '1982'
+        });
+
+        await service.searchMovies({
+            language:
+                'en-US',
+            query:
+                'Blade Runner',
+            region:
+                'US',
+            year:
+                '1982'
+        });
+
+        assert.equal(
+            calls,
+            1
+        );
+
+        assert.deepEqual(
+            [
+                ...repository.rows.keys()
+            ],
+            [
+                'movies:movies/search:tmdb:mapping_v1:language=en-US&query=Blade+Runner&region=US&year=1982'
+            ]
+        );
+
+    }
+);
+
 function createService(
     providers,
     {
@@ -1794,6 +2009,23 @@ function createService(
         providerRegistry:
             new AcquisitionProviderRegistry({
                 providers
+            })
+    });
+
+}
+
+function createConfiguredTmdbService({
+    acquisitionCache = null,
+    fetchImpl
+}) {
+
+    return new AcquisitionService({
+        acquisitionCache,
+        providerRegistry:
+            new AcquisitionProviderRegistry({
+                fetchImpl,
+                tmdbApiReadAccessToken:
+                    'test-token'
             })
     });
 
@@ -1855,6 +2087,22 @@ function createCacheRow({
             JSON.stringify(
                 response
             )
+    };
+
+}
+
+function createJsonResponse(payload) {
+
+    return {
+        ok:
+            true,
+        status:
+            200,
+        async json() {
+
+            return payload;
+
+        }
     };
 
 }

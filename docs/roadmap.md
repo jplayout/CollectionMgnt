@@ -31,6 +31,7 @@ Capacités disponibles :
   création de l'item, via le pipeline média existant.
 - Capability interne `movies/search` livrée pour préparer les providers films
   par recherche texte.
+- Provider TMDb backend livré comme premier provider `movies/search`.
 - Préférences d'affichage par collection/plugin.
 - Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
 - Exports JSON natifs, export CSV collection et import JSON natif non destructif.
@@ -407,12 +408,17 @@ Phase 5 — Extension progressive :
   film ajoutés dans ce lot.
 - ADR-0008 ajouté pour distinguer recherche texte et lookup code-barres.
 
-#### Lot 11.6 - TMDb Provider - Prévu
+#### Lot 11.6.1 - TMDb Provider - Livré
 
-- Ajouter un provider films via TMDb.
-- Utiliser la capability `movies/search`.
-- Mapper les résultats vers les champs existants du plugin `movies`.
-- Gérer proprement secret API, quotas et erreurs.
+- Provider `tmdb` ajouté pour la capability interne `movies/search`.
+- Authentification backend via `TMDB_API_READ_ACCESS_TOKEN`.
+- Recherche TMDb `/3/search/movie` avec query, langue, région, année optionnelle
+  et `include_adult=false`.
+- Mapping MVP livré : titre, description, source, poster `w500` distant et
+  metadata `tmdbId`, `originalTitle`, `releaseDate`, `releaseYear`,
+  `originalLanguage`.
+- Aucun endpoint details, aucun IMDb ID, aucun lookup code-barres film, aucun
+  frontend et aucune route publique film dans ce lot.
 
 #### Lot 11.7 - IGDB / RAWG - Prévu
 

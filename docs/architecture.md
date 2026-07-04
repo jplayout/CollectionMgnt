@@ -183,8 +183,10 @@ de cache. Pour la capability `movies/search`, la cle inclut la query texte
 normalisee ainsi que `language`, `region` et `year` quand ces options sont
 presentes.
 
-`movies/search` est une capability interne de recherche texte. Elle prepare les
-providers films comme TMDb sans creer de lookup code-barres film. Les
+`movies/search` est une capability interne de recherche texte. TMDb est le
+premier provider concret pour cette capability quand
+`TMDB_API_READ_ACCESS_TOKEN` est configure. Il reste backend-only, retourne des
+URLs poster distantes et ne cree pas de lookup code-barres film. Les
 codes-barres restent des identifiants produit et devront etre resolus par un
 provider capable de traiter EAN/UPC.
 

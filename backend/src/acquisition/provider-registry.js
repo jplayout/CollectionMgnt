@@ -11,12 +11,17 @@ import {
     GoogleBooksProvider
 } from './providers/google-books-provider.js';
 
+import {
+    TmdbProvider
+} from './providers/tmdb-provider.js';
+
 export class AcquisitionProviderRegistry {
 
     constructor({
         fetchImpl = globalThis.fetch,
         googleBooksApiKey = process.env.GOOGLE_BOOKS_API_KEY,
         providers = null,
+        tmdbApiReadAccessToken = process.env.TMDB_API_READ_ACCESS_TOKEN,
         timeoutMs
     } = {}) {
 
@@ -35,13 +40,32 @@ export class AcquisitionProviderRegistry {
                 })
             ];
 
+        if (
+            !providers
+        ) {
+
+            this.providers.push(
+                new TmdbProvider({
+                    fetchImpl,
+                    readAccessToken:
+                        tmdbApiReadAccessToken,
+                    timeoutMs
+                })
+            );
+
+        }
+
     }
 
     listProviders() {
 
-        return this.providers.map(
-            provider => provider.describe()
-        );
+        return this.providers
+            .map(
+                provider => provider.describe()
+            )
+            .filter(
+                description => description.enabled
+            );
 
     }
 
