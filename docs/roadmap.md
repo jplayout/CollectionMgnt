@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot11.5.
-- Dernier lot livré : Lot 11.5 - Provider Image Import.
+- Version actuelle : v0.12-lot14.3 en cours.
+- Dernier lot livré : Lot 14.2 - GitHub Governance.
 
 Capacités disponibles :
 
@@ -37,7 +37,8 @@ Capacités disponibles :
 - Playwright E2E MVP côté frontend avec Chromium, dataset de démonstration et `DATA_DIR` temporaire.
 - CI GitHub Actions, CodeQL, Semgrep, Dependabot, publication GHCR multi-architecture et builds Docker/Podman documentés.
 - Workflow GitHub Actions Project Conventions livré pour bloquer les écarts de conventions PR, branches, whitespace, Markdown et liens internes.
-- Gouvernance GitHub en cours de documentation : CODEOWNERS, template PR, politique de sécurité et règles GitHub à configurer.
+- Gouvernance GitHub livrée : CODEOWNERS, template PR, politique de sécurité et règles GitHub à configurer.
+- Gate Documentation & Architecture 14.3 en cours pour vérifier les mises à jour documentaires attendues sur les changements à forte confiance.
 - Base Compose Synology disponible avec images GHCR `linux/amd64` et `linux/arm64`, volume persistant explicite configurable et backend non exposé sur l'hôte.
 - Guide de déploiement Synology DSM / Container Manager disponible.
 - Guide HTTPS / Reverse Proxy DSM disponible, avec recommandation de proxy vers le frontend uniquement.
@@ -92,7 +93,9 @@ Limites majeures connues :
 - Lot 10.3.2 Trivy Security Scanning livré : scans dépendances et images conteneur en mode non bloquant.
 - Lot 11.0.1 Semgrep SAST GitHub Action livré : scan SAST complémentaire à CodeQL en mode observation non bloquant.
 - Lot 14.1 CI Hardening livré : Semgrep et Trivy deviennent bloquants selon une politique explicite.
-- Lot 14.2 GitHub Governance en cours : CODEOWNERS, template PR, politique de sécurité et documentation de gouvernance GitHub.
+- Lot 14.2 GitHub Governance livré : CODEOWNERS, template PR, politique de sécurité et documentation de gouvernance GitHub.
+- Lot 14.3 Documentation & Architecture Gates en cours : contrôle bloquant des
+  impacts documentaires les plus directs dans Project Conventions.
 - Lot 10.5.3 HTTPS / Reverse Proxy DSM livré : documentation HTTPS DSM avec backend non exposé.
 - Détail complet conservé dans `Historique des lots livrés > Sécurité`.
 
