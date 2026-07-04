@@ -8,8 +8,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot14.3 en cours.
-- Dernier lot livré : Lot 14.2 - GitHub Governance.
+- Version actuelle : v0.12-lot14.4.
+- Dernier lot livré : Lot 14.4 - Security Governance.
 
 Capacités disponibles :
 
@@ -38,7 +38,9 @@ Capacités disponibles :
 - CI GitHub Actions, CodeQL, Semgrep, Dependabot, publication GHCR multi-architecture et builds Docker/Podman documentés.
 - Workflow GitHub Actions Project Conventions livré pour bloquer les écarts de conventions PR, branches, whitespace, Markdown et liens internes.
 - Gouvernance GitHub livrée : CODEOWNERS, template PR, politique de sécurité et règles GitHub à configurer.
-- Gate Documentation & Architecture 14.3 en cours pour vérifier les mises à jour documentaires attendues sur les changements à forte confiance.
+- Gate Documentation & Architecture 14.3 livré pour vérifier les mises à jour documentaires attendues sur les changements à forte confiance.
+- Gouvernance sécurité 14.4 livrée : politique de sévérité, Security Gates et ADR-0007 Project Quality Gates.
+- Epic 14 Project Quality & Engineering terminé.
 - Base Compose Synology disponible avec images GHCR `linux/amd64` et `linux/arm64`, volume persistant explicite configurable et backend non exposé sur l'hôte.
 - Guide de déploiement Synology DSM / Container Manager disponible.
 - Guide HTTPS / Reverse Proxy DSM disponible, avec recommandation de proxy vers le frontend uniquement.
@@ -94,8 +96,10 @@ Limites majeures connues :
 - Lot 11.0.1 Semgrep SAST GitHub Action livré : scan SAST complémentaire à CodeQL en mode observation non bloquant.
 - Lot 14.1 CI Hardening livré : Semgrep et Trivy deviennent bloquants selon une politique explicite.
 - Lot 14.2 GitHub Governance livré : CODEOWNERS, template PR, politique de sécurité et documentation de gouvernance GitHub.
-- Lot 14.3 Documentation & Architecture Gates en cours : contrôle bloquant des
+- Lot 14.3 Documentation & Architecture Gates livré : contrôle bloquant des
   impacts documentaires les plus directs dans Project Conventions.
+- Lot 14.4 Security Governance livré : politique de sévérité, Security Gates et
+  ADR-0007 Project Quality Gates. Epic 14 terminé.
 - Lot 10.5.3 HTTPS / Reverse Proxy DSM livré : documentation HTTPS DSM avec backend non exposé.
 - Détail complet conservé dans `Historique des lots livrés > Sécurité`.
 
@@ -504,16 +508,25 @@ Travaux futurs :
 - Rendre Trivy bloquant sur les vulnérabilités `HIGH` et `CRITICAL`.
 - Ajouter permissions minimales et concurrence aux workflows existants.
 
-#### Lot 14.2 - GitHub governance - En cours
+#### Lot 14.2 - GitHub governance - Livré
 
 - Ajouter un CODEOWNERS minimal.
 - Ajouter un template de Pull Request léger.
 - Ajouter une politique de sécurité bilingue.
 - Documenter les règles GitHub versionnées, configurées dans GitHub et non versionnables.
 
-#### Lots suivants - Prévus
+#### Lot 14.3 - Documentation & Architecture gates - Livré
 
-- Structurer la gouvernance sécurité et qualité du projet.
+- Ajouter un gate Documentation & Architecture dans Project Conventions.
+- Bloquer les oublis documentaires les plus directs.
+- Prévoir une exception explicite et justifiée dans la PR.
+
+#### Lot 14.4 - Security governance - Livré
+
+- Formaliser la politique de sévérité sécurité.
+- Documenter les Security Gates et GitHub Security & Quality.
+- Créer ADR-0007 Project Quality Gates.
+- Clore l'Epic 14 Project Quality & Engineering.
 
 ### Médias
 

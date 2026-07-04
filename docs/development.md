@@ -149,6 +149,8 @@ Les descriptions de PR doivent rester courtes et utiliser ce format :
 ## Summary
 
 ...
+
+Docs impact:
 ```
 
 ## Testing expectations
@@ -157,12 +159,22 @@ Les descriptions de PR doivent rester courtes et utiliser ce format :
 - Les providers externes doivent etre testes avec mocks ou fixtures.
 - Les tests doivent etre ajoutes ou mis a jour quand le comportement change.
 - `git diff --check` doit etre execute avant d'ouvrir une PR.
+- Les security gates font partie des quality gates et doivent etre traites avant
+  merge lorsqu'ils sont bloquants.
 
 ## Documentation
 
 Toute fonctionnalite terminee doit mettre a jour la documentation concernee
 avant fusion. Verifier au minimum `docs/current-state.md` et `docs/roadmap.md`,
 puis les docs specialisees impactees.
+
+Le workflow Project Conventions verifie les impacts documentaires les plus
+directs. Si une PR ne necessite vraiment aucune mise a jour documentaire,
+indiquer une justification explicite dans le corps de PR :
+
+```text
+Docs impact: none - <reason>
+```
 
 ## Variables D'environnement
 
@@ -436,6 +448,8 @@ PR descriptions should stay short and use this format:
 ## Summary
 
 ...
+
+Docs impact:
 ```
 
 ## Testing Expectations
@@ -444,12 +458,22 @@ PR descriptions should stay short and use this format:
 - External providers must be tested with mocks or fixtures.
 - Tests should be added or updated when behavior changes.
 - `git diff --check` must be run before opening a PR.
+- Security gates are part of quality gates and must be handled before merge when
+  they are blocking.
 
 ## Documentation
 
 Every completed feature must update the affected documentation before merge.
 Check at least `docs/current-state.md` and `docs/roadmap.md`, then the impacted
 specialized docs.
+
+The Project Conventions workflow checks the most direct documentation impacts.
+If a PR truly needs no documentation update, add an explicit justification to
+the PR body:
+
+```text
+Docs impact: none - <reason>
+```
 
 ## Environment Variables
 
