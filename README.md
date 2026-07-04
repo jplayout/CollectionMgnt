@@ -318,7 +318,7 @@ Cela signifie que vous êtes libre d'utiliser, d'étudier, de modifier et de red
 
 L'AGPL exige également que les versions modifiées diffusées sur un réseau donnent accès à leur code source.
 
-Consultez [LICENSE](LICENSE) pour le texte complet. 
+Consultez [LICENSE](LICENSE) pour le texte complet.
 
 ---
 

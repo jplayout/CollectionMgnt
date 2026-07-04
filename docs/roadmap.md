@@ -36,6 +36,7 @@ Capacités disponibles :
 - Layout authentifié, responsive de base et tests backend d'intégration.
 - Playwright E2E MVP côté frontend avec Chromium, dataset de démonstration et `DATA_DIR` temporaire.
 - CI GitHub Actions, CodeQL, Semgrep, Dependabot, publication GHCR multi-architecture et builds Docker/Podman documentés.
+- Workflow GitHub Actions Project Conventions en cours de livraison pour bloquer les écarts de conventions PR, branches, whitespace, Markdown et liens internes.
 - Base Compose Synology disponible avec images GHCR `linux/amd64` et `linux/arm64`, volume persistant explicite configurable et backend non exposé sur l'hôte.
 - Guide de déploiement Synology DSM / Container Manager disponible.
 - Guide HTTPS / Reverse Proxy DSM disponible, avec recommandation de proxy vers le frontend uniquement.
@@ -482,6 +483,20 @@ Travaux futurs :
 - Automatic recovery when the server becomes available again.
 - Visual indication when data is viewed offline.
 - Incremental synchronization as a future evolution.
+
+### 14 — Project Quality & Engineering
+
+#### Lot 14.0 - Project conventions - En cours
+
+- Ajouter un workflow GitHub Actions bloquant dédié aux conventions du projet.
+- Vérifier les titres de Pull Request, les noms de branche, `git diff --check`, le lint Markdown et les liens Markdown internes.
+- Conserver ces contrôles indépendants du code applicatif et des tests fonctionnels.
+
+#### Lots suivants - Prévus
+
+- Durcir progressivement les règles de protection de branche et de Pull Request.
+- Clarifier les scans consultatifs et bloquants.
+- Structurer la gouvernance sécurité et qualité du projet.
 
 ### Médias
 

@@ -193,6 +193,16 @@ Lots acquisition terminés :
 - En-têtes couverts : `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` et `Permissions-Policy`
 - Configuration pensée pour ne pas bloquer uploads médias, exports, téléchargements et API existantes
 
+### Qualité projet
+
+- CI GitHub Actions existante pour les tests backend, le build frontend,
+  Playwright E2E, Docker, CodeQL, Semgrep, Trivy et Dependabot
+- Workflow Project Conventions en cours pour rendre bloquants les titres de PR,
+  les noms de branche en PR, la vérification whitespace du diff de PR,
+  markdownlint et les liens Markdown internes
+- Contrôles de conventions indépendants du code applicatif et des tests
+  fonctionnels
+
 ### Validation dynamique
 
 #### Types supportés

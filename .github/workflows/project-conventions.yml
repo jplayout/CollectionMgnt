@@ -1,0 +1,103 @@
+name: Project Conventions
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: project-conventions-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conventions:
+    name: Project Conventions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate pull request title
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "${PR_TITLE}" =~ ^(feat|fix|docs|security|refactor|test|ci|perf|chore):[[:space:]].+ ]]; then
+            {
+              echo "Invalid pull request title: ${PR_TITLE}"
+              echo
+              echo "Expected format: '<prefix>: <summary>'"
+              echo "Allowed prefixes: feat, fix, docs, security, refactor, test, ci, perf, chore."
+            } >&2
+            exit 1
+          fi
+
+      - name: Validate pull request branch name
+        if: github.event_name == 'pull_request'
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "${BRANCH_NAME}" =~ ^(analysis|feature|docs|fix|security|refactor|test|ci|chore)/.+ ]]; then
+            {
+              echo "Invalid branch name: ${BRANCH_NAME}"
+              echo
+              echo "Expected format: '<prefix>/<name>'"
+              echo "Allowed prefixes: analysis, feature, docs, fix, security, refactor, test, ci, chore."
+            } >&2
+            exit 1
+          fi
+
+      - name: Explain workflow dispatch branch behavior
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          echo "Branch name validation is pull-request oriented and is skipped for workflow_dispatch."
+          echo "Current ref: ${BRANCH_NAME}"
+
+      - name: Check pull request whitespace errors
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+
+          echo "Checking whitespace errors between origin/${BASE_REF} and HEAD."
+          git fetch --no-tags --prune --depth=1 origin "${BASE_REF}"
+          git diff --check "origin/${BASE_REF}...HEAD"
+
+      - name: Check workflow dispatch workspace whitespace errors
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+
+          echo "workflow_dispatch run: checking the current workspace with git diff --check."
+          git diff --check
+
+      - name: Lint Markdown documentation
+        uses: DavidAnson/markdownlint-cli2-action@v24.0.0
+        with:
+          config: .markdownlint.json
+          globs: |
+            **/*.md
+            !backend/node_modules/**
+            !frontend/node_modules/**
+
+      - name: Check internal Markdown links
+        uses: lycheeverse/lychee-action@v2.8.0
+        with:
+          args: --offline --no-progress --root-dir . --exclude "https?://.*" "**/*.md"
+          fail: true
+          failIfEmpty: false
+          lycheeVersion: v0.23.0
