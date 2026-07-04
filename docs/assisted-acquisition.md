@@ -10,6 +10,10 @@ Les identifiants sont des champs metadata declares par plugin et stockes dans
 CollectionMgnt avec Open Library comme provider principal et Google Books comme
 provider secondaire.
 
+Le backend dispose aussi du contrat interne `movies/search` pour preparer les
+futurs providers films par recherche texte. Aucun provider film reel et aucune
+route publique de recherche film ne sont livres a ce stade.
+
 Aucune camera, scan mobile, sauvegarde automatique ou dedoublonnage global
 n'est disponible a ce stade.
 
@@ -103,6 +107,11 @@ Le lookup ISBN utilise un cache backend SQLite transparent :
 - les erreurs provider, timeouts et ISBN invalides ne sont pas caches ;
 - aucune image binaire n'est stockee dans le cache.
 
+La recherche texte film interne utilise le meme principe de cache provider. Sa
+cle inclut la query normalisee ainsi que `language`, `region` et `year` quand
+ces options existent, afin de ne pas melanger des resultats localises
+differemment.
+
 Provider livre :
 
 - `openlibrary`
@@ -116,6 +125,15 @@ Provider livre :
   - configuration obligatoire : non
   - secret requis : aucun
   - cle API optionnelle : `GOOGLE_BOOKS_API_KEY`
+
+Capability interne preparee :
+
+- `movies/search`
+  - plugin : `movies`
+  - type : recherche texte
+  - options de contexte : `language`, `region`, `year`
+  - provider reel : non livre dans ce lot
+  - lookup code-barres : non
 
 Voir `docs/acquisition-providers.md` pour le contrat technique des providers,
 les responsabilites des couches acquisition et les bonnes pratiques de tests.
@@ -297,7 +315,8 @@ Non livre dans ce lot :
 - scan mobile
 - lecture automatique de code-barres
 - lookup code-barres
-- lookup films ou jeux video
+- provider reel de lookup films ou jeux video
+- route publique de recherche films
 - pre-remplissage avec sauvegarde automatique
 - import d'image avant creation d'un item
 - dedoublonnage global

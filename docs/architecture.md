@@ -135,12 +135,12 @@ L'acquisition assistee utilise aussi une couche dediee dans
 `backend/src/acquisition` :
 
 - `acquisition-service.js` orchestre les cas d'usage acquisition, dont le lookup
-  ISBN livre ;
+  ISBN livre et le socle interne de recherche texte films ;
 - `provider-registry.js` inventorie et selectionne les providers disponibles ;
 - `acquisition-cache.js` gere le cache metier des lookups acquisition ;
 - `providers/*` contient les adaptateurs vers les fournisseurs externes.
 
-Flux d'acquisition ISBN :
+Flux d'acquisition provider :
 
 ```text
 Frontend
@@ -177,6 +177,16 @@ Le cache SQLite stocke uniquement les reponses normalisees `{ query, results }`
 via un repository dedie. Il ne stocke ni reponse brute provider, ni erreur, ni
 image binaire. En cas de miss, d'expiration ou d'entree corrompue, le service
 appelle le provider selectionne.
+
+Pour les lookups par identifiant, l'identifiant normalise fait partie de la cle
+de cache. Pour la capability `movies/search`, la cle inclut la query texte
+normalisee ainsi que `language`, `region` et `year` quand ces options sont
+presentes.
+
+`movies/search` est une capability interne de recherche texte. Elle prepare les
+providers films comme TMDb sans creer de lookup code-barres film. Les
+codes-barres restent des identifiants produit et devront etre resolus par un
+provider capable de traiter EAN/UPC.
 
 Voir `docs/acquisition-providers.md` pour le contrat provider, les responsabilites
 des couches acquisition et les bonnes pratiques de tests.

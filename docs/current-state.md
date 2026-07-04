@@ -18,6 +18,8 @@ Frontend :
 - Médias : backend disponible, galerie frontend minimale disponible
 - Acquisition assistée livres : lookup ISBN, pré-remplissage local et import
   explicite de couverture après création disponibles
+- Acquisition assistée films : capability interne `movies/search` disponible,
+  sans provider réel ni route publique film à ce stade
 
 Lots acquisition terminés :
 
@@ -29,6 +31,7 @@ Lots acquisition terminés :
 - 11.4.0 : résolution multi-provider côté backend
 - 11.4.1 : provider secondaire Google Books pour les livres
 - 11.5 : import explicite de couverture provider vers le système média existant
+- 11.6.0 : capability interne `movies/search`
 
 ---
 
@@ -51,6 +54,8 @@ Lots acquisition terminés :
 - Fondations d'acquisition assistée livrées : champs identifiants `books.isbn`, `games.barcode`, `movies.barcode` et `others.barcode`
 - Lookup ISBN livre livré via backend providers Open Library et Google Books
 - Orchestration acquisition livrée via `AcquisitionService`
+- Capability interne `movies/search` livrée pour préparer les providers films
+  par recherche texte
 - Import sécurisé des couvertures provider livré après création de l'item
 - Cache SQLite acquisition livré via `acquisition_cache`
 - Aucun champ ISBN, EAN, UPC ou code-barres sur le plugin `consoles` à ce stade
@@ -98,6 +103,8 @@ Lots acquisition terminés :
 - Lookup ISBN livre disponible via `POST /api/acquisition/books/isbn/lookup`
 - Import explicite de couverture provider disponible via
   `POST /api/acquisition/images/import`
+- Capability interne `movies/search` disponible dans `AcquisitionService`,
+  sans route publique film ni provider réel livré
 - Providers livrés :
   - `openlibrary`, sans clé API obligatoire
   - `googlebooks`, sans clé API obligatoire, avec `GOOGLE_BOOKS_API_KEY` optionnelle
@@ -111,15 +118,18 @@ Lots acquisition terminés :
 - Cache SQLite transparent :
   - table `acquisition_cache`
   - clé incluant plugin, capacité, provider, version de mapping et identifiant normalisé
+  - clé `movies/search` incluant query, langue, région et année
   - résultats avec suggestions cachés 7 jours
   - résultats vides cachés 24 heures
   - erreurs provider, timeouts et ISBN invalides non cachés
   - aucune réponse brute provider ni image binaire stockée
 - Réponse API inchangée, sans champ `cached`
 - Fallback implicite Open Library -> Google Books actif pour le lookup ISBN livres
+- Résolution implicite/explicite prête pour les recherches texte films
 - Import image sécurisé uniquement après confirmation utilisateur et création
   de l'item, via `MediaService.createOriginalMedia()`
 - Aucun lookup code-barres films/jeux/autres livré
+- Aucun provider TMDb livré
 - Aucun scan caméra livré
 - Aucun import automatique d'image livré
 - Aucun cache local/offline d'images livré
