@@ -1,6 +1,6 @@
 # CI Et Tests
 
-Etat courant : v0.12-lot10.4.0.
+Etat courant : v0.12-lot14.4.
 
 Ce document decrit les validations automatisees disponibles pour les
 contributeurs. Le projet privilegie une base simple et rapide plutot qu'une
@@ -43,21 +43,30 @@ push `main`, pull request et declenchement manuel.
 Le workflow Semgrep `.github/workflows/semgrep.yml` execute un scan SAST
 complementaire a CodeQL sur push `main`, pull request et declenchement manuel.
 Il utilise `semgrep scan` avec les regles par defaut Semgrep, cible les sources
-JavaScript/Vue/Node et reste en mode observation non bloquant avec
-`continue-on-error`. Le workflow ne requiert pas `SEMGREP_APP_TOKEN` ; une
-connexion future a Semgrep App pourra etre ajoutee via ce secret.
+JavaScript/Vue/Node et est bloquant. Le workflow ne requiert pas
+`SEMGREP_APP_TOKEN` ; une connexion future a Semgrep App pourra etre ajoutee via
+ce secret.
 
 Le workflow Trivy `.github/workflows/trivy.yml` execute des scans de securite
-non bloquants sur push `main`, pull request et declenchement manuel :
+bloquants sur push `main`, pull request et declenchement manuel pour les
+vulnerabilites `HIGH` et `CRITICAL` :
 
 - scan des dependances backend npm ;
 - scan des dependances frontend npm ;
 - build des images backend et frontend ;
 - scan des images conteneur construites localement.
 
-Les scans Trivy publient un rapport lisible dans les logs GitHub Actions. Le
-mode initial est volontairement observatoire : `exit-code=0` et
-`continue-on-error`, sans blocage de CI sur vulnerabilite.
+Les scans Trivy publient un rapport lisible dans les logs GitHub Actions. Les
+vulnerabilites `LOW` et `MEDIUM` restent visibles sans bloquer la CI.
+
+La securite fait partie des quality gates : les vulnerabilites `CRITICAL` et
+`HIGH` bloquent le merge, les `MEDIUM` exigent une revue explicite et les `LOW`
+restent suivies.
+
+Le workflow Project Conventions `.github/workflows/project-conventions.yml`
+verifie les conventions de PR, le whitespace, Markdown, les liens internes et le
+gate Documentation & Architecture. Ce gate bloque les oublis documentaires les
+plus directs, sans appel reseau et sans dependance au code applicatif.
 
 Dependabot est configure dans `.github/dependabot.yml` pour verifier chaque
 semaine :
