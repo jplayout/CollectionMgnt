@@ -3,7 +3,8 @@
 Etat courant : architecture acquisition backend stabilisee avec Open Library
 comme provider principal et Google Books comme provider secondaire pour les
 lookups ISBN livres. Le socle interne `movies/search` est disponible pour les
-futurs providers films, sans provider reel livre a ce stade.
+providers films, avec TMDb comme premier provider Movies configure par
+`TMDB_API_READ_ACCESS_TOKEN`.
 
 Ce document est destine aux developpeurs qui veulent comprendre, tester ou
 ajouter un provider d'acquisition. Il complete `docs/architecture.md` et
@@ -192,6 +193,11 @@ Cette capability ne cree pas de lookup code-barres film. Un futur lookup
 EAN/UPC devra etre porte par un provider capable de resoudre reellement un
 identifiant produit.
 
+TMDb implemente `movies/search` via une recherche texte film. Il utilise un
+Bearer token backend, ne telecharge aucune image et ne consulte pas le endpoint
+movie details dans le MVP. Les images retournees sont uniquement des URLs poster
+distantes en taille `w500`.
+
 ## Resolution Multi-Provider
 
 En mode implicite, c'est-a-dire sans champ `provider` dans le body, le service
@@ -201,6 +207,9 @@ Pour les livres, l'ordre courant est :
 
 1. `openlibrary`
 2. `googlebooks`
+
+Pour les films, TMDb est le premier provider `movies/search` quand
+`TMDB_API_READ_ACCESS_TOKEN` est configure.
 
 Regles actuelles :
 
@@ -381,10 +390,11 @@ Etat courant et evolutions prevues :
 
 - Google Books : provider livre secondaire livre apres Open Library, avec cle
   API optionnelle via `GOOGLE_BOOKS_API_KEY` ;
-- `movies/search` : capability interne livree pour preparer les providers films
-  par recherche texte ;
-- TMDb : provider film futur, probablement avec configuration obligatoire, sans
-  lookup code-barres ;
+- TMDb : premier provider film pour `movies/search`, avec configuration
+  obligatoire via `TMDB_API_READ_ACCESS_TOKEN`, sans lookup code-barres, sans
+  endpoint details et sans IMDb ID dans ce lot ;
+- configuration admin des providers : future, les providers restent configures
+  par environnement dans l'etat courant ;
 - IGDB ou RAWG : provider jeux video futur, avec attention aux quotas et aux
   secrets ;
 - scan camera : couche frontend separee qui remplit un ISBN ou code-barres, puis

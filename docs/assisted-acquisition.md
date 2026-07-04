@@ -10,9 +10,9 @@ Les identifiants sont des champs metadata declares par plugin et stockes dans
 CollectionMgnt avec Open Library comme provider principal et Google Books comme
 provider secondaire.
 
-Le backend dispose aussi du contrat interne `movies/search` pour preparer les
-futurs providers films par recherche texte. Aucun provider film reel et aucune
-route publique de recherche film ne sont livres a ce stade.
+Le backend dispose aussi du contrat interne `movies/search` et du provider TMDb
+pour les films, configure via `TMDB_API_READ_ACCESS_TOKEN`. Aucune route
+publique de recherche film et aucun frontend film ne sont livres a ce stade.
 
 Aucune camera, scan mobile, sauvegarde automatique ou dedoublonnage global
 n'est disponible a ce stade.
@@ -132,8 +132,10 @@ Capability interne preparee :
   - plugin : `movies`
   - type : recherche texte
   - options de contexte : `language`, `region`, `year`
-  - provider reel : non livre dans ce lot
+  - provider reel : `tmdb`, si `TMDB_API_READ_ACCESS_TOKEN` est configure
   - lookup code-barres : non
+  - images : URLs poster distantes TMDb `w500`, sans telechargement provider
+  - details IMDb : non livres dans ce lot
 
 Voir `docs/acquisition-providers.md` pour le contrat technique des providers,
 les responsabilites des couches acquisition et les bonnes pratiques de tests.
@@ -164,10 +166,21 @@ Exemple :
       "capabilities": ["isbnLookup"],
       "enabled": true,
       "requiresConfiguration": false
+    },
+    {
+      "id": "tmdb",
+      "name": "The Movie Database (TMDb)",
+      "plugin": "movies",
+      "capabilities": ["movies/search"],
+      "enabled": true,
+      "requiresConfiguration": true
     }
   ]
 }
 ```
+
+TMDb apparait uniquement lorsque le backend est configure avec
+`TMDB_API_READ_ACCESS_TOKEN`.
 
 ### `POST /api/acquisition/books/isbn/lookup`
 
@@ -315,8 +328,9 @@ Non livre dans ce lot :
 - scan mobile
 - lecture automatique de code-barres
 - lookup code-barres
-- provider reel de lookup films ou jeux video
+- provider reel de lookup jeux video
 - route publique de recherche films
+- endpoint details TMDb et IMDb ID
 - pre-remplissage avec sauvegarde automatique
 - import d'image avant creation d'un item
 - dedoublonnage global
@@ -325,7 +339,7 @@ Non livre dans ce lot :
 
 Les phases suivantes pourront s'appuyer sur ces champs :
 
-- provider TMDb pour les films
+- route publique et frontend pour la recherche film TMDb
 - provider IGDB ou RAWG pour les jeux video
 - fournisseurs externes configurables
 - scan camera mobile en contexte HTTPS

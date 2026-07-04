@@ -18,8 +18,8 @@ Frontend :
 - Médias : backend disponible, galerie frontend minimale disponible
 - Acquisition assistée livres : lookup ISBN, pré-remplissage local et import
   explicite de couverture après création disponibles
-- Acquisition assistée films : capability interne `movies/search` disponible,
-  sans provider réel ni route publique film à ce stade
+- Acquisition assistée films : capability interne `movies/search` et provider
+  TMDb backend disponibles, sans route publique film à ce stade
 
 Lots acquisition terminés :
 
@@ -32,6 +32,7 @@ Lots acquisition terminés :
 - 11.4.1 : provider secondaire Google Books pour les livres
 - 11.5 : import explicite de couverture provider vers le système média existant
 - 11.6.0 : capability interne `movies/search`
+- 11.6.1 : provider TMDb backend pour `movies/search`
 
 ---
 
@@ -56,6 +57,7 @@ Lots acquisition terminés :
 - Orchestration acquisition livrée via `AcquisitionService`
 - Capability interne `movies/search` livrée pour préparer les providers films
   par recherche texte
+- Provider TMDb backend livré pour les films via `TMDB_API_READ_ACCESS_TOKEN`
 - Import sécurisé des couvertures provider livré après création de l'item
 - Cache SQLite acquisition livré via `acquisition_cache`
 - Aucun champ ISBN, EAN, UPC ou code-barres sur le plugin `consoles` à ce stade
@@ -104,10 +106,11 @@ Lots acquisition terminés :
 - Import explicite de couverture provider disponible via
   `POST /api/acquisition/images/import`
 - Capability interne `movies/search` disponible dans `AcquisitionService`,
-  sans route publique film ni provider réel livré
+  sans route publique film livrée
 - Providers livrés :
   - `openlibrary`, sans clé API obligatoire
   - `googlebooks`, sans clé API obligatoire, avec `GOOGLE_BOOKS_API_KEY` optionnelle
+  - `tmdb`, provider Movies configuré par `TMDB_API_READ_ACCESS_TOKEN`
 - Architecture backend :
   - route acquisition
   - `AcquisitionService`
@@ -126,10 +129,11 @@ Lots acquisition terminés :
 - Réponse API inchangée, sans champ `cached`
 - Fallback implicite Open Library -> Google Books actif pour le lookup ISBN livres
 - Résolution implicite/explicite prête pour les recherches texte films
+- TMDb retourne des suggestions film normalisées avec URLs poster distantes
+  `w500`, sans téléchargement provider, sans endpoint details et sans IMDb ID
 - Import image sécurisé uniquement après confirmation utilisateur et création
   de l'item, via `MediaService.createOriginalMedia()`
 - Aucun lookup code-barres films/jeux/autres livré
-- Aucun provider TMDb livré
 - Aucun scan caméra livré
 - Aucun import automatique d'image livré
 - Aucun cache local/offline d'images livré
