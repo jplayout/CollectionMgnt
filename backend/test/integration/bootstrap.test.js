@@ -43,3 +43,65 @@ test(
 
     }
 );
+
+test(
+    'initial admin bootstrap does not log the admin username',
+    async () => {
+
+        const originalLog =
+            console.log;
+
+        const logs =
+            [];
+
+        console.log = (
+            ...args
+        ) => {
+
+            logs.push(
+                args.join(
+                    ' '
+                )
+            );
+
+        };
+
+        let context;
+
+        try {
+
+            context =
+                await createTestApp();
+
+        } finally {
+
+            console.log =
+                originalLog;
+
+        }
+
+        try {
+
+            assert.ok(
+                logs.includes(
+                    'Initial admin user created.'
+                )
+            );
+
+            assert.equal(
+                logs.some(
+                    log => log.includes(
+                        `Initial admin user created: ${context.admin.username}`
+                    )
+                ),
+                false
+            );
+
+        } finally {
+
+            await context.close();
+
+        }
+
+    }
+);

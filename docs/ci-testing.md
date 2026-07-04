@@ -204,6 +204,11 @@ La couverture MVP verifie :
 - login admin avec succes ;
 - login en echec ;
 - limitation de `POST /api/auth/login` avec reponse `429` apres depassement ;
+- limitation de `GET /api/admin/media-audit` avec reponse `429` apres
+  depassement ;
+- limitation de `POST /api/admin/media-cleanup/preview` et
+  `POST /api/admin/media-cleanup/execute` avec reponse `429` apres
+  depassement ;
 - role utilisateur expose par login et `/api/auth/me` ;
 - route protegee sans token vers `401` ;
 - validation de `JWT_SECRET` absent ou trop faible ;
