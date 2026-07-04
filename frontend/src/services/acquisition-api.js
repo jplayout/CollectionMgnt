@@ -27,6 +27,31 @@ export function lookupBookByIsbn({
 
 }
 
+export function searchMovies({
+    language = null,
+    provider = null,
+    query,
+    region = null,
+    year = null
+}) {
+
+    return apiFetch(
+        '/api/acquisition/movies/search',
+        {
+            method:
+                'POST',
+            body: {
+                language,
+                provider,
+                query,
+                region,
+                year
+            }
+        }
+    );
+
+}
+
 export function importAcquisitionImage({
     imageUrl,
     isPrimary = false,

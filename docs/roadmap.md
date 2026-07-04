@@ -32,6 +32,8 @@ Capacités disponibles :
 - Capability interne `movies/search` livrée pour préparer les providers films
   par recherche texte.
 - Provider TMDb backend livré comme premier provider `movies/search`.
+- Recherche films frontend livrée via `movies/search`, avec pre-remplissage
+  local et import manuel du poster apres creation.
 - Préférences d'affichage par collection/plugin.
 - Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
 - Exports JSON natifs, export CSV collection et import JSON natif non destructif.
@@ -419,6 +421,18 @@ Phase 5 — Extension progressive :
   `originalLanguage`.
 - Aucun endpoint details, aucun IMDb ID, aucun lookup code-barres film, aucun
   frontend et aucune route publique film dans ce lot.
+
+#### Lot 11.6.2 - Movie Acquisition UI - Livré
+
+- Route `POST /api/acquisition/movies/search` exposee pour la recherche texte
+  films.
+- Formulaire movies branche sur `movies/search` avec affichage poster, titre,
+  annee, resume court, source et choix utilisateur explicite.
+- Pre-remplissage local uniquement, sans ecraser les champs deja saisis.
+- Image proposee conservee en memoire volatile et importable seulement apres
+  creation de l'item via le flux media existant.
+- Aucun endpoint details TMDb, aucun IMDb ID, aucun lookup code-barres film et
+  aucun telechargement automatique d'image.
 
 #### Lot 11.7 - IGDB / RAWG - Prévu
 

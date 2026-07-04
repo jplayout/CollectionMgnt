@@ -18,8 +18,9 @@ Frontend :
 - Médias : backend disponible, galerie frontend minimale disponible
 - Acquisition assistée livres : lookup ISBN, pré-remplissage local et import
   explicite de couverture après création disponibles
-- Acquisition assistée films : capability interne `movies/search` et provider
-  TMDb backend disponibles, sans route publique film à ce stade
+- Acquisition assistée films : recherche par titre via `movies/search`, provider
+  TMDb, pré-remplissage local et import explicite de poster après création
+  disponibles
 
 Lots acquisition terminés :
 
@@ -33,6 +34,7 @@ Lots acquisition terminés :
 - 11.5 : import explicite de couverture provider vers le système média existant
 - 11.6.0 : capability interne `movies/search`
 - 11.6.1 : provider TMDb backend pour `movies/search`
+- 11.6.2 : route et frontend de recherche films via `movies/search`
 
 ---
 
@@ -58,6 +60,8 @@ Lots acquisition terminés :
 - Capability interne `movies/search` livrée pour préparer les providers films
   par recherche texte
 - Provider TMDb backend livré pour les films via `TMDB_API_READ_ACCESS_TOKEN`
+- Route et frontend de recherche films livrés pour pré-remplir localement le
+  formulaire movies depuis les suggestions TMDb
 - Import sécurisé des couvertures provider livré après création de l'item
 - Cache SQLite acquisition livré via `acquisition_cache`
 - Aucun champ ISBN, EAN, UPC ou code-barres sur le plugin `consoles` à ce stade
@@ -103,10 +107,11 @@ Lots acquisition terminés :
 - Recherche et filtres compatibles avec `isbn` et `barcode`
 - API providers disponible via `GET /api/acquisition/providers`
 - Lookup ISBN livre disponible via `POST /api/acquisition/books/isbn/lookup`
+- Recherche texte films disponible via `POST /api/acquisition/movies/search`
 - Import explicite de couverture provider disponible via
   `POST /api/acquisition/images/import`
-- Capability interne `movies/search` disponible dans `AcquisitionService`,
-  sans route publique film livrée
+- Capability `movies/search` disponible dans `AcquisitionService` et exposee
+  via une route acquisition protegee JWT
 - Providers livrés :
   - `openlibrary`, sans clé API obligatoire
   - `googlebooks`, sans clé API obligatoire, avec `GOOGLE_BOOKS_API_KEY` optionnelle
@@ -131,6 +136,8 @@ Lots acquisition terminés :
 - Résolution implicite/explicite prête pour les recherches texte films
 - TMDb retourne des suggestions film normalisées avec URLs poster distantes
   `w500`, sans téléchargement provider, sans endpoint details et sans IMDb ID
+- Le formulaire movies propose une recherche par titre, un choix utilisateur
+  explicite et un pré-remplissage local sans écraser les champs déjà saisis
 - Import image sécurisé uniquement après confirmation utilisateur et création
   de l'item, via `MediaService.createOriginalMedia()`
 - Aucun lookup code-barres films/jeux/autres livré

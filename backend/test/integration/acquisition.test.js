@@ -10,11 +10,17 @@ import { createTestApp } from '../helpers/test-app.js';
 const originalFetch =
     globalThis.fetch;
 
+const originalTmdbApiReadAccessToken =
+    process.env.TMDB_API_READ_ACCESS_TOKEN;
+
 let context;
 let token;
 let fetchHandler;
 
 before(async () => {
+
+    process.env.TMDB_API_READ_ACCESS_TOKEN =
+        'test-tmdb-token';
 
     globalThis.fetch =
         async (
@@ -38,12 +44,25 @@ after(async () => {
     globalThis.fetch =
         originalFetch;
 
+    if (
+        originalTmdbApiReadAccessToken === undefined
+    ) {
+
+        delete process.env.TMDB_API_READ_ACCESS_TOKEN;
+
+    } else {
+
+        process.env.TMDB_API_READ_ACCESS_TOKEN =
+            originalTmdbApiReadAccessToken;
+
+    }
+
     await context.close();
 
 });
 
 test(
-    'GET /api/acquisition/providers returns Open Library and Google Books enabled',
+    'GET /api/acquisition/providers returns enabled acquisition providers',
     async () => {
 
         fetchHandler =
@@ -97,6 +116,21 @@ test(
                             'books',
                         requiresConfiguration:
                             false
+                    },
+                    {
+                        capabilities: [
+                            'movies/search'
+                        ],
+                        enabled:
+                            true,
+                        id:
+                            'tmdb',
+                        name:
+                            'The Movie Database (TMDb)',
+                        plugin:
+                            'movies',
+                        requiresConfiguration:
+                            true
                     }
                 ]
             }
@@ -611,6 +645,322 @@ test(
     }
 );
 
+test(
+    'POST /api/acquisition/movies/search returns movie suggestions',
+    async () => {
+
+        let requestedUrl =
+            '';
+
+        let authorizationHeader =
+            '';
+
+        fetchHandler =
+            async (
+                url,
+                options
+            ) => {
+
+                requestedUrl =
+                    String(
+                        url
+                    );
+
+                authorizationHeader =
+                    options?.headers?.Authorization;
+
+                return createJsonResponse(
+                    tmdbFixture()
+                );
+
+            };
+
+        const response =
+            await searchMovies({
+                language:
+                    'fr-FR',
+                query:
+                    'Blade Runner',
+                region:
+                    'FR',
+                year:
+                    '1982'
+            });
+
+        assert.equal(
+            response.statusCode,
+            200
+        );
+
+        assert.match(
+            requestedUrl,
+            /api\.themoviedb\.org\/3\/search\/movie/
+        );
+
+        assert.match(
+            requestedUrl,
+            /query=Blade\+Runner/
+        );
+
+        assert.match(
+            requestedUrl,
+            /language=fr-FR/
+        );
+
+        assert.match(
+            requestedUrl,
+            /region=FR/
+        );
+
+        assert.match(
+            requestedUrl,
+            /year=1982/
+        );
+
+        assert.equal(
+            authorizationHeader,
+            'Bearer test-tmdb-token'
+        );
+
+        assert.deepEqual(
+            response.json(),
+            {
+                query: {
+                    language:
+                        'fr-FR',
+                    plugin:
+                        'movies',
+                    region:
+                        'FR',
+                    type:
+                        'text',
+                    value:
+                        'Blade Runner',
+                    year:
+                        '1982'
+                },
+                results: [
+                    {
+                        confidence:
+                            'high',
+                        description:
+                            'A blade runner must pursue replicants.',
+                        images: [
+                            {
+                                kind:
+                                    'cover',
+                                source:
+                                    'tmdb',
+                                url:
+                                    'https://image.tmdb.org/t/p/w500/poster.jpg'
+                            }
+                        ],
+                        metadata: {
+                            originalLanguage:
+                                'en',
+                            originalTitle:
+                                'Blade Runner',
+                            releaseDate:
+                                '1982-06-25',
+                            releaseYear:
+                                '1982',
+                            tmdbId:
+                                78
+                        },
+                        provider:
+                            'tmdb',
+                        sourceUrl:
+                            'https://www.themoviedb.org/movie/78',
+                        title:
+                            'Blade Runner'
+                    }
+                ]
+            }
+        );
+
+    }
+);
+
+test(
+    'POST /api/acquisition/movies/search rejects an empty query',
+    async () => {
+
+        fetchHandler =
+            async () => {
+
+                throw new Error(
+                    'fetch should not be called'
+                );
+
+            };
+
+        const response =
+            await searchMovies({
+                query:
+                    '   '
+            });
+
+        assert.equal(
+            response.statusCode,
+            400
+        );
+
+        assert.equal(
+            response.json().code,
+            'invalid_search_query'
+        );
+
+    }
+);
+
+test(
+    'POST /api/acquisition/movies/search uses an explicit TMDb provider',
+    async () => {
+
+        let calls =
+            0;
+
+        fetchHandler =
+            async () => {
+
+                calls += 1;
+
+                return createJsonResponse(
+                    tmdbFixture({
+                        title:
+                            'Alien'
+                    })
+                );
+
+            };
+
+        const response =
+            await searchMovies({
+                provider:
+                    'tmdb',
+                query:
+                    'Alien'
+            });
+
+        assert.equal(
+            response.statusCode,
+            200
+        );
+
+        assert.equal(
+            response.json().results[0].provider,
+            'tmdb'
+        );
+
+        assert.equal(
+            calls,
+            1
+        );
+
+    }
+);
+
+test(
+    'POST /api/acquisition/movies/search returns provider_unavailable when explicit TMDb is not configured',
+    async () => {
+
+        const configuredToken =
+            process.env.TMDB_API_READ_ACCESS_TOKEN;
+
+        delete process.env.TMDB_API_READ_ACCESS_TOKEN;
+
+        const unconfiguredContext =
+            await createTestApp();
+
+        try {
+
+            const unconfiguredToken =
+                await unconfiguredContext.login();
+
+            const response =
+                await unconfiguredContext.app.inject({
+                    headers: {
+                        authorization:
+                            `Bearer ${unconfiguredToken}`
+                    },
+                    method:
+                        'POST',
+                    payload: {
+                        provider:
+                            'tmdb',
+                        query:
+                            'Blade Runner'
+                    },
+                    url:
+                        '/api/acquisition/movies/search'
+                });
+
+            assert.equal(
+                response.statusCode,
+                503
+            );
+
+            assert.equal(
+                response.json().code,
+                'provider_unavailable'
+            );
+
+        } finally {
+
+            await unconfiguredContext.close();
+
+            process.env.TMDB_API_READ_ACCESS_TOKEN =
+                configuredToken;
+
+        }
+
+    }
+);
+
+test(
+    'POST /api/acquisition/movies/search returns empty results',
+    async () => {
+
+        fetchHandler =
+            createJsonResponseHandler({
+                results: []
+            });
+
+        const response =
+            await searchMovies({
+                query:
+                    'No Match Movie'
+            });
+
+        assert.equal(
+            response.statusCode,
+            200
+        );
+
+        assert.deepEqual(
+            response.json(),
+            {
+                query: {
+                    language:
+                        null,
+                    plugin:
+                        'movies',
+                    region:
+                        null,
+                    type:
+                        'text',
+                    value:
+                        'No Match Movie',
+                    year:
+                        null
+                },
+                results: []
+            }
+        );
+
+    }
+);
+
 async function lookupIsbn(
     isbn,
     provider = null
@@ -637,6 +987,66 @@ async function lookupIsbn(
         payload,
         url:
             '/api/acquisition/books/isbn/lookup'
+    });
+
+}
+
+async function searchMovies({
+    language = null,
+    provider = null,
+    query,
+    region = null,
+    year = null
+}) {
+
+    const payload = {
+        query
+    };
+
+    if (
+        provider
+    ) {
+
+        payload.provider =
+            provider;
+
+    }
+
+    if (
+        language
+    ) {
+
+        payload.language =
+            language;
+
+    }
+
+    if (
+        region
+    ) {
+
+        payload.region =
+            region;
+
+    }
+
+    if (
+        year
+    ) {
+
+        payload.year =
+            year;
+
+    }
+
+    return context.app.inject({
+        headers:
+            authHeaders(),
+        method:
+            'POST',
+        payload,
+        url:
+            '/api/acquisition/movies/search'
     });
 
 }
@@ -698,6 +1108,32 @@ function googleBooksFixture(isbn) {
                     title:
                         'Fantastic Mr. Fox'
                 }
+            }
+        ]
+    };
+
+}
+
+function tmdbFixture({
+    title = 'Blade Runner'
+} = {}) {
+
+    return {
+        results: [
+            {
+                id:
+                    78,
+                original_language:
+                    'en',
+                original_title:
+                    title,
+                overview:
+                    'A blade runner must pursue replicants.',
+                poster_path:
+                    '/poster.jpg',
+                release_date:
+                    '1982-06-25',
+                title
             }
         ]
     };

@@ -93,10 +93,63 @@ async function mockProviders(page) {
 
 }
 
+async function mockMovieProviders(page) {
+
+    await page.route(
+        '**/api/acquisition/providers',
+        async route => {
+
+            await route.fulfill({
+                contentType:
+                    'application/json',
+                json: {
+                    providers: [
+                        {
+                            capabilities: [
+                                'movies/search'
+                            ],
+                            enabled:
+                                true,
+                            id:
+                                'tmdb',
+                            name:
+                                'The Movie Database (TMDb)',
+                            plugin:
+                                'movies',
+                            requiresConfiguration:
+                                true
+                        }
+                    ]
+                }
+            });
+
+        }
+    );
+
+}
+
 async function openBookCreatePage(page) {
 
     await page.goto(
         '/collections/books/items/new'
+    );
+
+    await expect(
+        page.getByRole(
+            'heading',
+            {
+                name:
+                    'Nouvel item'
+            }
+        )
+    ).toBeVisible();
+
+}
+
+async function openMovieCreatePage(page) {
+
+    await page.goto(
+        '/collections/movies/items/new'
     );
 
     await expect(
@@ -149,10 +202,65 @@ function bookSuggestion({
 
 }
 
+function movieSuggestion({
+    title = 'Blade Runner'
+} = {}) {
+
+    return {
+        confidence:
+            'high',
+        description:
+            'A blade runner must pursue replicants.',
+        images: [
+            {
+                kind:
+                    'cover',
+                source:
+                    'tmdb',
+                url:
+                    'data:image/gif;base64,R0lGODlhAQABAAAAACw='
+            }
+        ],
+        metadata: {
+            originalLanguage:
+                'en',
+            originalTitle:
+                title,
+            releaseDate:
+                '1982-06-25',
+            releaseYear:
+                '1982',
+            tmdbId:
+                78
+        },
+        provider:
+            'tmdb',
+        sourceUrl:
+            'https://www.themoviedb.org/movie/78',
+        title
+    };
+
+}
+
 async function mockLookup(page, handler) {
 
     await page.route(
         '**/api/acquisition/books/isbn/lookup',
+        async route => {
+
+            await handler(
+                route
+            );
+
+        }
+    );
+
+}
+
+async function mockMovieSearch(page, handler) {
+
+    await page.route(
+        '**/api/acquisition/movies/search',
         async route => {
 
             await handler(
@@ -304,6 +412,410 @@ test(
                     name:
                         'Fantastic Mr. Fox'
                 }
+            )
+        ).toBeVisible();
+
+    }
+);
+
+test(
+    'admin can search a movie, apply the suggestion and keep the proposed cover after creation',
+    async ({ page }) => {
+
+        await mockMovieProviders(
+            page
+        );
+
+        await mockMovieSearch(
+            page,
+            async route => {
+
+                const body =
+                    route.request().postDataJSON();
+
+                expect(
+                    body
+                ).toEqual({
+                    language:
+                        null,
+                    provider:
+                        null,
+                    query:
+                        'Blade Runner',
+                    region:
+                        null,
+                    year:
+                        null
+                });
+
+                await route.fulfill({
+                    contentType:
+                        'application/json',
+                    json: {
+                        query: {
+                            language:
+                                null,
+                            plugin:
+                                'movies',
+                            region:
+                                null,
+                            type:
+                                'text',
+                            value:
+                                'Blade Runner',
+                            year:
+                                null
+                        },
+                        results: [
+                            movieSuggestion()
+                        ]
+                    }
+                });
+
+            }
+        );
+
+        await openMovieCreatePage(
+            page
+        );
+
+        await page.getByLabel(
+            'Titre'
+        ).fill(
+            'Blade Runner'
+        );
+
+        await page.getByRole(
+            'button',
+            {
+                name:
+                    'Rechercher'
+            }
+        ).click();
+
+        await expect(
+            page.getByRole(
+                'heading',
+                {
+                    name:
+                        'Blade Runner'
+                }
+            )
+        ).toBeVisible();
+
+        await expect(
+            page.getByText(
+                'Source : tmdb'
+            )
+        ).toBeVisible();
+
+        await page.getByRole(
+            'button',
+            {
+                name:
+                    'Utiliser'
+            }
+        ).click();
+
+        await expect(
+            page.getByLabel(
+                'Description'
+            )
+        ).toHaveValue(
+            'A blade runner must pursue replicants.'
+        );
+
+        await expect(
+            page.getByLabel(
+                'Date de sortie'
+            )
+        ).toHaveValue(
+            '1982-06-25'
+        );
+
+        await page.getByRole(
+            'button',
+            {
+                name:
+                    'Créer l’item'
+            }
+        ).click();
+
+        await expect(
+            page
+        ).toHaveURL(
+            /\/items\/\d+/
+        );
+
+        await expect(
+            page.getByRole(
+                'heading',
+                {
+                    name:
+                        'Blade Runner'
+                }
+            )
+        ).toBeVisible();
+
+        await expect(
+            page.getByRole(
+                'button',
+                {
+                    name:
+                        'Importer la couverture proposée'
+                }
+            )
+        ).toBeVisible();
+
+    }
+);
+
+test(
+    'movie search with no result keeps the form usable',
+    async ({ page }) => {
+
+        await mockMovieProviders(
+            page
+        );
+
+        await mockMovieSearch(
+            page,
+            async route => {
+
+                await route.fulfill({
+                    contentType:
+                        'application/json',
+                    json: {
+                        query: {
+                            language:
+                                null,
+                            plugin:
+                                'movies',
+                            region:
+                                null,
+                            type:
+                                'text',
+                            value:
+                                'Unknown Movie',
+                            year:
+                                null
+                        },
+                        results: []
+                    }
+                });
+
+            }
+        );
+
+        await openMovieCreatePage(
+            page
+        );
+
+        await page.getByLabel(
+            'Titre'
+        ).fill(
+            'Unknown Movie'
+        );
+
+        await page.getByRole(
+            'button',
+            {
+                name:
+                    'Rechercher'
+            }
+        ).click();
+
+        await expect(
+            page.getByText(
+                'Aucun résultat trouvé'
+            )
+        ).toBeVisible();
+
+        await expect(
+            page.getByLabel(
+                'Titre'
+            )
+        ).toHaveValue(
+            'Unknown Movie'
+        );
+
+    }
+);
+
+test(
+    'applying a movie suggestion does not overwrite already filled fields',
+    async ({ page }) => {
+
+        await mockMovieProviders(
+            page
+        );
+
+        await mockMovieSearch(
+            page,
+            async route => {
+
+                await route.fulfill({
+                    contentType:
+                        'application/json',
+                    json: {
+                        query: {
+                            language:
+                                null,
+                            plugin:
+                                'movies',
+                            region:
+                                null,
+                            type:
+                                'text',
+                            value:
+                                'Manual Title',
+                            year:
+                                null
+                        },
+                        results: [
+                            movieSuggestion({
+                                title:
+                                    'Provider Title'
+                            })
+                        ]
+                    }
+                });
+
+            }
+        );
+
+        await openMovieCreatePage(
+            page
+        );
+
+        await page.getByLabel(
+            'Titre'
+        ).fill(
+            'Manual Title'
+        );
+
+        await page.getByLabel(
+            'Description'
+        ).fill(
+            'Manual description'
+        );
+
+        await page.getByLabel(
+            'Date de sortie'
+        ).fill(
+            '2000-01-01'
+        );
+
+        await page.getByRole(
+            'button',
+            {
+                name:
+                    'Rechercher'
+            }
+        ).click();
+
+        await page.getByRole(
+            'button',
+            {
+                name:
+                    'Utiliser'
+            }
+        ).click();
+
+        await expect(
+            page.getByLabel(
+                'Titre'
+            )
+        ).toHaveValue(
+            'Manual Title'
+        );
+
+        await expect(
+            page.getByLabel(
+                'Description'
+            )
+        ).toHaveValue(
+            'Manual description'
+        );
+
+        await expect(
+            page.getByLabel(
+                'Date de sortie'
+            )
+        ).toHaveValue(
+            '2000-01-01'
+        );
+
+        await expect(
+            page.getByLabel(
+                'Genre'
+            )
+        ).toHaveValue(
+            ''
+        );
+
+        await expect(
+            page.getByLabel(
+                'Réalisateur'
+            )
+        ).toHaveValue(
+            ''
+        );
+
+    }
+);
+
+test(
+    'movie search provider unavailable errors are readable',
+    async ({ page }) => {
+
+        await mockMovieProviders(
+            page
+        );
+
+        await mockMovieSearch(
+            page,
+            async route => {
+
+                await route.fulfill({
+                    contentType:
+                        'application/json',
+                    json: {
+                        code:
+                            'provider_unavailable',
+                        error:
+                            'provider_unavailable',
+                        message:
+                            'Provider unavailable'
+                    },
+                    status:
+                        503
+                });
+
+            }
+        );
+
+        await openMovieCreatePage(
+            page
+        );
+
+        await page.getByLabel(
+            'Titre'
+        ).fill(
+            'Blade Runner'
+        );
+
+        await page.getByRole(
+            'button',
+            {
+                name:
+                    'Rechercher'
+            }
+        ).click();
+
+        await expect(
+            page.getByText(
+                'Le service de recherche film est indisponible'
             )
         ).toBeVisible();
 
