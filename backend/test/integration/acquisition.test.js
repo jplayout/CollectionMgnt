@@ -115,18 +115,34 @@ test(
         fetchHandler =
             async url => {
 
-                calls.push(
+                const urlString =
                     String(
                         url
-                    )
+                    );
+
+                calls.push(
+                    urlString
                 );
 
+                let hostname;
+
+                try {
+
+                    hostname =
+                        new URL(
+                            urlString
+                        ).hostname;
+
+                } catch {
+
+                    hostname =
+                        '';
+
+                }
+
                 if (
-                    String(
-                        url
-                    ).includes(
-                        'openlibrary.org'
-                    )
+                    hostname ===
+                    'openlibrary.org'
                 ) {
 
                     return createJsonResponse({});
