@@ -434,7 +434,7 @@ Phase 5 — Extension progressive :
 - Aucun endpoint details TMDb, aucun IMDb ID, aucun lookup code-barres film et
   aucun telechargement automatique d'image.
 
-#### Lot 11.7 - IGDB / RAWG - Prévu
+#### Lot 11.7 - IGDB / RAWG - En cours
 
 - Ajouter un provider jeux vidéo via IGDB ou RAWG.
 - Mapper les résultats vers les champs existants du plugin `games`.
@@ -445,6 +445,18 @@ Phase 5 — Extension progressive :
   provider.
 - Évaluer les sources spécialisées médias ou rétro comme compléments possibles
   du provider metadata principal.
+
+#### Lot 11.7.1 - IGDB Metadata Provider - Livré
+
+- Provider backend `igdb` ajouté pour la capability interne `games/search`.
+- Authentification OAuth Client Credentials Twitch via `IGDB_CLIENT_ID` et
+  `IGDB_CLIENT_SECRET`.
+- Token IGDB conservé en cache mémoire provider et renouvelé avant expiration.
+- Recherche IGDB v4 par titre, avec plateforme et année optionnelles.
+- Mapping MVP vers titre, description, source, metadata jeux et URL cover
+  distante.
+- Aucun endpoint public jeux, aucun frontend, aucun téléchargement d'image,
+  aucun MediaService modifié et aucun ScreenScraper dans ce lot.
 
 #### Lot 11.8 - Scan caméra - Prévu
 

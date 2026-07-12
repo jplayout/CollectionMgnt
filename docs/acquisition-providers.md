@@ -4,7 +4,9 @@ Etat courant : architecture acquisition backend stabilisee avec Open Library
 comme provider principal et Google Books comme provider secondaire pour les
 lookups ISBN livres. Le socle interne `movies/search` est disponible pour les
 providers films, avec TMDb comme premier provider Movies configure par
-`TMDB_API_READ_ACCESS_TOKEN`.
+`TMDB_API_READ_ACCESS_TOKEN`. Le socle interne `games/search` est disponible
+cote service, avec IGDB comme premier metadata provider jeux video quand
+`IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET` sont configures.
 
 Ce document est destine aux developpeurs qui veulent comprendre, tester ou
 ajouter un provider d'acquisition. Il complete `docs/architecture.md` et
@@ -58,6 +60,10 @@ providers jeux video futurs peuvent donc etre combines : un provider
 generaliste comme IGDB peut porter la recherche metadata, tandis qu'un provider
 specialise comme ScreenScraper peut enrichir les medias retro ou les variantes
 regionales.
+
+IGDB est un metadata provider jeux video. Il fournit des suggestions de jeux et
+une URL de cover distante, mais ne telecharge, ne transforme et ne persiste
+aucun media.
 
 Dans tous les cas, les providers ne persistent pas de fichiers. Ils retournent
 des suggestions et des URLs distantes. Toute importation durable passe par
@@ -233,6 +239,23 @@ distantes en taille `w500`. Le frontend appelle cette capability via
 `POST /api/acquisition/movies/search`, puis applique la suggestion choisie au
 formulaire films sans sauvegarde automatique.
 
+La capability interne `games/search` prepare les providers jeux video par
+recherche texte. Elle utilise la methode `searchGames(searchQuery)`, ou
+`searchQuery` contient :
+
+- `query` : texte normalise et obligatoire ;
+- `language` : langue des metadata, optionnelle et reservee au cache ou a de
+  futurs providers qui la supportent ;
+- `platform` : plateforme attendue, optionnelle ;
+- `year` : annee de sortie attendue, optionnelle.
+
+IGDB implemente `games/search` comme metadata provider. Il utilise OAuth Client
+Credentials cote backend via Twitch, avec `IGDB_CLIENT_ID` et
+`IGDB_CLIENT_SECRET`. Le token est conserve en memoire jusqu'a son expiration et
+renouvele automatiquement avant expiration. IGDB ne fournit aucune route
+publique dediee dans ce lot, aucun frontend et aucun import automatique
+d'image. Les covers retournees sont des URLs distantes.
+
 ## Resolution Multi-Provider
 
 En mode implicite, c'est-a-dire sans champ `provider` dans le body, le service
@@ -245,6 +268,11 @@ Pour les livres, l'ordre courant est :
 
 Pour les films, TMDb est le premier provider `movies/search` quand
 `TMDB_API_READ_ACCESS_TOKEN` est configure.
+
+Pour les jeux video, IGDB est le premier provider `games/search` quand
+`IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET` sont configures. S'il n'est pas
+configure, il reste masque de `GET /api/acquisition/providers` et un appel
+explicite retourne `provider_unavailable`.
 
 Regles actuelles :
 
@@ -346,6 +374,10 @@ texte normalisee et des options `language`, `region` et `year`. Deux recherches
 avec la meme query mais des langues ou regions differentes restent donc
 distinctes.
 
+Pour `games/search`, l'identifiant de cache inclut la query texte normalisee et
+les options `language`, `platform` et `year`. Le cache OAuth du token IGDB reste
+un cache memoire interne au provider et ne passe pas par `AcquisitionCache`.
+
 Le cache stocke :
 
 - la reponse normalisee `{ query, results }` ;
@@ -432,10 +464,13 @@ Etat courant et evolutions prevues :
 - TMDb : premier provider film pour `movies/search`, avec configuration
   obligatoire via `TMDB_API_READ_ACCESS_TOKEN`, sans lookup code-barres, sans
   endpoint details et sans IMDb ID dans ce lot ;
+- IGDB : premier metadata provider jeux video pour `games/search`, avec
+  configuration obligatoire via `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET`, sans
+  route publique, sans frontend et sans telechargement d'image dans ce lot ;
 - configuration admin des providers : future, les providers restent configures
   par environnement dans l'etat courant ;
-- IGDB ou RAWG : provider jeux video futur, avec attention aux quotas et aux
-  secrets ;
+- RAWG : provider jeux video futur eventuel, avec attention aux quotas et aux
+  restrictions d'usage ;
 - ScreenScraper ou source equivalente : provider media ou retro potentiel,
   complementaire d'un provider metadata principal et soumis a ses propres
   contraintes de licence, attribution et quota ;
