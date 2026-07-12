@@ -21,6 +21,9 @@ Frontend :
 - Acquisition assistée films : recherche par titre via `movies/search`, provider
   TMDb, pré-remplissage local et import explicite de poster après création
   disponibles
+- Acquisition assistée jeux : recherche par titre via `games/search`, provider
+  IGDB, filtres plateforme/année, pré-remplissage local et import explicite de
+  cover après création disponibles
 
 Lots acquisition terminés :
 
@@ -35,6 +38,46 @@ Lots acquisition terminés :
 - 11.6.0 : capability interne `movies/search`
 - 11.6.1 : provider TMDb backend pour `movies/search`
 - 11.6.2 : route et frontend de recherche films via `movies/search`
+- 11.7.1 : provider IGDB backend pour `games/search`
+- 11.7.2 : route et frontend de recherche jeux via `games/search`
+
+Epic 11 Acquisition assistee :
+
+- Terminé pour les acquisitions Books, Movies et Games.
+- Les providers media specialises, le scan camera mobile et l'administration
+  des providers sont suivis dans des epics separes.
+
+---
+
+## Capabilities
+
+### Actuelles
+
+- `books/isbnLookup` : lookup ISBN livre via Open Library et Google Books.
+- `movies/search` : recherche texte films via TMDb, avec query, langue, region
+  et annee optionnelles.
+- `games/search` : recherche texte jeux via IGDB, avec query obligatoire,
+  plateforme et annee optionnelles.
+- `provider/imageImport` : import explicite d'une URL image distante apres
+  creation d'item, via le pipeline `MediaService`.
+
+### Futures
+
+- `mobile/barcodeScan` : scan camera local d'ISBN, EAN ou UPC.
+- `*/barcodeLookup` : lookup backend par code-barres quand un provider officiel
+  fiable existe pour le domaine concerne.
+- `providers/admin` : configuration, statut et diagnostic des providers depuis
+  l'administration.
+- Capabilities medias specialisees : recherche et selection d'assets provider
+  avant import explicite via `MediaService`.
+
+Principes :
+
+- Les recherches texte et les lookups par identifiant restent separes selon
+  ADR-0008.
+- Les providers de metadata, providers de medias et providers mixtes restent
+  separes selon ADR-0009.
+- `MediaService` reste le pipeline unique pour toute persistance de media.
 
 ---
 
@@ -62,7 +105,13 @@ Lots acquisition terminés :
 - Provider TMDb backend livré pour les films via `TMDB_API_READ_ACCESS_TOKEN`
 - Route et frontend de recherche films livrés pour pré-remplir localement le
   formulaire movies depuis les suggestions TMDb
+- Capability `games/search` livrée côté service et exposée via route protégée
+  pour les providers jeux vidéo par recherche texte
+- Provider IGDB backend livré comme Metadata Provider pour les jeux vidéo via
+  `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET`
 - Import sécurisé des couvertures provider livré après création de l'item
+- Séparation documentée entre providers de métadonnées, providers de médias et
+  providers mixtes
 - Cache SQLite acquisition livré via `acquisition_cache`
 - Aucun champ ISBN, EAN, UPC ou code-barres sur le plugin `consoles` à ce stade
 - Dataset officiel de démonstration disponible dans `demo/datasets/collectionmgnt-demo-v1.json`
@@ -108,14 +157,19 @@ Lots acquisition terminés :
 - API providers disponible via `GET /api/acquisition/providers`
 - Lookup ISBN livre disponible via `POST /api/acquisition/books/isbn/lookup`
 - Recherche texte films disponible via `POST /api/acquisition/movies/search`
+- Recherche texte jeux disponible via `POST /api/acquisition/games/search`
 - Import explicite de couverture provider disponible via
   `POST /api/acquisition/images/import`
 - Capability `movies/search` disponible dans `AcquisitionService` et exposee
+  via une route acquisition protegee JWT
+- Capability `games/search` disponible dans `AcquisitionService` et exposee
   via une route acquisition protegee JWT
 - Providers livrés :
   - `openlibrary`, sans clé API obligatoire
   - `googlebooks`, sans clé API obligatoire, avec `GOOGLE_BOOKS_API_KEY` optionnelle
   - `tmdb`, provider Movies configuré par `TMDB_API_READ_ACCESS_TOKEN`
+  - `igdb`, Metadata Provider Games configuré par `IGDB_CLIENT_ID` et
+    `IGDB_CLIENT_SECRET`
 - Architecture backend :
   - route acquisition
   - `AcquisitionService`
@@ -127,6 +181,7 @@ Lots acquisition terminés :
   - table `acquisition_cache`
   - clé incluant plugin, capacité, provider, version de mapping et identifiant normalisé
   - clé `movies/search` incluant query, langue, région et année
+  - clé `games/search` incluant query, langue, plateforme et année
   - résultats avec suggestions cachés 7 jours
   - résultats vides cachés 24 heures
   - erreurs provider, timeouts et ISBN invalides non cachés
@@ -136,12 +191,24 @@ Lots acquisition terminés :
 - Résolution implicite/explicite prête pour les recherches texte films
 - TMDb retourne des suggestions film normalisées avec URLs poster distantes
   `w500`, sans téléchargement provider, sans endpoint details et sans IMDb ID
+- TMDb est documenté comme provider mixte : metadata film et référence média
+  distante, sans persistance hors `MediaService`
+- Les providers peuvent être spécialisés : métadonnées uniquement, médias
+  uniquement ou les deux selon leurs capacités réelles
+- IGDB retourne des suggestions jeux normalisées avec URL cover distante, sans
+  téléchargement provider, sans screenshots, sans franchises et sans médias
+  persistés
 - Le formulaire movies propose une recherche par titre, un choix utilisateur
   explicite et un pré-remplissage local sans écraser les champs déjà saisis
+- Le formulaire games propose une recherche par titre, des filtres plateforme et
+  année optionnels, un choix utilisateur explicite et un pré-remplissage local
+  sans écraser les champs déjà saisis
 - Import image sécurisé uniquement après confirmation utilisateur et création
   de l'item, via `MediaService.createOriginalMedia()`
 - Aucun lookup code-barres films/jeux/autres livré
 - Aucun scan caméra livré
+- Aucune administration de configuration providers livrée
+- Aucun provider media specialise livré
 - Aucun import automatique d'image livré
 - Aucun cache local/offline d'images livré
 
@@ -151,6 +218,8 @@ Lots acquisition terminés :
 - Association d'images aux items
 - Images issues des providers importées via le même pipeline que les uploads
   manuels : original, WebP optimisé et miniature
+- `MediaService` reste le pipeline unique pour persister un média, même si la
+  source est un provider spécialisé médias
 - Pack média de démonstration générant une image PNG principale par item importé via l'API média existante
 - Pack média capable de compléter les médias manquants d'un dataset déjà importé, sans réimporter une nouvelle copie
 - Stockage disque dans `backend/data/uploads/items/{itemId}`
@@ -450,6 +519,8 @@ Lots acquisition terminés :
 
 - `GET /api/acquisition/providers`
 - `POST /api/acquisition/books/isbn/lookup`
+- `POST /api/acquisition/movies/search`
+- `POST /api/acquisition/games/search`
 - `POST /api/acquisition/images/import`
 
 ### Exports
@@ -477,6 +548,10 @@ Variables disponibles pour le déploiement Docker local :
 - `DATA_DIR`
 - `PLUGINS_DIR`
 - `GOOGLE_BOOKS_API_KEY` optionnelle pour augmenter les quotas Google Books
+- `TMDB_API_READ_ACCESS_TOKEN` optionnelle, requise pour activer le provider
+  TMDb
+- `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET` optionnelles, requises pour activer
+  le provider IGDB
 - `FRONTEND_PORT`
 - `BACKEND_PORT`
 
@@ -547,6 +622,11 @@ Variables disponibles :
 - `AcquisitionService` comme couche d'orchestration entre routes et providers
 - Résolution multi-provider implicite avec cache distinct par provider
 - Cache SQLite acquisition transparent, sans changement d'API publique
+- Distinction entre recherche texte et lookup par identifiant selon ADR-0008
+- Distinction entre metadata providers, media providers et providers mixtes
+  selon ADR-0009
+- `MediaService` comme pipeline unique de persistance media, y compris pour les
+  futurs providers medias specialises
 - Déploiement Docker auto-hébergé
 - Plateforme prioritaire/testée/documentée : Synology NAS
 - Compatible avec tout environnement Docker disposant d'un volume persistant

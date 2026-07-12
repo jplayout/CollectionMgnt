@@ -135,7 +135,7 @@ L'acquisition assistee utilise aussi une couche dediee dans
 `backend/src/acquisition` :
 
 - `acquisition-service.js` orchestre les cas d'usage acquisition, dont le lookup
-  ISBN livre et le socle interne de recherche texte films ;
+  ISBN livre, la recherche texte films et la recherche texte jeux video ;
 - `provider-registry.js` inventorie et selectionne les providers disponibles ;
 - `acquisition-cache.js` gere le cache metier des lookups acquisition ;
 - `providers/*` contient les adaptateurs vers les fournisseurs externes.
@@ -173,6 +173,14 @@ Responsabilites :
 - Provider : adaptateur externe, appel reseau et mapping vers le contrat
   CollectionMgnt.
 
+Les providers peuvent etre specialises. Un provider de metadata retourne des
+suggestions normalisees pour pre-remplir un item. Un provider de medias expose
+des assets distants, par exemple couvertures, screenshots, scans ou documents,
+sans les persister lui-meme. Certains providers peuvent faire les deux quand
+leur API expose metadata et medias coherents. Cette separation permet de
+choisir la meilleure source pour chaque besoin sans contourner le pipeline
+media.
+
 Le cache SQLite stocke uniquement les reponses normalisees `{ query, results }`
 via un repository dedie. Il ne stocke ni reponse brute provider, ni erreur, ni
 image binaire. En cas de miss, d'expiration ou d'entree corrompue, le service
@@ -183,6 +191,11 @@ de cache. Pour la capability `movies/search`, la cle inclut la query texte
 normalisee ainsi que `language`, `region` et `year` quand ces options sont
 presentes.
 
+Pour la capability interne `games/search`, la cle inclut la query texte
+normalisee ainsi que `language`, `platform` et `year` quand ces options sont
+presentes. Le cache OAuth du token IGDB reste interne au provider et separe du
+cache acquisition metier.
+
 `movies/search` est une capability de recherche texte exposee par
 `POST /api/acquisition/movies/search`. TMDb est le premier provider concret pour
 cette capability quand `TMDB_API_READ_ACCESS_TOKEN` est configure. Le frontend
@@ -191,6 +204,15 @@ restent des URLs distantes jusqu'a l'import explicite apres creation de l'item.
 La capability ne cree pas de lookup code-barres film. Les codes-barres restent
 des identifiants produit et devront etre resolus par un provider capable de
 traiter EAN/UPC.
+
+`games/search` est une capability interne de recherche texte jeux video portee
+par `AcquisitionService`. IGDB est le premier provider concret pour cette
+capability quand `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET` sont configures. IGDB
+est un metadata provider : il retourne des suggestions normalisees et une URL de
+cover distante. La capability est exposee par
+`POST /api/acquisition/games/search`. Le frontend jeux peut appliquer une
+suggestion au formulaire de creation, mais les covers restent des URLs distantes
+jusqu'a l'import explicite apres creation de l'item.
 
 Voir `docs/acquisition-providers.md` pour le contrat provider, les responsabilites
 des couches acquisition et les bonnes pratiques de tests.
@@ -359,6 +381,11 @@ Provider
   -> WebP
   -> Thumbnail
 ```
+
+`MediaService` reste le pipeline unique de persistance media, y compris quand
+un provider specialise expose uniquement des URLs ou assets distants. Les
+providers ne stockent pas de fichiers directement et ne contournent pas les
+validations, transformations et regles d'association aux items.
 
 Voir `docs/media-management.md`.
 

@@ -36,6 +36,7 @@ Les ADR permettent de :
 - ADR-0006 — Provider resolution strategy
 - ADR-0007 — Project quality gates
 - ADR-0008 — Acquisition search capabilities and barcode strategy
+- ADR-0009 — Metadata and media provider specialization
 
 ## Format Retenu
 
@@ -116,6 +117,7 @@ ADRs help to:
 - ADR-0006 — Provider resolution strategy
 - ADR-0007 — Project quality gates
 - ADR-0008 — Acquisition search capabilities and barcode strategy
+- ADR-0009 — Metadata and media provider specialization
 
 ## Format
 

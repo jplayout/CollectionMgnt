@@ -52,6 +52,29 @@ export function searchMovies({
 
 }
 
+export function searchGames({
+    platform = null,
+    provider = null,
+    query,
+    year = null
+}) {
+
+    return apiFetch(
+        '/api/acquisition/games/search',
+        {
+            method:
+                'POST',
+            body: {
+                platform,
+                provider,
+                query,
+                year
+            }
+        }
+    );
+
+}
+
 export function importAcquisitionImage({
     imageUrl,
     isPrimary = false,
