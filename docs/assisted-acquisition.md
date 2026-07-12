@@ -21,8 +21,9 @@ Le backend expose `games/search` via IGDB pour les jeux video, configure par
 par titre, avec plateforme et annee optionnelles, puis applique une suggestion
 sans importer automatiquement la cover distante.
 
-Aucune camera, scan mobile, sauvegarde automatique ou dedoublonnage global
-n'est disponible a ce stade.
+Une fondation frontend de scan camera local est disponible, sans integration aux
+formulaires a ce stade. Elle ne declenche aucun lookup, aucune sauvegarde
+automatique et aucun dedoublonnage global.
 
 ## Champs Supportes
 
@@ -50,6 +51,40 @@ Champ texte specialise pour les codes-barres produits.
 - Stockage : valeur normalisee sans espaces ni tirets
 
 Les consoles ne recoivent pas de champ identifiant dans ce lot.
+
+## Scanner Camera Frontend
+
+Le lot 15.0 ajoute la fondation technique frontend du scanner camera.
+
+Formats actifs :
+
+- `ean_13`
+- `upc_a`
+
+ISBN-10 n'est pas une symbologie camera annoncee. QR Code reste hors perimetre.
+
+Architecture :
+
+- `NativeBarcodeAdapter` utilise `BarcodeDetector` seulement apres verification
+  de `getSupportedFormats()`.
+- `ZxingBarcodeAdapter` charge `@zxing/browser` par import dynamique si le natif
+  est absent ou insuffisant.
+- `ScannerService` gere `navigator.mediaDevices.getUserMedia`, le choix
+  d'adaptateur et l'arret idempotent du flux camera.
+- `CameraScanner.vue` expose une modale accessible, une video, un cadre de scan,
+  des etats permission/loading/scanning/error/unsupported et un evenement de
+  resultat brut normalise.
+
+Garanties du lot :
+
+- aucun appel backend ;
+- aucun appel provider ;
+- aucune sauvegarde automatique ;
+- aucune image ou frame envoyee ou persistee ;
+- aucun stockage local browser ;
+- arret strict du `MediaStream` apres succes, fermeture, erreur et unmount ;
+- saisie clavier toujours disponible car le composant n'est pas encore branche
+  aux formulaires.
 
 ## Recherche Et Filtres
 

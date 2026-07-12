@@ -8,6 +8,7 @@
   "e2e:install": "playwright install chromium"
  },
  "dependencies": {
+  "@zxing/browser": "0.2.1",
   "pinia": "^3",
   "vue": "^3",
   "vue-i18n": "^11",
