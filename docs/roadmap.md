@@ -439,6 +439,12 @@ Phase 5 — Extension progressive :
 - Ajouter un provider jeux vidéo via IGDB ou RAWG.
 - Mapper les résultats vers les champs existants du plugin `games`.
 - Choisir le provider selon qualité, contraintes API et facilité d'auto-hébergement.
+- Formaliser la séparation entre metadata providers, media providers et
+  providers mixtes.
+- Garder `MediaService` comme pipeline unique pour tout média importé depuis un
+  provider.
+- Évaluer les sources spécialisées médias ou rétro comme compléments possibles
+  du provider metadata principal.
 
 #### Lot 11.8 - Scan caméra - Prévu
 

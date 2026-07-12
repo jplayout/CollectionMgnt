@@ -36,6 +36,34 @@ Rôle des couches :
 - `ProviderRegistry` : inventaire et selection ordonnee des providers.
 - Provider : adaptateur vers une API externe et mapping vers CollectionMgnt.
 
+## Metadata Providers Et Media Providers
+
+Les providers ne sont pas obliges de couvrir toute l'acquisition. Ils sont
+modelises selon leurs capacites reelles.
+
+Un metadata provider fournit des suggestions exploitables pour creer ou
+pre-remplir un item : titre, description, champs plugin, identifiants metier ou
+URLs de previsualisation. Open Library et Google Books sont aujourd'hui utilises
+comme metadata providers livres.
+
+Un media provider fournit surtout des assets exploitables apres selection d'un
+item : jaquettes, posters, screenshots, scans, manuels ou autres medias
+distants. Il peut etre utile meme s'il ne fournit pas assez de metadata pour
+etre un provider principal de recherche.
+
+Un provider peut aussi faire les deux lorsque son API expose metadata et medias
+coherents. TMDb est le cas mixte livre aujourd'hui : il fournit des suggestions
+film normalisees et des URLs poster distantes, sans persister ces images. Les
+providers jeux video futurs peuvent donc etre combines : un provider
+generaliste comme IGDB peut porter la recherche metadata, tandis qu'un provider
+specialise comme ScreenScraper peut enrichir les medias retro ou les variantes
+regionales.
+
+Dans tous les cas, les providers ne persistent pas de fichiers. Ils retournent
+des suggestions et des URLs distantes. Toute importation durable passe par
+`POST /api/acquisition/images/import` ou une future route equivalente qui
+reutilise `MediaService`.
+
 ## Responsabilites
 
 ### Route
@@ -180,6 +208,11 @@ Comportement attendu :
 - lever une erreur acquisition stable pour timeout ou erreur provider ;
 - ne jamais retourner la reponse brute de l'API externe.
 
+Une methode media future devra suivre la meme logique : recevoir une requete
+normalisee, retourner des assets provider-agnostic et ne jamais telecharger ou
+persister directement le fichier. L'import effectif restera separe du lookup et
+passera par le pipeline media existant.
+
 La capability interne `movies/search` prepare les providers films par recherche
 texte. Elle utilise la methode `searchMovies(searchQuery)`, ou `searchQuery`
 contient :
@@ -259,6 +292,10 @@ Une suggestion peut contenir :
 - `metadata` : champs compatibles avec le plugin cible ;
 - `images` : URLs de previsualisation distante ;
 - `sourceUrl` : URL de consultation chez le provider.
+
+Une URL presente dans `images` est une reference distante, pas un media stocke.
+Elle devient un media CollectionMgnt seulement apres confirmation utilisateur et
+passage par `MediaService`.
 
 Le mapping doit produire des champs deja comprehensibles par CollectionMgnt. Par
 exemple, un provider livre mappe vers `metadata.author`,
@@ -399,6 +436,9 @@ Etat courant et evolutions prevues :
   par environnement dans l'etat courant ;
 - IGDB ou RAWG : provider jeux video futur, avec attention aux quotas et aux
   secrets ;
+- ScreenScraper ou source equivalente : provider media ou retro potentiel,
+  complementaire d'un provider metadata principal et soumis a ses propres
+  contraintes de licence, attribution et quota ;
 - scan camera : couche frontend separee qui remplit un ISBN ou code-barres, puis
   appelle le lookup backend ;
 - internationalization : distinguer langue de l'interface, langue des metadata

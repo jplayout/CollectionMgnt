@@ -63,6 +63,8 @@ Lots acquisition terminés :
 - Route et frontend de recherche films livrés pour pré-remplir localement le
   formulaire movies depuis les suggestions TMDb
 - Import sécurisé des couvertures provider livré après création de l'item
+- Séparation documentée entre providers de métadonnées, providers de médias et
+  providers mixtes
 - Cache SQLite acquisition livré via `acquisition_cache`
 - Aucun champ ISBN, EAN, UPC ou code-barres sur le plugin `consoles` à ce stade
 - Dataset officiel de démonstration disponible dans `demo/datasets/collectionmgnt-demo-v1.json`
@@ -136,6 +138,10 @@ Lots acquisition terminés :
 - Résolution implicite/explicite prête pour les recherches texte films
 - TMDb retourne des suggestions film normalisées avec URLs poster distantes
   `w500`, sans téléchargement provider, sans endpoint details et sans IMDb ID
+- TMDb est documenté comme provider mixte : metadata film et référence média
+  distante, sans persistance hors `MediaService`
+- Les providers peuvent être spécialisés : métadonnées uniquement, médias
+  uniquement ou les deux selon leurs capacités réelles
 - Le formulaire movies propose une recherche par titre, un choix utilisateur
   explicite et un pré-remplissage local sans écraser les champs déjà saisis
 - Import image sécurisé uniquement après confirmation utilisateur et création
@@ -151,6 +157,8 @@ Lots acquisition terminés :
 - Association d'images aux items
 - Images issues des providers importées via le même pipeline que les uploads
   manuels : original, WebP optimisé et miniature
+- `MediaService` reste le pipeline unique pour persister un média, même si la
+  source est un provider spécialisé médias
 - Pack média de démonstration générant une image PNG principale par item importé via l'API média existante
 - Pack média capable de compléter les médias manquants d'un dataset déjà importé, sans réimporter une nouvelle copie
 - Stockage disque dans `backend/data/uploads/items/{itemId}`
