@@ -191,6 +191,11 @@ de cache. Pour la capability `movies/search`, la cle inclut la query texte
 normalisee ainsi que `language`, `region` et `year` quand ces options sont
 presentes.
 
+Pour la capability interne `games/search`, la cle inclut la query texte
+normalisee ainsi que `language`, `platform` et `year` quand ces options sont
+presentes. Le cache OAuth du token IGDB reste interne au provider et separe du
+cache acquisition metier.
+
 `movies/search` est une capability de recherche texte exposee par
 `POST /api/acquisition/movies/search`. TMDb est le premier provider concret pour
 cette capability quand `TMDB_API_READ_ACCESS_TOKEN` est configure. Le frontend
@@ -199,6 +204,13 @@ restent des URLs distantes jusqu'a l'import explicite apres creation de l'item.
 La capability ne cree pas de lookup code-barres film. Les codes-barres restent
 des identifiants produit et devront etre resolus par un provider capable de
 traiter EAN/UPC.
+
+`games/search` est une capability interne de recherche texte jeux video portee
+par `AcquisitionService`. IGDB est le premier provider concret pour cette
+capability quand `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET` sont configures. IGDB
+est un metadata provider : il retourne des suggestions normalisees et une URL de
+cover distante, sans route publique, sans frontend et sans telechargement
+d'image dans ce lot.
 
 Voir `docs/acquisition-providers.md` pour le contrat provider, les responsabilites
 des couches acquisition et les bonnes pratiques de tests.

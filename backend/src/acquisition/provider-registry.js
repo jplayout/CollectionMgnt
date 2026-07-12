@@ -15,11 +15,17 @@ import {
     TmdbProvider
 } from './providers/tmdb-provider.js';
 
+import {
+    IgdbProvider
+} from './providers/igdb-provider.js';
+
 export class AcquisitionProviderRegistry {
 
     constructor({
         fetchImpl = globalThis.fetch,
         googleBooksApiKey = process.env.GOOGLE_BOOKS_API_KEY,
+        igdbClientId = process.env.IGDB_CLIENT_ID,
+        igdbClientSecret = process.env.IGDB_CLIENT_SECRET,
         providers = null,
         tmdbApiReadAccessToken = process.env.TMDB_API_READ_ACCESS_TOKEN,
         timeoutMs
@@ -49,6 +55,14 @@ export class AcquisitionProviderRegistry {
                     fetchImpl,
                     readAccessToken:
                         tmdbApiReadAccessToken,
+                    timeoutMs
+                }),
+                new IgdbProvider({
+                    clientId:
+                        igdbClientId,
+                    clientSecret:
+                        igdbClientSecret,
+                    fetchImpl,
                     timeoutMs
                 })
             );

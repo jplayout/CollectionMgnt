@@ -35,6 +35,7 @@ Lots acquisition terminés :
 - 11.6.0 : capability interne `movies/search`
 - 11.6.1 : provider TMDb backend pour `movies/search`
 - 11.6.2 : route et frontend de recherche films via `movies/search`
+- 11.7.1 : provider IGDB backend pour `games/search`
 
 ---
 
@@ -62,6 +63,10 @@ Lots acquisition terminés :
 - Provider TMDb backend livré pour les films via `TMDB_API_READ_ACCESS_TOKEN`
 - Route et frontend de recherche films livrés pour pré-remplir localement le
   formulaire movies depuis les suggestions TMDb
+- Capability interne `games/search` livrée côté service pour préparer les
+  providers jeux vidéo par recherche texte
+- Provider IGDB backend livré comme Metadata Provider pour les jeux vidéo via
+  `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET`
 - Import sécurisé des couvertures provider livré après création de l'item
 - Séparation documentée entre providers de métadonnées, providers de médias et
   providers mixtes
@@ -114,10 +119,14 @@ Lots acquisition terminés :
   `POST /api/acquisition/images/import`
 - Capability `movies/search` disponible dans `AcquisitionService` et exposee
   via une route acquisition protegee JWT
+- Capability `games/search` disponible dans `AcquisitionService`, sans route
+  publique ni frontend dans ce lot
 - Providers livrés :
   - `openlibrary`, sans clé API obligatoire
   - `googlebooks`, sans clé API obligatoire, avec `GOOGLE_BOOKS_API_KEY` optionnelle
   - `tmdb`, provider Movies configuré par `TMDB_API_READ_ACCESS_TOKEN`
+  - `igdb`, Metadata Provider Games configuré par `IGDB_CLIENT_ID` et
+    `IGDB_CLIENT_SECRET`
 - Architecture backend :
   - route acquisition
   - `AcquisitionService`
@@ -129,6 +138,7 @@ Lots acquisition terminés :
   - table `acquisition_cache`
   - clé incluant plugin, capacité, provider, version de mapping et identifiant normalisé
   - clé `movies/search` incluant query, langue, région et année
+  - clé `games/search` incluant query, langue, plateforme et année
   - résultats avec suggestions cachés 7 jours
   - résultats vides cachés 24 heures
   - erreurs provider, timeouts et ISBN invalides non cachés
@@ -142,11 +152,15 @@ Lots acquisition terminés :
   distante, sans persistance hors `MediaService`
 - Les providers peuvent être spécialisés : métadonnées uniquement, médias
   uniquement ou les deux selon leurs capacités réelles
+- IGDB retourne des suggestions jeux normalisées avec URL cover distante, sans
+  téléchargement provider, sans screenshots, sans franchises et sans médias
+  persistés
 - Le formulaire movies propose une recherche par titre, un choix utilisateur
   explicite et un pré-remplissage local sans écraser les champs déjà saisis
 - Import image sécurisé uniquement après confirmation utilisateur et création
   de l'item, via `MediaService.createOriginalMedia()`
 - Aucun lookup code-barres films/jeux/autres livré
+- Aucune route publique ni UI de recherche jeux livrée dans ce lot
 - Aucun scan caméra livré
 - Aucun import automatique d'image livré
 - Aucun cache local/offline d'images livré

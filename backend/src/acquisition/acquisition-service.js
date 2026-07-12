@@ -168,7 +168,11 @@ export class AcquisitionService {
         const emptyResponse =
             createSearchResponse(
                 searchQuery,
-                []
+                [],
+                {
+                    plugin:
+                        'movies'
+                }
             );
 
         let lastTechnicalError =
@@ -186,6 +190,112 @@ export class AcquisitionService {
 
                 const response =
                     await this.searchMoviesWithProvider({
+                        provider,
+                        searchQuery
+                    });
+
+                if (
+                    resolution.explicit ||
+                    response.results.length > 0
+                ) {
+
+                    return response;
+
+                }
+
+                hasEmptyResponse =
+                    true;
+
+            } catch (error) {
+
+                if (
+                    resolution.explicit ||
+                    !isTechnicalProviderError(
+                        error
+                    )
+                ) {
+
+                    throw error;
+
+                }
+
+                lastTechnicalError =
+                    error;
+
+            }
+
+        }
+
+        if (
+            hasEmptyResponse
+        ) {
+
+            return emptyResponse;
+
+        }
+
+        if (
+            lastTechnicalError
+        ) {
+
+            throw lastTechnicalError;
+
+        }
+
+        return emptyResponse;
+
+    }
+
+    async searchGames({
+        language = null,
+        platform = null,
+        providerId = null,
+        query,
+        year = null
+    }) {
+
+        const searchQuery =
+            normalizeTextSearchQuery({
+                language,
+                platform,
+                query,
+                year
+            });
+
+        const resolution =
+            this.resolveProviders({
+                capability:
+                    'games/search',
+                plugin:
+                    'games',
+                providerId
+            });
+
+        const emptyResponse =
+            createSearchResponse(
+                searchQuery,
+                [],
+                {
+                    plugin:
+                        'games'
+                }
+            );
+
+        let lastTechnicalError =
+            null;
+
+        let hasEmptyResponse =
+            false;
+
+        for (
+            const provider
+            of resolution.providers
+        ) {
+
+            try {
+
+                const response =
+                    await this.searchGamesWithProvider({
                         provider,
                         searchQuery
                     });
@@ -383,7 +493,69 @@ export class AcquisitionService {
         const response =
             createSearchResponse(
                 searchQuery,
-                results
+                results,
+                {
+                    plugin:
+                        'movies'
+                }
+            );
+
+        this.acquisitionCache?.set({
+            ...cacheContext,
+            response
+        });
+
+        return response;
+
+    }
+
+    async searchGamesWithProvider({
+        provider,
+        searchQuery
+    }) {
+
+        const resolvedProviderId =
+            provider.describe().id;
+
+        const cacheContext = {
+            capability:
+                'games/search',
+            identifier:
+                buildSearchCacheIdentifier(
+                    searchQuery
+                ),
+            plugin:
+                'games',
+            providerId:
+                resolvedProviderId
+        };
+
+        const cachedResponse =
+            this.acquisitionCache?.get(
+                cacheContext
+            );
+
+        if (
+            cachedResponse
+        ) {
+
+            return cachedResponse;
+
+        }
+
+        const results =
+            await provider.searchGames(
+                searchQuery
+            );
+
+        const response =
+            createSearchResponse(
+                searchQuery,
+                results,
+                {
+                    plugin:
+                        'games'
+                }
             );
 
         this.acquisitionCache?.set({
@@ -418,35 +590,66 @@ function createLookupResponse(
 
 function createSearchResponse(
     searchQuery,
-    results
+    results,
+    {
+        plugin
+    }
 ) {
 
+    const query = {
+        language:
+            searchQuery.language,
+        plugin:
+            plugin,
+        type:
+            'text',
+        value:
+            searchQuery.query,
+        year:
+            searchQuery.year
+    };
+
+    if (
+        Object.hasOwn(
+            searchQuery,
+            'platform'
+        )
+    ) {
+
+        query.platform =
+            searchQuery.platform;
+
+    }
+
+    if (
+        Object.hasOwn(
+            searchQuery,
+            'region'
+        )
+    ) {
+
+        query.region =
+            searchQuery.region;
+
+    }
+
     return {
-        query: {
-            language:
-                searchQuery.language,
-            plugin:
-                'movies',
-            region:
-                searchQuery.region,
-            type:
-                'text',
-            value:
-                searchQuery.query,
-            year:
-                searchQuery.year
-        },
+        query,
         results
     };
 
 }
 
-function normalizeTextSearchQuery({
-    language,
-    query,
-    region,
-    year
-}) {
+function normalizeTextSearchQuery(input) {
+
+    const {
+        language,
+        platform,
+        query,
+        region,
+        year
+    } =
+        input;
 
     const normalizedQuery =
         typeof query === 'string'
@@ -468,22 +671,48 @@ function normalizeTextSearchQuery({
 
     }
 
-    return {
+    const searchQuery = {
         language:
             normalizeOptionalText(
                 language
             ),
         query:
             normalizedQuery,
-        region:
-            normalizeOptionalText(
-                region
-            ),
         year:
             normalizeOptionalText(
                 year
             )
     };
+
+    if (
+        Object.hasOwn(
+            input,
+            'platform'
+        )
+    ) {
+
+        searchQuery.platform =
+            normalizeOptionalText(
+                platform
+            );
+
+    }
+
+    if (
+        Object.hasOwn(
+            input,
+            'region'
+        )
+    ) {
+
+        searchQuery.region =
+            normalizeOptionalText(
+                region
+            );
+
+    }
+
+    return searchQuery;
 
 }
 
@@ -507,16 +736,53 @@ function normalizeOptionalText(value) {
 
 function buildSearchCacheIdentifier(searchQuery) {
 
-    return new URLSearchParams({
-        language:
-            searchQuery.language ?? '',
-        query:
-            searchQuery.query,
-        region:
-            searchQuery.region ?? '',
-        year:
-            searchQuery.year ?? ''
-    }).toString();
+    const parameters =
+        new URLSearchParams();
+
+    parameters.set(
+        'language',
+        searchQuery.language ?? ''
+    );
+
+    if (
+        Object.hasOwn(
+            searchQuery,
+            'platform'
+        )
+    ) {
+
+        parameters.set(
+            'platform',
+            searchQuery.platform ?? ''
+        );
+
+    }
+
+    parameters.set(
+        'query',
+        searchQuery.query
+    );
+
+    if (
+        Object.hasOwn(
+            searchQuery,
+            'region'
+        )
+    ) {
+
+        parameters.set(
+            'region',
+            searchQuery.region ?? ''
+        );
+
+    }
+
+    parameters.set(
+        'year',
+        searchQuery.year ?? ''
+    );
+
+    return parameters.toString();
 
 }
 
