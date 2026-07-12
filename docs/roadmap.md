@@ -34,6 +34,11 @@ Capacités disponibles :
 - Provider TMDb backend livré comme premier provider `movies/search`.
 - Recherche films frontend livrée via `movies/search`, avec pre-remplissage
   local et import manuel du poster apres creation.
+- Capability `games/search` livree via IGDB pour la recherche jeux, avec route
+  backend protegee, UI de selection et import manuel de cover apres creation.
+- Epic 11 Acquisition assistee termine pour les acquisitions Books, Movies et
+  Games. Les travaux camera, administration provider et providers medias sont
+  des epics separes.
 - Préférences d'affichage par collection/plugin.
 - Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
 - Exports JSON natifs, export CSV collection et import JSON natif non destructif.
@@ -73,8 +78,9 @@ Limites majeures connues :
 
 ### Priorité moyenne
 
-- Providers films et jeux vidéo : TMDb, IGDB ou RAWG.
-- Scan caméra mobile en contexte HTTPS.
+- Epic Mobile Acquisition : scan camera mobile en contexte HTTPS.
+- Epic Provider Administration : configuration et diagnostic des providers.
+- Epic Media Providers : sources medias specialisees et selection d'assets.
 - Recherche enrichie par auteur, éditeur, série, tags et tolérance aux fautes.
 - Navigation de grandes collections par groupes configurables.
 - Consultation mobile rapide avant achat et premiers usages hors connexion.
@@ -89,6 +95,37 @@ Limites majeures connues :
 - Catalogue de plugins.
 - Recherche globale multi-collections et recherche approximative.
 - Choix avancé du mode de recherche : LIKE, stricte ou FTS.
+
+## Capabilities
+
+### Actuelles
+
+- `books/isbnLookup` : lookup ISBN livre via Open Library et Google Books.
+- `movies/search` : recherche texte films via TMDb, avec query, langue, region
+  et annee optionnelles.
+- `games/search` : recherche texte jeux via IGDB, avec query obligatoire,
+  plateforme et annee optionnelles.
+- `provider/imageImport` : import explicite d'une URL image distante apres
+  creation d'item, via `MediaService`.
+
+### Futures
+
+- `mobile/barcodeScan` : lecture locale camera d'ISBN, EAN ou UPC, sans lookup
+  provider direct depuis le frontend.
+- `*/barcodeLookup` : resolution backend d'un identifiant produit quand un
+  provider officiel fiable existe pour le domaine concerne.
+- `providers/admin` : configuration, statut, diagnostic et test des providers
+  depuis l'administration.
+- `media/search` ou capabilities medias specialisees : recherche et selection
+  d'assets provider avant import explicite via `MediaService`.
+
+Principes :
+
+- Les recherches texte et les lookups par identifiant restent separes,
+  conformement a ADR-0008.
+- Les metadata providers, media providers et providers mixtes restent separes
+  par capabilities reelles, conformement a ADR-0009.
+- `MediaService` reste le pipeline unique pour toute persistance de media.
 
 ## Sécurité
 
@@ -289,13 +326,18 @@ Lien roadmap :
 - Tag filters.
 - Smart collections based on tags.
 
-### Acquisition assistée
+### Epic 11 — Acquisition assistée — Livré
 
 #### Acquisition assistée / pré-remplissage automatique
 
 Objectif :
 
 - Réduire fortement le temps nécessaire à la création d’un item grâce à l’identification automatique et au pré-remplissage des métadonnées.
+- Epic clos pour les flux Books, Movies et Games : lookup ISBN livres,
+  recherche texte films, recherche texte jeux, selection utilisateur,
+  pre-remplissage local et import image explicite apres creation sont livres.
+- Les travaux restant autour du scan camera, de l'administration des providers
+  et des providers medias sont deplaces vers des epics dedies.
 
 Phase 1 — Identifiants standard :
 
@@ -305,9 +347,9 @@ Phase 1 — Identifiants standard :
 
 Phase 2 — Scan mobile et tablette :
 
-- Utilisation de l’appareil photo depuis un téléphone ou une tablette.
-- Détection automatique des codes-barres.
-- Remplissage automatique du champ ISBN / EAN / UPC détecté.
+- Deplacee vers l'Epic Mobile Acquisition.
+- Le scan restera separe du lookup provider : il remplit un identifiant local,
+  puis le backend decide si une capability de lookup existe.
 
 Phase 3 — Lookup livres :
 
@@ -331,8 +373,10 @@ Phase 4 — Architecture fournisseurs :
 
 Phase 5 — Extension progressive :
 
-- Étendre ensuite aux jeux vidéo, films, consoles et autres collections.
-- Création semi-automatique avec validation utilisateur avant enregistrement.
+- Films livres via TMDb et `movies/search`.
+- Jeux video livres via IGDB et `games/search`.
+- Consoles et autres collections restent futurs, selon providers officiels
+  disponibles et capabilities reelles.
 
 #### Lot 11.0 - Acquisition Identifier Foundations - Livré
 
@@ -434,17 +478,18 @@ Phase 5 — Extension progressive :
 - Aucun endpoint details TMDb, aucun IMDb ID, aucun lookup code-barres film et
   aucun telechargement automatique d'image.
 
-#### Lot 11.7 - IGDB / RAWG - En cours
+#### Lot 11.7 - Games Acquisition - Livré
 
-- Ajouter un provider jeux vidéo via IGDB ou RAWG.
-- Mapper les résultats vers les champs existants du plugin `games`.
-- Choisir le provider selon qualité, contraintes API et facilité d'auto-hébergement.
+- IGDB retenu comme premier Metadata Provider jeux video.
+- Provider backend, route protegee et frontend de recherche jeux livres via
+  `games/search`.
+- Mapping des resultats vers les champs existants du plugin `games` livre.
 - Formaliser la séparation entre metadata providers, media providers et
-  providers mixtes.
+  providers mixtes livre via ADR-0009.
 - Garder `MediaService` comme pipeline unique pour tout média importé depuis un
   provider.
 - Évaluer les sources spécialisées médias ou rétro comme compléments possibles
-  du provider metadata principal.
+  du provider metadata principal est deplace vers l'Epic Media Providers.
 
 #### Lot 11.7.1 - IGDB Metadata Provider - Livré
 
@@ -472,20 +517,88 @@ Phase 5 — Extension progressive :
 - Aucun ScreenScraper, barcode, caméra, téléchargement automatique d'image ou
   changement MediaService dans ce lot.
 
-#### Lot 11.8 - Scan caméra - Prévu
+#### Lot 11.8 - Scan caméra - Déplacé
 
-- Ajouter le scan caméra mobile en contexte HTTPS.
-- Séparer strictement scan et lookup : le scan remplit `isbn` ou `barcode`, puis le backend effectue le lookup.
-- Prévoir `BarcodeDetector` quand disponible et un fallback JavaScript si nécessaire.
+- Le scan camera n'est plus dans l'Epic 11.
+- Il devient le point d'entree de l'Epic Mobile Acquisition.
+- La separation scan local / lookup backend reste celle decrite par ADR-0008.
+
+### Mobile Acquisition
+
+Objectif :
+
+- Rendre l'acquisition utilisable en contexte mobile et tablette, notamment
+  avant achat ou pendant l'inventaire physique.
+
+Travaux prévus :
+
+- Scan camera ISBN, EAN et UPC en contexte HTTPS.
+- Detection locale via `BarcodeDetector` quand disponible, avec fallback
+  JavaScript si necessaire.
+- Remplissage du champ `isbn` ou `barcode` sans appel provider direct depuis le
+  frontend.
+- Lancement explicite du lookup ou de la recherche par le backend apres
+  validation utilisateur.
+- UX mobile pour selectionner une suggestion, creer l'item et importer une
+  image via le flux existant.
 
 Contraintes :
 
-- Fonctionnalité optionnelle.
-- Validation utilisateur obligatoire avant création définitive.
-- Compatibilité desktop, tablette et mobile.
-- Aucune dépendance obligatoire à un fournisseur externe.
-- Respect de la confidentialité : ne pas envoyer plus de données que nécessaire aux services externes.
-- Images/couvertures récupérées seulement après validation ou selon un comportement clairement documenté.
+- Le scan n'invente pas de capability provider.
+- Le scan ne remplace pas `books/isbnLookup`, `movies/search` ou
+  `games/search`.
+- Aucun secret provider expose au frontend.
+- Les images restent importees explicitement via `MediaService`.
+
+### Provider Administration
+
+Objectif :
+
+- Permettre a l'administrateur de comprendre, configurer et diagnostiquer les
+  providers sans modifier manuellement le code.
+
+Travaux prévus :
+
+- Etat des providers disponibles, configures, indisponibles ou en erreur.
+- Configuration admin des secrets et options provider, avec stockage securise a
+  definir avant implementation.
+- Test de connectivite provider cote backend.
+- Affichage des capabilities par provider : metadata, media ou mixte.
+- Diagnostics de quotas, timeouts et erreurs sans exposer de secrets.
+- Documentation des variables d'environnement conservee comme mode simple pour
+  les deploiements auto-heberges.
+
+Contraintes :
+
+- Aucune logique provider specifique dans `AcquisitionService`.
+- Aucun secret ou token dans les logs, reponses API ou exports.
+- Les providers non configures restent masques des resolutions implicites.
+
+### Media Providers
+
+Objectif :
+
+- Ajouter des sources specialisees pour les assets media sans contourner le
+  pipeline `MediaService`.
+
+Travaux prévus :
+
+- Evaluer ScreenScraper ou sources equivalentes comme providers medias ou retro
+  complementaires.
+- Rechercher et selectionner des assets : box front, box back, cartridge, disc,
+  screenshots, logos, manuels ou scans selon licences et API officielles.
+- Associer un asset distant a un item existant apres confirmation utilisateur.
+- Importer l'asset selectionne via `MediaService`, avec les memes validations,
+  transformations WebP et miniatures que les uploads manuels.
+- Garder IGDB comme Metadata Provider principal jeux tant qu'un provider media
+  ne demontre pas une meilleure couverture metadata generaliste.
+
+Contraintes :
+
+- Une URL distante provider n'est pas un media persiste.
+- Aucun telechargement automatique d'image.
+- Les licences, attributions, quotas et restrictions de redistribution doivent
+  etre valides avant integration.
 
 ### Import / export / sauvegarde
 
