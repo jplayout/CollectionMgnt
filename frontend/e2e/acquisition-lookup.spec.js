@@ -709,6 +709,30 @@ test(
             )
         ).toBeVisible();
 
+        const itemId =
+            page.url().match(
+                /\/items\/(\d+)/
+            )?.[1];
+
+        expect(
+            itemId
+        ).toBeTruthy();
+
+        const deleteResponse =
+            await page.request.delete(
+                `/api/items/${itemId}`,
+                {
+                    headers: {
+                        authorization:
+                            `Bearer ${adminToken}`
+                    }
+                }
+            );
+
+        expect(
+            deleteResponse.ok()
+        ).toBeTruthy();
+
     }
 );
 
