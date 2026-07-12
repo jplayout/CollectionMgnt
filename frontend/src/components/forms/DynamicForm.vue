@@ -51,22 +51,65 @@
                 v-for="field in supportedFields"
                 :key="field.name"
             >
+                <div
+                    v-if="isScannerEnabled(field)"
+                    class="scanner-field-row"
+                >
+                    <AcquisitionLookupField
+                        v-if="isAcquisitionLookupField(field)"
+                        :error="frontendErrors[field.name]"
+                        :field="field"
+                        :model-value="metadata[field.name]"
+                        @apply-suggestion="applyAcquisitionSuggestion"
+                        @update:model-value="updateMetadataValue(field, $event)"
+                    />
+
+                    <DynamicField
+                        v-else
+                        :error="frontendErrors[field.name]"
+                        :field="field"
+                        :model-value="metadata[field.name]"
+                        @update:model-value="updateMetadataValue(field, $event)"
+                    />
+
+                    <button
+                        :aria-label="`Scanner le champ ${field.label ?? field.name}`"
+                        class="scanner-button"
+                        :disabled="submitting || scannerOpen"
+                        type="button"
+                        @click="openScanner(field, $event.currentTarget)"
+                    >
+                        Scanner
+                    </button>
+                </div>
+
                 <AcquisitionLookupField
-                    v-if="isAcquisitionLookupField(field)"
-                    v-model="metadata[field.name]"
+                    v-else-if="isAcquisitionLookupField(field)"
                     :error="frontendErrors[field.name]"
                     :field="field"
+                    :model-value="metadata[field.name]"
                     @apply-suggestion="applyAcquisitionSuggestion"
+                    @update:model-value="updateMetadataValue(field, $event)"
                 />
 
                 <DynamicField
                     v-else
-                    v-model="metadata[field.name]"
                     :error="frontendErrors[field.name]"
                     :field="field"
+                    :model-value="metadata[field.name]"
+                    @update:model-value="updateMetadataValue(field, $event)"
                 />
             </template>
         </div>
+
+        <CameraScanner
+            :open="scannerOpen"
+            :scanner-factory="scannerFactory"
+            :trigger-element="scannerTriggerElement"
+            @close="closeScanner"
+            @error="handleScannerError"
+            @result="applyScannerResult"
+        />
 
         <div
             v-if="backendMessages.length"
@@ -101,6 +144,9 @@ import {
 
 import DynamicField
 from './DynamicField.vue';
+
+import CameraScanner
+from './CameraScanner.vue';
 
 import AcquisitionLookupField
 from './AcquisitionLookupField.vue';
@@ -188,6 +234,12 @@ const props =
                 false,
             type:
                 Boolean
+        },
+        scannerFactory: {
+            default:
+                undefined,
+            type:
+                Function
         }
     });
 
@@ -211,6 +263,15 @@ const extraMetadata =
 
 const frontendErrors =
     reactive({});
+
+const scannerOpen =
+    ref(false);
+
+const scannerField =
+    ref(null);
+
+const scannerTriggerElement =
+    ref(null);
 
 const supportedFields =
     computed(
@@ -468,6 +529,166 @@ function isAcquisitionLookupField(field) {
     return props.pluginId === 'books' &&
         field.name === 'isbn' &&
         field.type === 'isbn';
+
+}
+
+function isScannerEnabled(field) {
+
+    return field.type === 'isbn' ||
+        field.type === 'barcode';
+
+}
+
+function updateMetadataValue(field, value) {
+
+    metadata[field.name] =
+        value;
+
+    delete frontendErrors[field.name];
+
+}
+
+function openScanner(field, triggerElement) {
+
+    if (
+        !isScannerEnabled(
+            field
+        )
+    ) {
+
+        return;
+
+    }
+
+    scannerField.value =
+        field;
+
+    scannerTriggerElement.value =
+        triggerElement;
+
+    scannerOpen.value =
+        true;
+
+}
+
+function closeScanner() {
+
+    scannerOpen.value =
+        false;
+
+}
+
+function handleScannerError() {
+
+    // CameraScanner renders the user-facing camera error. Manual input remains available.
+
+}
+
+function applyScannerResult(result) {
+
+    const field =
+        scannerField.value;
+
+    if (
+        !field
+    ) {
+
+        return;
+
+    }
+
+    const normalizedValue =
+        normalizeIdentifier(
+            result?.rawValue ?? ''
+        );
+
+    const scannedErrors =
+        getFieldValidationErrors(
+        field,
+        normalizedValue
+    );
+
+    if (
+        scannedErrors[field.name] &&
+        hasValidCurrentIdentifierValue(
+            field
+        )
+    ) {
+
+        frontendErrors[field.name] =
+            'Code scanné invalide, valeur existante conservée';
+
+        scannerOpen.value =
+            false;
+
+        return;
+
+    }
+
+    metadata[field.name] =
+        normalizedValue;
+
+    setFieldErrors(
+        field,
+        scannedErrors
+    );
+
+    scannerOpen.value =
+        false;
+
+}
+
+function getFieldValidationErrors(field, value) {
+
+    const errors = {};
+
+    validateFieldValue(
+        field,
+        value,
+        errors
+    );
+
+    return errors;
+
+}
+
+function setFieldErrors(field, errors) {
+
+    delete frontendErrors[field.name];
+
+    if (
+        errors[field.name]
+    ) {
+
+        frontendErrors[field.name] =
+            errors[field.name];
+
+    }
+
+}
+
+function hasValidCurrentIdentifierValue(field) {
+
+    const currentValue =
+        metadata[field.name];
+
+    if (
+        isEmptyValue(
+            currentValue
+        )
+    ) {
+
+        return false;
+
+    }
+
+    const currentErrors =
+        getFieldValidationErrors(
+        field,
+        currentValue
+    );
+
+    return !currentErrors[field.name];
 
 }
 
@@ -843,6 +1064,17 @@ function normalizeValue(
 
 }
 
+function normalizeIdentifier(value) {
+
+    return String(value)
+        .replaceAll(
+            /[\s-]/g,
+            ''
+        )
+        .toUpperCase();
+
+}
+
 function validatePayload(
     payload
 ) {
@@ -903,6 +1135,34 @@ function validateFieldValue(
     value,
     errors
 ) {
+
+    if (
+        field.type === 'isbn' &&
+        !isValidIsbn(
+            value
+        )
+    ) {
+
+        errors[field.name] =
+            'ISBN invalide';
+
+        return;
+
+    }
+
+    if (
+        field.type === 'barcode' &&
+        !isValidBarcode(
+            value
+        )
+    ) {
+
+        errors[field.name] =
+            'Code-barres invalide';
+
+        return;
+
+    }
 
     if (
         field.type === 'number' ||
@@ -998,6 +1258,165 @@ function validateFieldValue(
         );
 
     }
+
+}
+
+function isValidIsbn(value) {
+
+    const normalizedValue =
+        normalizeIdentifier(
+            value
+        );
+
+    if (
+        /^[0-9]{9}[0-9X]$/.test(
+            normalizedValue
+        )
+    ) {
+
+        return hasValidIsbn10Checksum(
+            normalizedValue
+        );
+
+    }
+
+    if (
+        /^[0-9]{13}$/.test(
+            normalizedValue
+        )
+    ) {
+
+        return hasValidEan13Checksum(
+            normalizedValue
+        );
+
+    }
+
+    return false;
+
+}
+
+function isValidBarcode(value) {
+
+    const normalizedValue =
+        normalizeIdentifier(
+            value
+        );
+
+    if (
+        /^[0-9]{12}$/.test(
+            normalizedValue
+        )
+    ) {
+
+        return hasValidUpcAChecksum(
+            normalizedValue
+        );
+
+    }
+
+    if (
+        /^[0-9]{13}$/.test(
+            normalizedValue
+        )
+    ) {
+
+        return hasValidEan13Checksum(
+            normalizedValue
+        );
+
+    }
+
+    return false;
+
+}
+
+function hasValidIsbn10Checksum(value) {
+
+    let sum =
+        0;
+
+    for (
+        let index = 0;
+        index < 10;
+        index += 1
+    ) {
+
+        const character =
+            value[index];
+
+        const digit =
+            character === 'X'
+                ? 10
+                : Number(character);
+
+        sum += digit * (10 - index);
+
+    }
+
+    return sum % 11 === 0;
+
+}
+
+function hasValidEan13Checksum(value) {
+
+    let sum =
+        0;
+
+    for (
+        let index = 0;
+        index < 12;
+        index += 1
+    ) {
+
+        const digit =
+            Number(
+                value[index]
+            );
+
+        sum += index % 2 === 0
+            ? digit
+            : digit * 3;
+
+    }
+
+    const checksum =
+        (10 - sum % 10) % 10;
+
+    return checksum === Number(
+        value[12]
+    );
+
+}
+
+function hasValidUpcAChecksum(value) {
+
+    let sum =
+        0;
+
+    for (
+        let index = 0;
+        index < 11;
+        index += 1
+    ) {
+
+        const digit =
+            Number(
+                value[index]
+            );
+
+        sum += index % 2 === 0
+            ? digit * 3
+            : digit;
+
+    }
+
+    const checksum =
+        (10 - sum % 10) % 10;
+
+    return checksum === Number(
+        value[11]
+    );
 
 }
 
@@ -1128,6 +1547,13 @@ function isEmptyValue(
     grid-column: 1 / -1;
 }
 
+.scanner-field-row {
+    align-items: end;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
 label {
     color: #30394b;
     display: grid;
@@ -1198,6 +1624,10 @@ button:disabled {
     opacity: 0.7;
 }
 
+.scanner-button {
+    background: #2357a4;
+}
+
 @media (max-width: 899px) {
     .form-grid {
         grid-template-columns: 1fr;
@@ -1216,6 +1646,10 @@ button:disabled {
 
     button {
         width: 100%;
+    }
+
+    .scanner-field-row {
+        grid-template-columns: 1fr;
     }
 }
 </style>
