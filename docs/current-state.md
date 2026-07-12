@@ -41,6 +41,44 @@ Lots acquisition terminés :
 - 11.7.1 : provider IGDB backend pour `games/search`
 - 11.7.2 : route et frontend de recherche jeux via `games/search`
 
+Epic 11 Acquisition assistee :
+
+- Terminé pour les acquisitions Books, Movies et Games.
+- Les providers media specialises, le scan camera mobile et l'administration
+  des providers sont suivis dans des epics separes.
+
+---
+
+## Capabilities
+
+### Actuelles
+
+- `books/isbnLookup` : lookup ISBN livre via Open Library et Google Books.
+- `movies/search` : recherche texte films via TMDb, avec query, langue, region
+  et annee optionnelles.
+- `games/search` : recherche texte jeux via IGDB, avec query obligatoire,
+  plateforme et annee optionnelles.
+- `provider/imageImport` : import explicite d'une URL image distante apres
+  creation d'item, via le pipeline `MediaService`.
+
+### Futures
+
+- `mobile/barcodeScan` : scan camera local d'ISBN, EAN ou UPC.
+- `*/barcodeLookup` : lookup backend par code-barres quand un provider officiel
+  fiable existe pour le domaine concerne.
+- `providers/admin` : configuration, statut et diagnostic des providers depuis
+  l'administration.
+- Capabilities medias specialisees : recherche et selection d'assets provider
+  avant import explicite via `MediaService`.
+
+Principes :
+
+- Les recherches texte et les lookups par identifiant restent separes selon
+  ADR-0008.
+- Les providers de metadata, providers de medias et providers mixtes restent
+  separes selon ADR-0009.
+- `MediaService` reste le pipeline unique pour toute persistance de media.
+
 ---
 
 ## Backend
@@ -169,6 +207,8 @@ Lots acquisition terminés :
   de l'item, via `MediaService.createOriginalMedia()`
 - Aucun lookup code-barres films/jeux/autres livré
 - Aucun scan caméra livré
+- Aucune administration de configuration providers livrée
+- Aucun provider media specialise livré
 - Aucun import automatique d'image livré
 - Aucun cache local/offline d'images livré
 
@@ -479,6 +519,8 @@ Lots acquisition terminés :
 
 - `GET /api/acquisition/providers`
 - `POST /api/acquisition/books/isbn/lookup`
+- `POST /api/acquisition/movies/search`
+- `POST /api/acquisition/games/search`
 - `POST /api/acquisition/images/import`
 
 ### Exports
@@ -506,6 +548,10 @@ Variables disponibles pour le déploiement Docker local :
 - `DATA_DIR`
 - `PLUGINS_DIR`
 - `GOOGLE_BOOKS_API_KEY` optionnelle pour augmenter les quotas Google Books
+- `TMDB_API_READ_ACCESS_TOKEN` optionnelle, requise pour activer le provider
+  TMDb
+- `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET` optionnelles, requises pour activer
+  le provider IGDB
 - `FRONTEND_PORT`
 - `BACKEND_PORT`
 
@@ -576,6 +622,11 @@ Variables disponibles :
 - `AcquisitionService` comme couche d'orchestration entre routes et providers
 - Résolution multi-provider implicite avec cache distinct par provider
 - Cache SQLite acquisition transparent, sans changement d'API publique
+- Distinction entre recherche texte et lookup par identifiant selon ADR-0008
+- Distinction entre metadata providers, media providers et providers mixtes
+  selon ADR-0009
+- `MediaService` comme pipeline unique de persistance media, y compris pour les
+  futurs providers medias specialises
 - Déploiement Docker auto-hébergé
 - Plateforme prioritaire/testée/documentée : Synology NAS
 - Compatible avec tout environnement Docker disposant d'un volume persistant
