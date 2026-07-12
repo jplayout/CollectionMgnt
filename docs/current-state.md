@@ -40,6 +40,8 @@ Lots acquisition terminés :
 - 11.6.2 : route et frontend de recherche films via `movies/search`
 - 11.7.1 : provider IGDB backend pour `games/search`
 - 11.7.2 : route et frontend de recherche jeux via `games/search`
+- 15.0 : fondation frontend du scanner camera local avec BarcodeDetector
+  prioritaire et fallback ZXing charge a la demande
 
 Epic 11 Acquisition assistee :
 
@@ -63,7 +65,8 @@ Epic 11 Acquisition assistee :
 
 ### Futures
 
-- `mobile/barcodeScan` : scan camera local d'ISBN, EAN ou UPC.
+- `mobile/barcodeScan` : fondation frontend locale pour EAN-13 et UPC-A,
+  sans lookup backend ni integration formulaire a ce stade.
 - `*/barcodeLookup` : lookup backend par code-barres quand un provider officiel
   fiable existe pour le domaine concerne.
 - `providers/admin` : configuration, statut et diagnostic des providers depuis
@@ -203,10 +206,22 @@ Principes :
 - Le formulaire games propose une recherche par titre, des filtres plateforme et
   année optionnels, un choix utilisateur explicite et un pré-remplissage local
   sans écraser les champs déjà saisis
+- La fondation frontend du scanner camera est disponible sous
+  `frontend/src/services/barcode-scanner` et
+  `frontend/src/components/forms/CameraScanner.vue`.
+- Le scanner privilegie `BarcodeDetector` quand les formats utiles sont
+  reellement supportes, puis charge `@zxing/browser` dynamiquement uniquement
+  en fallback.
+- Le scan camera reste local : aucune frame n'est envoyee, persistee ou stockee
+  en localStorage, sessionStorage ou IndexedDB.
+- Les formats camera actifs dans ce lot sont EAN-13 et UPC-A. ISBN-10 n'est pas
+  annonce comme symbologie camera et QR Code reste hors perimetre.
+- Le composant scanner n'est pas encore branche aux champs `isbn` ou `barcode`.
+  La saisie clavier reste donc l'alternative disponible dans les formulaires.
 - Import image sécurisé uniquement après confirmation utilisateur et création
   de l'item, via `MediaService.createOriginalMedia()`
 - Aucun lookup code-barres films/jeux/autres livré
-- Aucun scan caméra livré
+- Aucun scan camera integre aux formulaires livre
 - Aucune administration de configuration providers livrée
 - Aucun provider media specialise livré
 - Aucun import automatique d'image livré

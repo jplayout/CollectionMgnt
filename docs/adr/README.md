@@ -37,6 +37,7 @@ Les ADR permettent de :
 - ADR-0007 — Project quality gates
 - ADR-0008 — Acquisition search capabilities and barcode strategy
 - ADR-0009 — Metadata and media provider specialization
+- ADR-0010 — Native barcode detection with lazy-loaded fallback
 
 ## Format Retenu
 
@@ -118,6 +119,7 @@ ADRs help to:
 - ADR-0007 — Project quality gates
 - ADR-0008 — Acquisition search capabilities and barcode strategy
 - ADR-0009 — Metadata and media provider specialization
+- ADR-0010 — Native barcode detection with lazy-loaded fallback
 
 ## Format
 

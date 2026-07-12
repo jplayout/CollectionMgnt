@@ -78,7 +78,8 @@ Limites majeures connues :
 
 ### Priorité moyenne
 
-- Epic Mobile Acquisition : scan camera mobile en contexte HTTPS.
+- Epic Mobile Acquisition : fondation scanner camera frontend livree,
+  integration formulaire et validation mobile reelle restantes.
 - Epic Provider Administration : configuration et diagnostic des providers.
 - Epic Media Providers : sources medias specialisees et selection d'assets.
 - Recherche enrichie par auteur, éditeur, série, tags et tolérance aux fautes.
@@ -532,9 +533,10 @@ Objectif :
 
 Travaux prévus :
 
-- Scan camera ISBN, EAN et UPC en contexte HTTPS.
+- Fondation scanner camera EAN-13 et UPC-A en contexte HTTPS livree cote
+  frontend.
 - Detection locale via `BarcodeDetector` quand disponible, avec fallback
-  JavaScript si necessaire.
+  JavaScript ZXing charge a la demande.
 - Remplissage du champ `isbn` ou `barcode` sans appel provider direct depuis le
   frontend.
 - Lancement explicite du lookup ou de la recherche par le backend apres
@@ -547,6 +549,10 @@ Contraintes :
 - Le scan n'invente pas de capability provider.
 - Le scan ne remplace pas `books/isbnLookup`, `movies/search` ou
   `games/search`.
+- Lot 15.0 livre les adaptateurs frontend native/ZXing lazy-loaded, le service
+  scanner et la modale `CameraScanner.vue`, sans branchement formulaire.
+- Lot 15.1 branchera le resultat brut vers les champs `isbn` / `barcode` et les
+  validations metier.
 - Aucun secret provider expose au frontend.
 - Les images restent importees explicitement via `MediaService`.
 
