@@ -173,6 +173,14 @@ Responsabilites :
 - Provider : adaptateur externe, appel reseau et mapping vers le contrat
   CollectionMgnt.
 
+Les providers peuvent etre specialises. Un provider de metadata retourne des
+suggestions normalisees pour pre-remplir un item. Un provider de medias expose
+des assets distants, par exemple couvertures, screenshots, scans ou documents,
+sans les persister lui-meme. Certains providers peuvent faire les deux quand
+leur API expose metadata et medias coherents. Cette separation permet de
+choisir la meilleure source pour chaque besoin sans contourner le pipeline
+media.
+
 Le cache SQLite stocke uniquement les reponses normalisees `{ query, results }`
 via un repository dedie. Il ne stocke ni reponse brute provider, ni erreur, ni
 image binaire. En cas de miss, d'expiration ou d'entree corrompue, le service
@@ -359,6 +367,11 @@ Provider
   -> WebP
   -> Thumbnail
 ```
+
+`MediaService` reste le pipeline unique de persistance media, y compris quand
+un provider specialise expose uniquement des URLs ou assets distants. Les
+providers ne stockent pas de fichiers directement et ne contournent pas les
+validations, transformations et regles d'association aux items.
 
 Voir `docs/media-management.md`.
 
