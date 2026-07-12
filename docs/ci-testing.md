@@ -100,6 +100,7 @@ Frontend :
 ```bash
 cd frontend
 npm exec vite build
+npx playwright test e2e/camera-scanner.spec.js
 ```
 
 E2E Playwright :
@@ -204,6 +205,18 @@ Les scenarios couverts sont volontairement limites :
 Le media pack de demonstration, les exports, les backups, les filtres, la
 pagination detaillee, les screenshots E2E et les navigateurs multiples restent
 hors perimetre de ce MVP.
+
+Un fichier cible le scanner camera frontend :
+
+```text
+frontend/e2e/camera-scanner.spec.js
+```
+
+Il mocke `navigator.mediaDevices.getUserMedia`, `BarcodeDetector`, le fallback
+ZXing et le montage Vue du composant. Ces tests verifient que le fallback n'est
+pas charge dans le chemin natif, que les tracks camera sont arretees apres
+succes, fermeture et unmount, et qu'aucune requete reseau ni persistance locale
+n'est effectuee par le scanner.
 
 ## Ce Qui Est Teste
 

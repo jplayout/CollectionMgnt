@@ -19,6 +19,10 @@ CollectionMgnt est une application web auto-hebergee composee de :
 En production Docker, le frontend est servi par Nginx et proxifie `/api` vers le
 backend. En developpement, Vite proxifie aussi `/api` vers le backend local.
 
+Le frontend contient aussi une fondation de scan camera locale sous
+`frontend/src/services/barcode-scanner`. Elle est volontairement separee des
+providers, du backend acquisition et du `MediaService`.
+
 ## Architecture Generale
 
 ```text
@@ -216,6 +220,32 @@ jusqu'a l'import explicite apres creation de l'item.
 
 Voir `docs/acquisition-providers.md` pour le contrat provider, les responsabilites
 des couches acquisition et les bonnes pratiques de tests.
+
+## Scanner Camera Frontend
+
+Le scanner camera est une fondation frontend non encore integree aux
+formulaires `isbn` ou `barcode`.
+
+Modules :
+
+- `native-barcode-adapter.js` detecte `BarcodeDetector`, interroge
+  `getSupportedFormats()` et n'utilise le natif que si EAN-13 ou UPC-A sont
+  reellement supportes.
+- `zxing-barcode-adapter.js` charge `@zxing/browser` par import dynamique et
+  limite le decode aux formats MVP EAN-13 et UPC-A.
+- `scanner-service.js` gere `getUserMedia`, le choix native puis fallback, la
+  normalisation des erreurs et l'arret idempotent des ressources.
+- `CameraScanner.vue` fournit la modale accessible, la video, l'overlay de
+  cadrage, les etats utilisateur et l'emission d'un resultat brut normalise.
+
+Principes :
+
+- demande camera uniquement apres action utilisateur ouvrant la modale ;
+- traitement exclusivement local, sans requete backend ni appel provider ;
+- aucune image ou frame envoyee, stockee ou persistee ;
+- aucun usage de localStorage, sessionStorage ou IndexedDB ;
+- `MediaStream` arrete apres succes, fermeture, erreur et unmount ;
+- saisie manuelle conservee par les formulaires existants.
 
 ### Repositories
 
