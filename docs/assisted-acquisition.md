@@ -21,8 +21,8 @@ Le backend expose `games/search` via IGDB pour les jeux video, configure par
 par titre, avec plateforme et annee optionnelles, puis applique une suggestion
 sans importer automatiquement la cover distante.
 
-Une fondation frontend de scan camera local est disponible, sans integration aux
-formulaires a ce stade. Elle ne declenche aucun lookup, aucune sauvegarde
+Le scan camera frontend local peut remplir les champs `isbn` et `barcode` des
+formulaires dynamiques. Il ne declenche aucun lookup, aucune sauvegarde
 automatique et aucun dedoublonnage global.
 
 ## Champs Supportes
@@ -54,7 +54,8 @@ Les consoles ne recoivent pas de champ identifiant dans ce lot.
 
 ## Scanner Camera Frontend
 
-Le lot 15.0 ajoute la fondation technique frontend du scanner camera.
+Les lots 15.0 et 15.1 ajoutent la fondation technique frontend du scanner camera
+et son branchement aux champs identifiants.
 
 Formats actifs :
 
@@ -74,6 +75,8 @@ Architecture :
 - `CameraScanner.vue` expose une modale accessible, une video, un cadre de scan,
   des etats permission/loading/scanning/error/unsupported et un evenement de
   resultat brut normalise.
+- `DynamicForm.vue` affiche un bouton `Scanner` pour les champs `isbn` et
+  `barcode`, puis remplit uniquement le champ concerne.
 
 Garanties du lot :
 
@@ -83,8 +86,11 @@ Garanties du lot :
 - aucune image ou frame envoyee ou persistee ;
 - aucun stockage local browser ;
 - arret strict du `MediaStream` apres succes, fermeture, erreur et unmount ;
-- saisie clavier toujours disponible car le composant n'est pas encore branche
-  aux formulaires.
+- saisie clavier toujours disponible ;
+- apres un scan invalide, la modale se ferme et l'erreur reste associee au
+  champ pour permettre une correction manuelle immediate ;
+- lookup ISBN livres et recherches jeux/films toujours declenches uniquement
+  par le bouton `Rechercher`.
 
 ## Recherche Et Filtres
 

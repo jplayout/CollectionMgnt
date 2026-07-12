@@ -42,6 +42,8 @@ Lots acquisition terminés :
 - 11.7.2 : route et frontend de recherche jeux via `games/search`
 - 15.0 : fondation frontend du scanner camera local avec BarcodeDetector
   prioritaire et fallback ZXing charge a la demande
+- 15.1 : integration du scanner camera aux champs `isbn` et `barcode` des
+  formulaires dynamiques
 
 Epic 11 Acquisition assistee :
 
@@ -65,8 +67,8 @@ Epic 11 Acquisition assistee :
 
 ### Futures
 
-- `mobile/barcodeScan` : fondation frontend locale pour EAN-13 et UPC-A,
-  sans lookup backend ni integration formulaire a ce stade.
+- `mobile/barcodeScan` : lecture camera locale EAN-13 et UPC-A pour remplir les
+  champs `isbn` et `barcode`, sans lookup automatique.
 - `*/barcodeLookup` : lookup backend par code-barres quand un provider officiel
   fiable existe pour le domaine concerne.
 - `providers/admin` : configuration, statut et diagnostic des providers depuis
@@ -216,12 +218,16 @@ Principes :
   en localStorage, sessionStorage ou IndexedDB.
 - Les formats camera actifs dans ce lot sont EAN-13 et UPC-A. ISBN-10 n'est pas
   annonce comme symbologie camera et QR Code reste hors perimetre.
-- Le composant scanner n'est pas encore branche aux champs `isbn` ou `barcode`.
-  La saisie clavier reste donc l'alternative disponible dans les formulaires.
+- Le bouton `Scanner` est disponible sur `books.isbn` et sur les champs
+  `barcode` des plugins qui en declarent un. Il remplit seulement le champ,
+  normalise la valeur et applique les validations metier existantes.
+- Aucun lookup ISBN, recherche texte ou appel provider n'est lance
+  automatiquement apres un scan. L'utilisateur garde le bouton `Rechercher`
+  comme action explicite.
 - Import image sécurisé uniquement après confirmation utilisateur et création
   de l'item, via `MediaService.createOriginalMedia()`
 - Aucun lookup code-barres films/jeux/autres livré
-- Aucun scan camera integre aux formulaires livre
+- Aucune validation reelle Android/iPhone livree ; elle reste prevue pour 15.2
 - Aucune administration de configuration providers livrée
 - Aucun provider media specialise livré
 - Aucun import automatique d'image livré

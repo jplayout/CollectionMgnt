@@ -78,8 +78,8 @@ Limites majeures connues :
 
 ### Priorité moyenne
 
-- Epic Mobile Acquisition : fondation scanner camera frontend livree,
-  integration formulaire et validation mobile reelle restantes.
+- Epic Mobile Acquisition : fondation scanner camera frontend et integration
+  formulaire livrees, validation mobile reelle restante.
 - Epic Provider Administration : configuration et diagnostic des providers.
 - Epic Media Providers : sources medias specialisees et selection d'assets.
 - Recherche enrichie par auteur, éditeur, série, tags et tolérance aux fautes.
@@ -551,8 +551,10 @@ Contraintes :
   `games/search`.
 - Lot 15.0 livre les adaptateurs frontend native/ZXing lazy-loaded, le service
   scanner et la modale `CameraScanner.vue`, sans branchement formulaire.
-- Lot 15.1 branchera le resultat brut vers les champs `isbn` / `barcode` et les
-  validations metier.
+- Lot 15.1 livre le branchement du resultat brut vers les champs `isbn` /
+  `barcode` et les validations metier, sans lookup automatique.
+- Lot 15.2 reste dedie a la validation reelle Android/iPhone et aux ajustements
+  UX issus des tests terrain.
 - Aucun secret provider expose au frontend.
 - Les images restent importees explicitement via `MediaService`.
 
