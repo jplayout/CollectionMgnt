@@ -13,6 +13,12 @@ const originalFetch =
 const originalTmdbApiReadAccessToken =
     process.env.TMDB_API_READ_ACCESS_TOKEN;
 
+const originalIgdbClientId =
+    process.env.IGDB_CLIENT_ID;
+
+const originalIgdbClientSecret =
+    process.env.IGDB_CLIENT_SECRET;
+
 let context;
 let token;
 let fetchHandler;
@@ -21,6 +27,12 @@ before(async () => {
 
     process.env.TMDB_API_READ_ACCESS_TOKEN =
         'test-tmdb-token';
+
+    process.env.IGDB_CLIENT_ID =
+        'test-igdb-client';
+
+    process.env.IGDB_CLIENT_SECRET =
+        'test-igdb-secret';
 
     globalThis.fetch =
         async (
@@ -54,6 +66,32 @@ after(async () => {
 
         process.env.TMDB_API_READ_ACCESS_TOKEN =
             originalTmdbApiReadAccessToken;
+
+    }
+
+    if (
+        originalIgdbClientId === undefined
+    ) {
+
+        delete process.env.IGDB_CLIENT_ID;
+
+    } else {
+
+        process.env.IGDB_CLIENT_ID =
+            originalIgdbClientId;
+
+    }
+
+    if (
+        originalIgdbClientSecret === undefined
+    ) {
+
+        delete process.env.IGDB_CLIENT_SECRET;
+
+    } else {
+
+        process.env.IGDB_CLIENT_SECRET =
+            originalIgdbClientSecret;
 
     }
 
@@ -131,6 +169,23 @@ test(
                             'movies',
                         requiresConfiguration:
                             true
+                    },
+                    {
+                        capabilities: [
+                            'games/search'
+                        ],
+                        enabled:
+                            true,
+                        id:
+                            'igdb',
+                        name:
+                            'IGDB',
+                        plugin:
+                            'games',
+                        requiresConfiguration:
+                            true,
+                        type:
+                            'metadata'
                     }
                 ]
             }
@@ -961,6 +1016,381 @@ test(
     }
 );
 
+test(
+    'POST /api/acquisition/games/search returns game suggestions',
+    async () => {
+
+        const calls =
+            [];
+
+        fetchHandler =
+            async (
+                url,
+                options
+            ) => {
+
+                calls.push({
+                    body:
+                        String(
+                            options?.body ?? ''
+                        ),
+                    headers:
+                        options?.headers ?? {},
+                    url:
+                        String(
+                            url
+                        )
+                });
+
+                if (
+                    String(
+                        url
+                    ) ===
+                    'https://id.twitch.tv/oauth2/token'
+                ) {
+
+                    return createJsonResponse({
+                        access_token:
+                            'test-igdb-token',
+                        expires_in:
+                            3600
+                    });
+
+                }
+
+                return createJsonResponse(
+                    igdbFixture()
+                );
+
+            };
+
+        const response =
+            await searchGames({
+                platform:
+                    'PlayStation 5',
+                query:
+                    'Elden Ring',
+                year:
+                    '2022'
+            });
+
+        assert.equal(
+            response.statusCode,
+            200
+        );
+
+        assert.equal(
+            calls[0].url,
+            'https://id.twitch.tv/oauth2/token'
+        );
+
+        assert.equal(
+            calls[1].url,
+            'https://api.igdb.com/v4/games'
+        );
+
+        assert.equal(
+            calls[1].headers.Authorization,
+            'Bearer test-igdb-token'
+        );
+
+        assert.equal(
+            calls[1].headers['Client-ID'],
+            'test-igdb-client'
+        );
+
+        assert.match(
+            calls[1].body,
+            /search "Elden Ring";/
+        );
+
+        assert.deepEqual(
+            response.json(),
+            {
+                query: {
+                    language:
+                        null,
+                    platform:
+                        'PlayStation 5',
+                    plugin:
+                        'games',
+                    type:
+                        'text',
+                    value:
+                        'Elden Ring',
+                    year:
+                        '2022'
+                },
+                results: [
+                    {
+                        confidence:
+                            'high',
+                        description:
+                            'Become an Elden Lord.',
+                        images: [
+                            {
+                                kind:
+                                    'cover',
+                                source:
+                                    'igdb',
+                                url:
+                                    'https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.jpg'
+                            }
+                        ],
+                        metadata: {
+                            developer:
+                                'FromSoftware',
+                            genres: [
+                                'Role-playing (RPG)',
+                                'Adventure'
+                            ],
+                            igdbId:
+                                119133,
+                            platforms: [
+                                'PlayStation 5',
+                                'Windows PC'
+                            ],
+                            publisher:
+                                'Bandai Namco Entertainment',
+                            releaseDate:
+                                '2022-02-25'
+                        },
+                        provider:
+                            'igdb',
+                        sourceUrl:
+                            'https://www.igdb.com/games/elden-ring',
+                        title:
+                            'Elden Ring'
+                    }
+                ]
+            }
+        );
+
+    }
+);
+
+test(
+    'POST /api/acquisition/games/search rejects an empty query',
+    async () => {
+
+        fetchHandler =
+            async () => {
+
+                throw new Error(
+                    'fetch should not be called'
+                );
+
+            };
+
+        const response =
+            await searchGames({
+                query:
+                    '   '
+            });
+
+        assert.equal(
+            response.statusCode,
+            400
+        );
+
+        assert.equal(
+            response.json().code,
+            'invalid_search_query'
+        );
+
+    }
+);
+
+test(
+    'POST /api/acquisition/games/search uses an explicit IGDB provider',
+    async () => {
+
+        let gamesCalls =
+            0;
+
+        fetchHandler =
+            async url => {
+
+                if (
+                    String(
+                        url
+                    ) ===
+                    'https://id.twitch.tv/oauth2/token'
+                ) {
+
+                    return createJsonResponse({
+                        access_token:
+                            'test-igdb-token',
+                        expires_in:
+                            3600
+                    });
+
+                }
+
+                gamesCalls +=
+                    1;
+
+                return createJsonResponse(
+                    igdbFixture({
+                        name:
+                            'Metroid Prime'
+                    })
+                );
+
+            };
+
+        const response =
+            await searchGames({
+                provider:
+                    'igdb',
+                query:
+                    'Metroid Prime'
+            });
+
+        assert.equal(
+            response.statusCode,
+            200
+        );
+
+        assert.equal(
+            response.json().results[0].provider,
+            'igdb'
+        );
+
+        assert.equal(
+            gamesCalls,
+            1
+        );
+
+    }
+);
+
+test(
+    'POST /api/acquisition/games/search returns provider_unavailable when explicit IGDB is not configured',
+    async () => {
+
+        const configuredClientId =
+            process.env.IGDB_CLIENT_ID;
+
+        const configuredClientSecret =
+            process.env.IGDB_CLIENT_SECRET;
+
+        delete process.env.IGDB_CLIENT_ID;
+        delete process.env.IGDB_CLIENT_SECRET;
+
+        const unconfiguredContext =
+            await createTestApp();
+
+        try {
+
+            const unconfiguredToken =
+                await unconfiguredContext.login();
+
+            const response =
+                await unconfiguredContext.app.inject({
+                    headers: {
+                        authorization:
+                            `Bearer ${unconfiguredToken}`
+                    },
+                    method:
+                        'POST',
+                    payload: {
+                        provider:
+                            'igdb',
+                        query:
+                            'Elden Ring'
+                    },
+                    url:
+                        '/api/acquisition/games/search'
+                });
+
+            assert.equal(
+                response.statusCode,
+                503
+            );
+
+            assert.equal(
+                response.json().code,
+                'provider_unavailable'
+            );
+
+        } finally {
+
+            await unconfiguredContext.close();
+
+            process.env.IGDB_CLIENT_ID =
+                configuredClientId;
+
+            process.env.IGDB_CLIENT_SECRET =
+                configuredClientSecret;
+
+        }
+
+    }
+);
+
+test(
+    'POST /api/acquisition/games/search returns empty results',
+    async () => {
+
+        fetchHandler =
+            async url => {
+
+                if (
+                    String(
+                        url
+                    ) ===
+                    'https://id.twitch.tv/oauth2/token'
+                ) {
+
+                    return createJsonResponse({
+                        access_token:
+                            'test-igdb-token',
+                        expires_in:
+                            3600
+                    });
+
+                }
+
+                return createJsonResponse([]);
+
+            };
+
+        const response =
+            await searchGames({
+                query:
+                    'No Match Game'
+            });
+
+        assert.equal(
+            response.statusCode,
+            200
+        );
+
+        assert.deepEqual(
+            response.json(),
+            {
+                query: {
+                    language:
+                        null,
+                    platform:
+                        null,
+                    plugin:
+                        'games',
+                    type:
+                        'text',
+                    value:
+                        'No Match Game',
+                    year:
+                        null
+                },
+                results: []
+            }
+        );
+
+    }
+);
+
 async function lookupIsbn(
     isbn,
     provider = null
@@ -1051,6 +1481,56 @@ async function searchMovies({
 
 }
 
+async function searchGames({
+    platform = null,
+    provider = null,
+    query,
+    year = null
+}) {
+
+    const payload = {
+        query
+    };
+
+    if (
+        provider
+    ) {
+
+        payload.provider =
+            provider;
+
+    }
+
+    if (
+        platform
+    ) {
+
+        payload.platform =
+            platform;
+
+    }
+
+    if (
+        year
+    ) {
+
+        payload.year =
+            year;
+
+    }
+
+    return context.app.inject({
+        headers:
+            authHeaders(),
+        method:
+            'POST',
+        payload,
+        url:
+            '/api/acquisition/games/search'
+    });
+
+}
+
 function openLibraryFixture(isbn) {
 
     return {
@@ -1073,6 +1553,72 @@ function openLibraryFixture(isbn) {
                 'Fantastic Mr. Fox'
         }
     };
+
+}
+
+function igdbFixture({
+    name = 'Elden Ring'
+} = {}) {
+
+    return [
+        {
+            cover: {
+                image_id:
+                    'co4jni'
+            },
+            first_release_date:
+                1645747200,
+            genres: [
+                {
+                    name:
+                        'Role-playing (RPG)'
+                },
+                {
+                    name:
+                        'Adventure'
+                }
+            ],
+            id:
+                119133,
+            involved_companies: [
+                {
+                    company: {
+                        name:
+                            'FromSoftware'
+                    },
+                    developer:
+                        true,
+                    publisher:
+                        false
+                },
+                {
+                    company: {
+                        name:
+                            'Bandai Namco Entertainment'
+                    },
+                    developer:
+                        false,
+                    publisher:
+                        true
+                }
+            ],
+            name,
+            platforms: [
+                {
+                    name:
+                        'PlayStation 5'
+                },
+                {
+                    name:
+                        'Windows PC'
+                }
+            ],
+            summary:
+                'Become an Elden Lord.',
+            url:
+                'https://www.igdb.com/games/elden-ring'
+        }
+    ];
 
 }
 

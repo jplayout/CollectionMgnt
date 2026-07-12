@@ -1,9 +1,10 @@
 # Assisted Acquisition
 
 Etat courant : fondations identifiants, lookup backend ISBN livres, recherche
-texte films via TMDb, pre-remplissage frontend local, orchestration backend,
-resolution multi-provider, cache SQLite acquisition et import explicite de
-couverture provider vers le systeme media existant.
+texte films via TMDb, recherche texte jeux via IGDB, pre-remplissage frontend
+local, orchestration backend, resolution multi-provider, cache SQLite
+acquisition et import explicite de couverture provider vers le systeme media
+existant.
 
 Les identifiants sont des champs metadata declares par plugin et stockes dans
 `items.metadata`. Le lookup ISBN livres est disponible via le backend
@@ -14,6 +15,11 @@ Le backend expose aussi `movies/search` via TMDb pour les films, configure par
 `TMDB_API_READ_ACCESS_TOKEN`. Le frontend films permet une recherche par titre,
 un choix explicite de suggestion et un pre-remplissage local sans sauvegarde
 automatique.
+
+Le backend expose `games/search` via IGDB pour les jeux video, configure par
+`IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET`. Le frontend jeux permet une recherche
+par titre, avec plateforme et annee optionnelles, puis applique une suggestion
+sans importer automatiquement la cover distante.
 
 Aucune camera, scan mobile, sauvegarde automatique ou dedoublonnage global
 n'est disponible a ce stade.
@@ -113,6 +119,11 @@ cle inclut la query normalisee ainsi que `language`, `region` et `year` quand
 ces options existent, afin de ne pas melanger des resultats localises
 differemment.
 
+La recherche texte jeux utilise le meme cache provider. Sa cle inclut la query
+normalisee ainsi que `language`, `platform` et `year` quand ces options existent.
+Le cache OAuth Twitch d'IGDB reste en memoire dans le provider et ne passe pas
+par `AcquisitionCache`.
+
 Provider livre :
 
 - `openlibrary`
@@ -137,6 +148,20 @@ Capability film :
   - lookup code-barres : non
   - images : URLs poster distantes TMDb `w500`, sans telechargement provider
   - details IMDb : non livres dans ce lot
+
+Capability jeux video :
+
+- `games/search`
+  - plugin : `games`
+  - type : recherche texte
+  - options de contexte : `platform`, `year`
+  - provider reel : `igdb`, si `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET` sont
+    configures
+  - lookup code-barres : non
+  - images : URLs cover distantes IGDB `t_cover_big`, sans telechargement
+    provider
+  - medias riches : screenshots, artworks, videos et franchises non livres dans
+    ce lot
 
 Voir `docs/acquisition-providers.md` pour le contrat technique des providers,
 les responsabilites des couches acquisition et les bonnes pratiques de tests.
@@ -175,6 +200,15 @@ Exemple :
       "capabilities": ["movies/search"],
       "enabled": true,
       "requiresConfiguration": true
+    },
+    {
+      "id": "igdb",
+      "name": "IGDB",
+      "plugin": "games",
+      "capabilities": ["games/search"],
+      "enabled": true,
+      "requiresConfiguration": true,
+      "type": "metadata"
     }
   ]
 }
@@ -182,6 +216,9 @@ Exemple :
 
 TMDb apparait uniquement lorsque le backend est configure avec
 `TMDB_API_READ_ACCESS_TOKEN`.
+
+IGDB apparait uniquement lorsque le backend est configure avec
+`IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET`.
 
 ### `POST /api/acquisition/books/isbn/lookup`
 
@@ -315,6 +352,71 @@ provider normalises et garde l'image proposee en memoire volatile. L'import de
 couverture reste propose uniquement apres creation de l'item et confirmation
 utilisateur.
 
+### `POST /api/acquisition/games/search`
+
+Recherche des suggestions de metadata jeu video depuis un titre.
+
+Body :
+
+```json
+{
+  "query": "Elden Ring",
+  "provider": "igdb",
+  "platform": "PlayStation 5",
+  "year": "2022"
+}
+```
+
+`query` est obligatoire. `provider`, `platform` et `year` sont optionnels. Si
+`provider` est absent, la resolution implicite utilise les providers jeux actifs
+dans l'ordre du registre.
+
+Reponse :
+
+```json
+{
+  "query": {
+    "plugin": "games",
+    "type": "text",
+    "value": "Elden Ring",
+    "language": null,
+    "platform": "PlayStation 5",
+    "year": "2022"
+  },
+  "results": [
+    {
+      "provider": "igdb",
+      "confidence": "high",
+      "title": "Elden Ring",
+      "description": "Become an Elden Lord.",
+      "metadata": {
+        "igdbId": 119133,
+        "releaseDate": "2022-02-25",
+        "platforms": ["PlayStation 5", "Windows PC"],
+        "genres": ["Role-playing (RPG)", "Adventure"],
+        "developer": "FromSoftware",
+        "publisher": "Bandai Namco Entertainment"
+      },
+      "images": [
+        {
+          "url": "https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.jpg",
+          "kind": "cover",
+          "source": "igdb"
+        }
+      ],
+      "sourceUrl": "https://www.igdb.com/games/elden-ring"
+    }
+  ]
+}
+```
+
+Le frontend jeux utilise cette route dans le formulaire de creation. Le bouton
+`Utiliser` pre-remplit uniquement les champs vides : titre, description,
+`release_date`, `developer`, `publisher`, `platform` et `genre`. `igdbId` est
+conserve dans `metadata`. La cover distante reste en memoire volatile et
+l'import de couverture reste propose uniquement apres creation de l'item et
+confirmation utilisateur.
+
 ### `POST /api/acquisition/images/import`
 
 Importe une image distante proposee par un provider vers la galerie media d'un
@@ -381,11 +483,40 @@ Les erreurs de lookup (`invalid_isbn`, `provider_unavailable`,
 `provider_timeout`, erreur generique) sont affichees sans bloquer la saisie
 manuelle.
 
+## Recherche Frontend Jeux
+
+Le formulaire dynamique affiche une recherche IGDB pour le plugin `games` quand
+un provider compatible est disponible.
+
+Flux utilisateur :
+
+1. l'utilisateur saisit un titre ;
+2. il peut preciser une plateforme et une annee ;
+3. le frontend appelle `POST /api/acquisition/games/search` ;
+4. le backend interroge IGDB selon la strategie de resolution ;
+5. le frontend affiche les suggestions retournees ;
+6. l'utilisateur choisit `Utiliser` ;
+7. le formulaire est pre-rempli localement ;
+8. l'utilisateur controle et sauvegarde manuellement.
+
+Regles de pre-remplissage :
+
+- les champs deja remplis ne sont jamais ecrases ;
+- `title`, `description`, `release_date`, `developer`, `publisher`, `platform`
+  et `genre` sont renseignes uniquement si le champ courant est vide ;
+- `igdbId` est conserve dans `metadata` ;
+- aucune valeur absente n'est inventee ;
+- aucun item n'est cree ou modifie tant que l'utilisateur ne soumet pas le
+  formulaire ;
+- les URLs de cover sont affichees comme suggestions distantes ;
+- l'import d'une cover proposee n'est disponible qu'apres creation de l'item,
+  depuis la fiche item.
+
 ## Hors Perimetre Actuel
 
 Cette phase capture les identifiants, ajoute le lookup backend ISBN livres via
-Open Library et Google Books, puis expose le pre-remplissage local cote frontend
-pour les livres.
+Open Library et Google Books, expose la recherche films via TMDb et expose la
+recherche jeux via IGDB avec pre-remplissage local cote frontend.
 
 Non livre dans ce lot :
 
@@ -393,9 +524,9 @@ Non livre dans ce lot :
 - scan mobile
 - lecture automatique de code-barres
 - lookup code-barres
-- provider reel de lookup jeux video
-- route publique de recherche films
 - endpoint details TMDb et IMDb ID
+- endpoint details IGDB
+- ScreenScraper
 - pre-remplissage avec sauvegarde automatique
 - import d'image avant creation d'un item
 - dedoublonnage global
@@ -404,8 +535,7 @@ Non livre dans ce lot :
 
 Les phases suivantes pourront s'appuyer sur ces champs :
 
-- route publique et frontend pour la recherche film TMDb
-- provider IGDB ou RAWG pour les jeux video
 - fournisseurs externes configurables
+- providers media ou retro complementaires comme ScreenScraper
 - scan camera mobile en contexte HTTPS
 - dedoublonnage assiste par collection ou multi-collections

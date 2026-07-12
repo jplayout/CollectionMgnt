@@ -39,6 +39,14 @@
                 @apply-suggestion="applyMovieAcquisitionSuggestion"
             />
 
+            <GameAcquisitionSearch
+                v-if="isGameAcquisitionSearchEnabled"
+                :platform="metadata.platform"
+                :query="title"
+                :year="getReleaseYear(metadata.release_date)"
+                @apply-suggestion="applyGameAcquisitionSuggestion"
+            />
+
             <template
                 v-for="field in supportedFields"
                 :key="field.name"
@@ -99,6 +107,9 @@ from './AcquisitionLookupField.vue';
 
 import MovieAcquisitionSearch
 from './MovieAcquisitionSearch.vue';
+
+import GameAcquisitionSearch
+from './GameAcquisitionSearch.vue';
 
 const SUPPORTED_TYPES =
     new Set([
@@ -286,6 +297,12 @@ const isMovieAcquisitionSearchEnabled =
     computed(
         () => props.enableAcquisitionSearch &&
             props.pluginId === 'movies'
+    );
+
+const isGameAcquisitionSearchEnabled =
+    computed(
+        () => props.enableAcquisitionSearch &&
+            props.pluginId === 'games'
     );
 
 watch(
@@ -592,11 +609,129 @@ function applyMovieAcquisitionSuggestion(suggestion) {
 
 }
 
+function applyGameAcquisitionSuggestion(suggestion) {
+
+    if (
+        !isEmptyValue(suggestion?.title) &&
+        isEmptyValue(title.value)
+    ) {
+
+        title.value =
+            suggestion.title;
+
+    }
+
+    if (
+        !isEmptyValue(suggestion?.description) &&
+        isEmptyValue(description.value)
+    ) {
+
+        description.value =
+            suggestion.description;
+
+    }
+
+    applyMetadataSuggestion(
+        'release_date',
+        suggestion?.metadata?.releaseDate
+    );
+
+    applyMetadataSuggestion(
+        'developer',
+        suggestion?.metadata?.developer
+    );
+
+    applyMetadataSuggestion(
+        'publisher',
+        suggestion?.metadata?.publisher
+    );
+
+    applyMetadataSuggestion(
+        'platform',
+        joinSuggestionList(
+            suggestion?.metadata?.platforms
+        )
+    );
+
+    applyMetadataSuggestion(
+        'genre',
+        joinSuggestionList(
+            suggestion?.metadata?.genres
+        )
+    );
+
+    applyExtraMetadataSuggestion(
+        'igdbId',
+        suggestion?.metadata?.igdbId
+    );
+
+    const coverImage =
+        getCoverImage(
+            suggestion
+        );
+
+    if (
+        coverImage
+    ) {
+
+        emit(
+            'acquisition-image-selected',
+            {
+                imageUrl:
+                    coverImage.url,
+                provider:
+                    suggestion.provider ?? null,
+                source:
+                    coverImage.source ?? suggestion.provider ?? null
+            }
+        );
+
+    }
+
+}
+
 function getCoverImage(suggestion) {
 
     return suggestion?.images?.find(
         image => image.kind === 'cover' && image.url
     ) ?? null;
+
+}
+
+function joinSuggestionList(value) {
+
+    if (
+        !Array.isArray(value)
+    ) {
+
+        return value;
+
+    }
+
+    return value
+        .filter(
+            item => !isEmptyValue(item)
+        )
+        .join(', ');
+
+}
+
+function getReleaseYear(value) {
+
+    if (
+        typeof value !== 'string'
+    ) {
+
+        return null;
+
+    }
+
+    const match =
+        value.match(
+            /^\d{4}/
+        );
+
+    return match?.[0] ?? null;
 
 }
 
