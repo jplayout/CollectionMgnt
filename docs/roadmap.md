@@ -458,6 +458,20 @@ Phase 5 — Extension progressive :
 - Aucun endpoint public jeux, aucun frontend, aucun téléchargement d'image,
   aucun MediaService modifié et aucun ScreenScraper dans ce lot.
 
+#### Lot 11.7.2 - UI Acquisition Jeux - Livré
+
+- Route protégée `POST /api/acquisition/games/search` ajoutée.
+- Le frontend jeux appelle `games/search` via le backend uniquement.
+- Recherche par titre avec plateforme et année optionnelles.
+- Suggestions IGDB affichant cover distante, titre, année, plateformes,
+  développeur, éditeur et source.
+- Le bouton `Utiliser` pré-remplit uniquement les champs vides et conserve
+  `igdbId` dans `metadata`.
+- Les covers restent en mémoire volatile jusqu'à la création de l'item, puis
+  l'import explicite continue de passer par `MediaService`.
+- Aucun ScreenScraper, barcode, caméra, téléchargement automatique d'image ou
+  changement MediaService dans ce lot.
+
 #### Lot 11.8 - Scan caméra - Prévu
 
 - Ajouter le scan caméra mobile en contexte HTTPS.

@@ -4,9 +4,9 @@ Etat courant : architecture acquisition backend stabilisee avec Open Library
 comme provider principal et Google Books comme provider secondaire pour les
 lookups ISBN livres. Le socle interne `movies/search` est disponible pour les
 providers films, avec TMDb comme premier provider Movies configure par
-`TMDB_API_READ_ACCESS_TOKEN`. Le socle interne `games/search` est disponible
-cote service, avec IGDB comme premier metadata provider jeux video quand
-`IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET` sont configures.
+`TMDB_API_READ_ACCESS_TOKEN`. `games/search` est expose pour les jeux video,
+avec IGDB comme premier metadata provider quand `IGDB_CLIENT_ID` et
+`IGDB_CLIENT_SECRET` sont configures.
 
 Ce document est destine aux developpeurs qui veulent comprendre, tester ou
 ajouter un provider d'acquisition. Il complete `docs/architecture.md` et
@@ -252,9 +252,10 @@ recherche texte. Elle utilise la methode `searchGames(searchQuery)`, ou
 IGDB implemente `games/search` comme metadata provider. Il utilise OAuth Client
 Credentials cote backend via Twitch, avec `IGDB_CLIENT_ID` et
 `IGDB_CLIENT_SECRET`. Le token est conserve en memoire jusqu'a son expiration et
-renouvele automatiquement avant expiration. IGDB ne fournit aucune route
-publique dediee dans ce lot, aucun frontend et aucun import automatique
-d'image. Les covers retournees sont des URLs distantes.
+renouvele automatiquement avant expiration. Le frontend appelle cette capability
+via `POST /api/acquisition/games/search`, puis applique la suggestion choisie au
+formulaire jeux sans sauvegarde automatique. Les covers retournees sont des URLs
+distantes et aucun telechargement d'image n'est declenche par la recherche.
 
 ## Resolution Multi-Provider
 
@@ -465,8 +466,9 @@ Etat courant et evolutions prevues :
   obligatoire via `TMDB_API_READ_ACCESS_TOKEN`, sans lookup code-barres, sans
   endpoint details et sans IMDb ID dans ce lot ;
 - IGDB : premier metadata provider jeux video pour `games/search`, avec
-  configuration obligatoire via `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET`, sans
-  route publique, sans frontend et sans telechargement d'image dans ce lot ;
+  configuration obligatoire via `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET`, route
+  acquisition protegee JWT, frontend de recherche jeux et aucun telechargement
+  automatique d'image ;
 - configuration admin des providers : future, les providers restent configures
   par environnement dans l'etat courant ;
 - RAWG : provider jeux video futur eventuel, avec attention aux quotas et aux

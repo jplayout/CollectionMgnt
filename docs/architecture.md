@@ -135,7 +135,7 @@ L'acquisition assistee utilise aussi une couche dediee dans
 `backend/src/acquisition` :
 
 - `acquisition-service.js` orchestre les cas d'usage acquisition, dont le lookup
-  ISBN livre et le socle interne de recherche texte films ;
+  ISBN livre, la recherche texte films et la recherche texte jeux video ;
 - `provider-registry.js` inventorie et selectionne les providers disponibles ;
 - `acquisition-cache.js` gere le cache metier des lookups acquisition ;
 - `providers/*` contient les adaptateurs vers les fournisseurs externes.
@@ -209,8 +209,10 @@ traiter EAN/UPC.
 par `AcquisitionService`. IGDB est le premier provider concret pour cette
 capability quand `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET` sont configures. IGDB
 est un metadata provider : il retourne des suggestions normalisees et une URL de
-cover distante, sans route publique, sans frontend et sans telechargement
-d'image dans ce lot.
+cover distante. La capability est exposee par
+`POST /api/acquisition/games/search`. Le frontend jeux peut appliquer une
+suggestion au formulaire de creation, mais les covers restent des URLs distantes
+jusqu'a l'import explicite apres creation de l'item.
 
 Voir `docs/acquisition-providers.md` pour le contrat provider, les responsabilites
 des couches acquisition et les bonnes pratiques de tests.

@@ -21,6 +21,9 @@ Frontend :
 - Acquisition assistée films : recherche par titre via `movies/search`, provider
   TMDb, pré-remplissage local et import explicite de poster après création
   disponibles
+- Acquisition assistée jeux : recherche par titre via `games/search`, provider
+  IGDB, filtres plateforme/année, pré-remplissage local et import explicite de
+  cover après création disponibles
 
 Lots acquisition terminés :
 
@@ -36,6 +39,7 @@ Lots acquisition terminés :
 - 11.6.1 : provider TMDb backend pour `movies/search`
 - 11.6.2 : route et frontend de recherche films via `movies/search`
 - 11.7.1 : provider IGDB backend pour `games/search`
+- 11.7.2 : route et frontend de recherche jeux via `games/search`
 
 ---
 
@@ -63,8 +67,8 @@ Lots acquisition terminés :
 - Provider TMDb backend livré pour les films via `TMDB_API_READ_ACCESS_TOKEN`
 - Route et frontend de recherche films livrés pour pré-remplir localement le
   formulaire movies depuis les suggestions TMDb
-- Capability interne `games/search` livrée côté service pour préparer les
-  providers jeux vidéo par recherche texte
+- Capability `games/search` livrée côté service et exposée via route protégée
+  pour les providers jeux vidéo par recherche texte
 - Provider IGDB backend livré comme Metadata Provider pour les jeux vidéo via
   `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET`
 - Import sécurisé des couvertures provider livré après création de l'item
@@ -115,12 +119,13 @@ Lots acquisition terminés :
 - API providers disponible via `GET /api/acquisition/providers`
 - Lookup ISBN livre disponible via `POST /api/acquisition/books/isbn/lookup`
 - Recherche texte films disponible via `POST /api/acquisition/movies/search`
+- Recherche texte jeux disponible via `POST /api/acquisition/games/search`
 - Import explicite de couverture provider disponible via
   `POST /api/acquisition/images/import`
 - Capability `movies/search` disponible dans `AcquisitionService` et exposee
   via une route acquisition protegee JWT
-- Capability `games/search` disponible dans `AcquisitionService`, sans route
-  publique ni frontend dans ce lot
+- Capability `games/search` disponible dans `AcquisitionService` et exposee
+  via une route acquisition protegee JWT
 - Providers livrés :
   - `openlibrary`, sans clé API obligatoire
   - `googlebooks`, sans clé API obligatoire, avec `GOOGLE_BOOKS_API_KEY` optionnelle
@@ -157,10 +162,12 @@ Lots acquisition terminés :
   persistés
 - Le formulaire movies propose une recherche par titre, un choix utilisateur
   explicite et un pré-remplissage local sans écraser les champs déjà saisis
+- Le formulaire games propose une recherche par titre, des filtres plateforme et
+  année optionnels, un choix utilisateur explicite et un pré-remplissage local
+  sans écraser les champs déjà saisis
 - Import image sécurisé uniquement après confirmation utilisateur et création
   de l'item, via `MediaService.createOriginalMedia()`
 - Aucun lookup code-barres films/jeux/autres livré
-- Aucune route publique ni UI de recherche jeux livrée dans ce lot
 - Aucun scan caméra livré
 - Aucun import automatique d'image livré
 - Aucun cache local/offline d'images livré
