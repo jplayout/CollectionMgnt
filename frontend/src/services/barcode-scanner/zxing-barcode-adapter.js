@@ -5,6 +5,28 @@ import {
 const defaultScanIntervalMs =
     300;
 
+async function loadZxingModules() {
+
+    const [
+        browser,
+        library
+    ] =
+        await Promise.all([
+            import(
+                '@zxing/browser'
+            ),
+            import(
+                '@zxing/library'
+            )
+        ]);
+
+    return {
+        browser,
+        library
+    };
+
+}
+
 const zxingFormatNames =
     new Map([
         [
@@ -21,9 +43,7 @@ export class ZxingBarcodeAdapter {
 
     constructor({
         moduleLoader =
-            () => import(
-                '@zxing/browser'
-            ),
+            loadZxingModules,
         scanIntervalMs =
             defaultScanIntervalMs
     } = {}) {
@@ -41,6 +61,9 @@ export class ZxingBarcodeAdapter {
             null;
 
         this.zxing =
+            null;
+
+        this.zxingLibrary =
             null;
 
         this.lastLoadError =
@@ -144,10 +167,11 @@ export class ZxingBarcodeAdapter {
                     ) {
 
                         onDiagnostic({
-                            errorName:
-                                this.getErrorName(
-                                    error
-                                ),
+                            ...this.describeFatalError(
+                                error
+                            ),
+                            errorType:
+                                'fatal',
                             type:
                                 'detection fatal'
                         });
@@ -163,6 +187,10 @@ export class ZxingBarcodeAdapter {
                     onDiagnostic({
                         errorName:
                             this.getErrorName(
+                                error
+                            ),
+                        errorType:
+                            this.getDecodeErrorType(
                                 error
                             ),
                         type:
@@ -236,8 +264,14 @@ export class ZxingBarcodeAdapter {
 
         try {
 
-            this.zxing =
+            const modules =
                 await this.moduleLoader();
+
+            this.zxing =
+                modules.browser ?? modules;
+
+            this.zxingLibrary =
+                modules.library ?? modules;
 
         } catch (error) {
 
@@ -308,14 +342,133 @@ export class ZxingBarcodeAdapter {
 
     isRetryableDecodeError(error) {
 
-        return [
-            'NotFoundException',
-            'ChecksumException',
-            'FormatException'
-        ].includes(
+        return this.getDecodeErrorType(
+            error
+        ) !== 'fatal';
+
+    }
+
+    getDecodeErrorType(error) {
+
+        if (
+            this.isInstanceOfZxingError(
+                error,
+                'NotFoundException'
+            )
+        ) {
+
+            return 'notFound';
+
+        }
+
+        if (
+            this.isInstanceOfZxingError(
+                error,
+                'ChecksumException'
+            )
+        ) {
+
+            return 'checksum';
+
+        }
+
+        if (
+            this.isInstanceOfZxingError(
+                error,
+                'FormatException'
+            )
+        ) {
+
+            return 'format';
+
+        }
+
+        return this.getFallbackDecodeErrorType(
+            error
+        );
+
+    }
+
+    isInstanceOfZxingError(error, className) {
+
+        const ErrorClass =
+            this.zxingLibrary?.[className];
+
+        return typeof ErrorClass === 'function' &&
+            error instanceof ErrorClass;
+
+    }
+
+    getFallbackDecodeErrorType(error) {
+
+        const errorName =
             this.getErrorName(
                 error
-            )
+            );
+
+        if (
+            errorName === 'NotFoundException'
+        ) {
+
+            return 'notFound';
+
+        }
+
+        if (
+            errorName === 'ChecksumException'
+        ) {
+
+            return 'checksum';
+
+        }
+
+        if (
+            errorName === 'FormatException'
+        ) {
+
+            return 'format';
+
+        }
+
+        return 'fatal';
+
+    }
+
+    describeFatalError(error) {
+
+        return {
+            constructorName:
+                error?.constructor?.name ?? '',
+            errorName:
+                error?.name ?? '',
+            message:
+                this.sanitizeErrorMessage(
+                    error?.message
+                ),
+            objectType:
+                Object.prototype.toString.call(
+                    error
+                )
+        };
+
+    }
+
+    sanitizeErrorMessage(message) {
+
+        if (
+            typeof message !== 'string'
+        ) {
+
+            return '';
+
+        }
+
+        return message.replace(
+            /[\r\n\t]+/gu,
+            ' '
+        ).slice(
+            0,
+            80
         );
 
     }

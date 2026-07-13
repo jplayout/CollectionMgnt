@@ -9,6 +9,7 @@
  },
  "dependencies": {
   "@zxing/browser": "0.2.1",
+  "@zxing/library": "0.23.0",
   "pinia": "^3",
   "vue": "^3",
   "vue-i18n": "^11",

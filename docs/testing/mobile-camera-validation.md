@@ -157,6 +157,7 @@ For each fix / Pour chaque correction:
 | IOS-003 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Safari permission is accepted, camera appears briefly, then the modal closes immediately or the stream is stopped. | blocking | fix pending real-device retest | Audit found no backdrop click, focusout, blur, visibilitychange or global click close path. Closure paths are close button, Escape, scan result, parent `open=false` and unmount. The 15.2.2 correction avoids focusing the close button during permission, adds explicit scanner states, ignores backdrop pointer events during permission/preparing video, requires pointerdown and pointerup to both happen on the backdrop after `scanning`, and logs close reasons in development. | `frontend/e2e/camera-scanner.spec.js` covers normal backdrop close in `scanning`, ignored backdrop during permission, pointerdown before permission plus pointerup after permission, dialog clicks, close button during permission, stable video node, no stop after permission resolution without explicit close, visibilitychange/blur, and Scanner button no-submit behavior. |
 | IOS-004 | Safari macOS and iPadOS Safari/PWA, exact versions TBD | Production Docker build shows a preview briefly, then black, but development-only console traces are unavailable in the field. | blocking diagnostic | diagnostic added, retest required | The scanner now exposes an explicitly enabled visible diagnostic panel when the URL contains `cameraDebug=1`. It records safe session, stream, track, video, adapter and lifecycle state in memory only, adds a preview-only switch to disable detection, and provides a copy button for sanitized diagnostic text. | `frontend/e2e/camera-scanner.spec.js` covers hidden-by-default diagnostics, explicit activation, no local/session storage persistence, getUserMedia updates, track mute/ended, srcObject clearing, preview-only without adapters and sanitized copy output. |
 | IOS-005 | Safari macOS and iPadOS Safari/PWA, exact versions TBD | ZXing fallback receives a normal decode error after preview starts; the preview turns black because the shared MediaStream is stopped. | blocking | fix pending Safari macOS and iPadOS retest | Root cause proven: `ZxingBarcodeAdapter` calls `reader.decode(video)` directly and previously treated only `NotFoundException` as retryable. `ChecksumException` and `FormatException` now stay retryable, keep the stream attached, schedule the next scan at the existing interval and emit safe diagnostics. Unknown decode errors, import failures and permanent setup errors remain fatal. | `frontend/e2e/camera-scanner.spec.js` covers NotFound, Checksum and Format retries without `onError`, no premature `track.stop` or `srcObject = null`, unknown fatal errors, manual stop cancellation and a Checksum -> NotFound -> valid result flow with preview still active. |
+| IOS-006 | Safari macOS production Docker build, iPadOS Safari/PWA TBD | Production minification changes ZXing exception class names to `e`; normal decode exceptions are misclassified as fatal and stop the stream. | blocking | fix pending Safari macOS and iPadOS retest | Root cause proven in production diagnostic: first ZXing attempt emitted `detection fatal e`, then `read-error`, then the stream stopped. 15.2.5 loads `@zxing/browser` and `@zxing/library` together in the lazy ZXing chunk and classifies retryable decode errors primarily with real `instanceof` checks against `NotFoundException`, `ChecksumException` and `FormatException`. Name comparisons remain only as fallback. | `frontend/e2e/camera-scanner.spec.js` covers real `@zxing/library` exceptions, including minified subclasses whose `error.name` and `constructor.name` are `e`, while preserving retry behavior and stream attachment. |
 
 ## iPadOS Retest Procedure / Procedure De Retest iPadOS
 
@@ -231,6 +232,8 @@ The copied diagnostic may include / Le diagnostic copie peut inclure:
 - `video.srcObject`, `paused`, `readyState`, `videoWidth` and `videoHeight`;
 - detection attempt counters plus separate `notFound`, `checksum`, `format`
   and `fatal` counters;
+- for fatal detection errors only: safe `error.name`, `constructor.name`,
+  object type and a short cleaned message when available;
 - document visibility and relative timestamps;
 - the 30 most recent safe diagnostic events.
 
@@ -315,6 +318,11 @@ Known technical limits / Limites techniques connues:
   15.2.4 conserve les erreurs normales de decodage ZXing en retry:
   `NotFoundException`, `ChecksumException` et `FormatException` n'arretent plus
   le flux partage.
+- 15.2.5 makes that retry classification production-safe by checking real ZXing
+  exception classes loaded from the lazy `@zxing/library` chunk before falling
+  back to names / 15.2.5 rend cette classification compatible production en
+  testant les vraies classes d'exception ZXing chargees dans le chunk lazy
+  `@zxing/library` avant tout fallback par nom.
 
 ## Final Field Report / Rapport Terrain Final
 
@@ -334,12 +342,15 @@ Completer cette section apres la campagne sur appareils reels.
   after permission acceptance; IOS-004 production diagnostics needed because
   Safari macOS/iPadOS can reproduce the black preview without development
   console traces; IOS-005 ZXing retryable decode errors could stop the
-  MediaStream and leave the modal open with a black preview.
+  MediaStream and leave the modal open with a black preview; IOS-006 production
+  minification renamed ZXing exception classes to `e`, breaking name-based
+  retry classification.
 - Fixes applied / corrections eventuelles: IOS-001 frontend scanner startup
   hardening; IOS-002 single-stream-per-session hardening; IOS-003
   permission/backdrop close hardening; IOS-004 explicit visible diagnostic
   panel and preview-only mode; IOS-005 retryable ZXing decode error
-  classification, pending real Safari macOS and iPadOS retest.
+  classification; IOS-006 production-safe `instanceof` classification with
+  real ZXing classes, pending real Safari macOS and iPadOS retest.
 - Known limits / limites connues: see above
 - Decision / decision: Epic 15 incomplete until iPadOS/Safari retest and
   required iPhone Safari row pass

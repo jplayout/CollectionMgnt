@@ -8,6 +8,11 @@ export default defineConfig({
     plugins: [
         vue()
     ],
+    resolve: {
+        dedupe: [
+            '@zxing/library'
+        ]
+    },
     server: {
         proxy: {
             '/api': {
