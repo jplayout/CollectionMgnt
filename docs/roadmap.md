@@ -553,8 +553,13 @@ Contraintes :
   scanner et la modale `CameraScanner.vue`, sans branchement formulaire.
 - Lot 15.1 livre le branchement du resultat brut vers les champs `isbn` /
   `barcode` et les validations metier, sans lookup automatique.
-- Lot 15.2 reste dedie a la validation reelle Android/iPhone et aux ajustements
-  UX issus des tests terrain.
+- Lot 15.2 fournit la checklist bilingue de validation reelle Android/iPhone
+  dans `docs/testing/mobile-camera-validation.md`. L'Epic 15 reste incomplet
+  tant que Chrome Android et Safari iPhone ne sont pas valides sur appareils
+  reels sans defaut bloquant.
+- Une correction de l'aperçu camera noir observe sur tablette iPadOS apres
+  permission accordee est disponible, avec retest iPadOS reel requis avant
+  merge.
 - Aucun secret provider expose au frontend.
 - Les images restent importees explicitement via `MediaService`.
 

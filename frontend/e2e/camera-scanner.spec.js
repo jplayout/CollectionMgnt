@@ -13,7 +13,14 @@ async function withScannerModules(page, callback) {
         () => {
 
             window.createTestVideo =
-                () => {
+                ({
+                    height =
+                        480,
+                    readyState =
+                        HTMLMediaElement.HAVE_CURRENT_DATA,
+                    width =
+                        640
+                } = {}) => {
 
                     const video =
                         document.createElement(
@@ -36,8 +43,46 @@ async function withScannerModules(page, callback) {
                     video.pause =
                         () => {};
 
+                    video.playCalls =
+                        0;
+
                     video.play =
-                        async () => {};
+                        async () => {
+
+                            video.playCalls +=
+                                1;
+
+                        };
+
+                    Object.defineProperty(
+                        video,
+                        'readyState',
+                        {
+                            configurable:
+                                true,
+                            get: () => readyState
+                        }
+                    );
+
+                    Object.defineProperty(
+                        video,
+                        'videoHeight',
+                        {
+                            configurable:
+                                true,
+                            get: () => height
+                        }
+                    );
+
+                    Object.defineProperty(
+                        video,
+                        'videoWidth',
+                        {
+                            configurable:
+                                true,
+                            get: () => width
+                        }
+                    );
 
                     return video;
 
@@ -157,6 +202,578 @@ test.describe(
         );
 
         test(
+            'attaches the stream and explicitly starts iOS-compatible video playback',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ScannerService
+                            } = await import(
+                                '/src/services/barcode-scanner/scanner-service.js'
+                            );
+
+                            const stream = {
+                                active:
+                                    true,
+                                getVideoTracks: () => [
+                                    {
+                                        readyState:
+                                            'live',
+                                        stop: () => {}
+                                    }
+                                ]
+                            };
+
+                            const service =
+                                new ScannerService({
+                                    createNativeAdapter: () => ({
+                                        isSupported: async () => true,
+                                        start: () => {},
+                                        stop: () => {}
+                                    }),
+                                    mediaDevices: {
+                                        getUserMedia: async () => stream
+                                    },
+                                    secureContext:
+                                        true
+                                });
+
+                            const video =
+                                window.createTestVideo();
+
+                            await service.start({
+                                onError: () => {},
+                                onResult: () => {},
+                                video
+                            });
+
+                            const resultValue = {
+                                autoplay:
+                                    video.autoplay,
+                                muted:
+                                    video.muted,
+                                playCalls:
+                                    video.playCalls,
+                                playsInline:
+                                    video.playsInline,
+                                srcObjectAttached:
+                                    video.srcObject === stream,
+                                webkitPlaysInline:
+                                    video.hasAttribute(
+                                        'webkit-playsinline'
+                                    )
+                            };
+
+                            service.stop();
+
+                            return resultValue;
+
+                        }
+                    );
+
+                expect(
+                    result
+                ).toEqual({
+                    autoplay:
+                        true,
+                    muted:
+                        true,
+                    playCalls:
+                        1,
+                    playsInline:
+                        true,
+                    srcObjectAttached:
+                        true,
+                    webkitPlaysInline:
+                        true
+                });
+
+            }
+        );
+
+        test(
+            'returns a distinct error when video play is rejected',
+            async ({ page }) => {
+
+                const code =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ScannerService
+                            } = await import(
+                                '/src/services/barcode-scanner/scanner-service.js'
+                            );
+
+                            const service =
+                                new ScannerService({
+                                    mediaDevices: {
+                                        getUserMedia: async () => ({
+                                            active:
+                                                true,
+                                            getVideoTracks: () => [
+                                                {
+                                                    readyState:
+                                                        'live',
+                                                    stop: () => {}
+                                                }
+                                            ]
+                                        })
+                                    },
+                                    secureContext:
+                                        true
+                                });
+
+                            const video =
+                                window.createTestVideo();
+
+                            video.play =
+                                async () => {
+
+                                    throw new Error(
+                                        'play-blocked'
+                                    );
+
+                                };
+
+                            try {
+
+                                await service.start({
+                                    onError: () => {},
+                                    onResult: () => {},
+                                    video
+                                });
+
+                            } catch (error) {
+
+                                return error.code;
+
+                            }
+
+                            return 'none';
+
+                        }
+                    );
+
+                expect(
+                    code
+                ).toBe(
+                    'video-play-failed'
+                );
+
+            }
+        );
+
+        test(
+            'falls back to unconstrained video when the ideal environment stream has no preview frames',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ScannerService
+                            } = await import(
+                                '/src/services/barcode-scanner/scanner-service.js'
+                            );
+
+                            const calls =
+                                [];
+
+                            const stopped =
+                                [];
+
+                            const streams = [
+                                {
+                                    active:
+                                        true,
+                                    getVideoTracks: () => [
+                                        {
+                                            readyState:
+                                                'live',
+                                            stop: () => stopped.push(
+                                                'ideal'
+                                            )
+                                        }
+                                    ],
+                                    label:
+                                        'ideal'
+                                },
+                                {
+                                    active:
+                                        true,
+                                    getVideoTracks: () => [
+                                        {
+                                            readyState:
+                                                'live',
+                                            stop: () => stopped.push(
+                                                'fallback'
+                                            )
+                                        }
+                                    ],
+                                    label:
+                                        'fallback'
+                                }
+                            ];
+
+                            const service =
+                                new ScannerService({
+                                    createNativeAdapter: () => ({
+                                        isSupported: async () => true,
+                                        start: () => {},
+                                        stop: () => {}
+                                    }),
+                                    mediaDevices: {
+                                        getUserMedia: async constraints => {
+
+                                            calls.push(
+                                                constraints
+                                            );
+
+                                            return streams[
+                                                calls.length - 1
+                                            ];
+
+                                        }
+                                    },
+                                    previewReadyTimeoutMs:
+                                        1,
+                                    secureContext:
+                                        true
+                                });
+
+                            const video =
+                                window.createTestVideo();
+
+                            Object.defineProperty(
+                                video,
+                                'srcObject',
+                                {
+                                    configurable:
+                                        true,
+                                    get() {
+
+                                        return this.currentStream;
+
+                                    },
+                                    set(stream) {
+
+                                        this.currentStream =
+                                            stream;
+
+                                        Object.defineProperty(
+                                            this,
+                                            'videoWidth',
+                                            {
+                                                configurable:
+                                                    true,
+                                                get: () => stream?.label === 'fallback' ?
+                                                    640 :
+                                                    0
+                                            }
+                                        );
+
+                                        Object.defineProperty(
+                                            this,
+                                            'videoHeight',
+                                            {
+                                                configurable:
+                                                    true,
+                                                get: () => stream?.label === 'fallback' ?
+                                                    480 :
+                                                    0
+                                            }
+                                        );
+
+                                    }
+                                }
+                            );
+
+                            await service.start({
+                                onError: () => {},
+                                onResult: () => {},
+                                video
+                            });
+
+                            const resultValue = {
+                                calls,
+                                srcObject:
+                                    video.srcObject?.label,
+                                stoppedBeforeStop:
+                                    [
+                                        ...stopped
+                                    ]
+                            };
+
+                            service.stop();
+
+                            resultValue.stoppedAfterStop =
+                                [
+                                    ...stopped
+                                ];
+
+                            return resultValue;
+
+                        }
+                    );
+
+                expect(
+                    result.calls
+                ).toEqual([
+                    {
+                        audio:
+                            false,
+                        video: {
+                            facingMode: {
+                                ideal:
+                                    'environment'
+                            }
+                        }
+                    },
+                    {
+                        audio:
+                            false,
+                        video:
+                            true
+                    }
+                ]);
+
+                expect(
+                    result.stoppedBeforeStop
+                ).toEqual([
+                    'ideal'
+                ]);
+
+                expect(
+                    result.stoppedAfterStop
+                ).toEqual([
+                    'ideal',
+                    'fallback'
+                ]);
+
+                expect(
+                    result.srcObject
+                ).toBe(
+                    'fallback'
+                );
+
+            }
+        );
+
+        test(
+            'fails instead of leaving a black preview when the stream never exposes video dimensions',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ScannerService
+                            } = await import(
+                                '/src/services/barcode-scanner/scanner-service.js'
+                            );
+
+                            const stopped =
+                                [];
+
+                            const service =
+                                new ScannerService({
+                                    mediaDevices: {
+                                        getUserMedia: async () => ({
+                                            active:
+                                                true,
+                                            getVideoTracks: () => [
+                                                {
+                                                    readyState:
+                                                        'live',
+                                                    stop: () => stopped.push(
+                                                        'track'
+                                                    )
+                                                }
+                                            ]
+                                        })
+                                    },
+                                    previewReadyTimeoutMs:
+                                        1,
+                                    secureContext:
+                                        true
+                                });
+
+                            const video =
+                                window.createTestVideo({
+                                    height:
+                                        0,
+                                    width:
+                                        0
+                                });
+
+                            try {
+
+                                await service.start({
+                                    onError: () => {},
+                                    onResult: () => {},
+                                    video
+                                });
+
+                            } catch (error) {
+
+                                return {
+                                    code:
+                                        error.code,
+                                    srcObjectCleared:
+                                        video.srcObject === null,
+                                    stopped
+                                };
+
+                            }
+
+                            return {
+                                code:
+                                    'none',
+                                srcObjectCleared:
+                                    video.srcObject === null,
+                                stopped
+                            };
+
+                        }
+                    );
+
+                expect(
+                    result.code
+                ).toBe(
+                    'video-preview-unavailable'
+                );
+
+                expect(
+                    result.srcObjectCleared
+                ).toBeTruthy();
+
+                expect(
+                    result.stopped
+                ).toEqual([
+                    'track',
+                    'track'
+                ]);
+
+            }
+        );
+
+        test(
+            'cleans the pending stream when closed before metadata is available',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ScannerService
+                            } = await import(
+                                '/src/services/barcode-scanner/scanner-service.js'
+                            );
+
+                            const calls =
+                                [];
+
+                            const stopped =
+                                [];
+
+                            const service =
+                                new ScannerService({
+                                    createNativeAdapter: () => ({
+                                        isSupported: async () => true,
+                                        start: () => calls.push(
+                                            'native-start'
+                                        ),
+                                        stop: () => {}
+                                    }),
+                                    mediaDevices: {
+                                        getUserMedia: async () => ({
+                                            active:
+                                                true,
+                                            getVideoTracks: () => [
+                                                {
+                                                    readyState:
+                                                        'live',
+                                                    stop: () => stopped.push(
+                                                        'track'
+                                                    )
+                                                }
+                                            ]
+                                        })
+                                    },
+                                    previewReadyTimeoutMs:
+                                        1000,
+                                    secureContext:
+                                        true
+                                });
+
+                            const video =
+                                window.createTestVideo({
+                                    height:
+                                        0,
+                                    readyState:
+                                        0,
+                                    width:
+                                        0
+                                });
+
+                            const startPromise =
+                                service.start({
+                                    onError: () => {},
+                                    onResult: () => {},
+                                    video
+                                });
+
+                            await new Promise(
+                                resolve => window.setTimeout(
+                                    resolve,
+                                    0
+                                )
+                            );
+
+                            service.stop();
+
+                            await startPromise;
+
+                            return {
+                                calls,
+                                srcObjectCleared:
+                                    video.srcObject === null,
+                                stopped
+                            };
+
+                        }
+                    );
+
+                expect(
+                    result.calls
+                ).toEqual([]);
+
+                expect(
+                    result.srcObjectCleared
+                ).toBeTruthy();
+
+                expect(
+                    result.stopped.length
+                ).toBeGreaterThanOrEqual(
+                    1
+                );
+
+            }
+        );
+
+        test(
             'loads fallback when BarcodeDetector is absent or lacks MVP formats',
             async ({ page }) => {
 
@@ -267,6 +884,109 @@ test.describe(
                     'fallback',
                     'fallback'
                 ]);
+
+            }
+        );
+
+        test(
+            'starts ZXing only after the shared video stream is readable',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ScannerService
+                            } = await import(
+                                '/src/services/barcode-scanner/scanner-service.js'
+                            );
+
+                            let getUserMediaCalls =
+                                0;
+
+                            const stream = {
+                                active:
+                                    true,
+                                getVideoTracks: () => [
+                                    {
+                                        readyState:
+                                            'live',
+                                        stop: () => {}
+                                    }
+                                ]
+                            };
+
+                            let zxingStartResult;
+
+                            const service =
+                                new ScannerService({
+                                    createNativeAdapter: () => ({
+                                        isSupported: async () => false,
+                                        stop: () => {}
+                                    }),
+                                    createZxingAdapter: () => ({
+                                        isSupported: async () => true,
+                                        start: ({ video }) => {
+
+                                            zxingStartResult =
+                                                {
+                                                    readable:
+                                                        video.readyState >=
+                                                            HTMLMediaElement.HAVE_CURRENT_DATA &&
+                                                        video.videoWidth > 0 &&
+                                                        video.videoHeight > 0,
+                                                    sharedStream:
+                                                        video.srcObject === stream
+                                                };
+
+                                        },
+                                        stop: () => {}
+                                    }),
+                                    mediaDevices: {
+                                        getUserMedia: async () => {
+
+                                            getUserMediaCalls +=
+                                                1;
+
+                                            return stream;
+
+                                        }
+                                    },
+                                    secureContext:
+                                        true
+                                });
+
+                            await service.start({
+                                onError: () => {},
+                                onResult: () => {},
+                                video:
+                                    window.createTestVideo()
+                            });
+
+                            return {
+                                getUserMediaCalls,
+                                zxingStartResult
+                            };
+
+                        }
+                    );
+
+                expect(
+                    result.getUserMediaCalls
+                ).toBe(
+                    1
+                );
+
+                expect(
+                    result.zxingStartResult
+                ).toEqual({
+                    readable:
+                        true,
+                    sharedStream:
+                        true
+                });
 
             }
         );
