@@ -152,12 +152,12 @@ For each fix / Pour chaque correction:
 
 | ID | Device/browser | Scenario | Severity | Status | Fix | Automated test |
 | --- | --- | --- | --- | --- | --- | --- |
-| IOS-001 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Permission granted and modal opens, but the video preview remains black and no barcode is detected. | blocking | fix pending real-device retest | ScannerService now sets `autoplay`, `muted`, `playsInline`, `srcObject`, waits for metadata/dimensions, calls `video.play()`, falls back from `facingMode: ideal` to `video: true`, and reports a dedicated preview/playback error instead of leaving a black modal. | `frontend/e2e/camera-scanner.spec.js` covers `srcObject`, `video.play()`, iOS video properties, play rejection, zero dimensions, close before metadata, constraint fallback and ZXing shared stream. |
-| IOS-002 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Permission granted, preview appears briefly, then becomes black. | blocking | fix pending real-device retest | The 15.2 correction was insufficient because zero preview dimensions could trigger the fallback constraints branch after a stream had already been obtained. The 15.2.1 correction guarantees one `getUserMedia` call per successful scanner session; `{ video: true }` is attempted only when the first `getUserMedia` rejects before returning a stream. Track `mute`, `unmute` and `ended` events are instrumented in development without camera labels, frames or barcode data. | `frontend/e2e/camera-scanner.spec.js` covers one successful `getUserMedia` call, no second call while dimensions are zero, fallback only on pre-stream rejection, muted track without a reopen loop, ZXing shared stream and close/reopen session boundaries. |
-| IOS-003 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Safari permission is accepted, camera appears briefly, then the modal closes immediately or the stream is stopped. | blocking | fix pending real-device retest | Audit found no backdrop click, focusout, blur, visibilitychange or global click close path. Closure paths are close button, Escape, scan result, parent `open=false` and unmount. The 15.2.2 correction avoids focusing the close button during permission, adds explicit scanner states, ignores backdrop pointer events during permission/preparing video, requires pointerdown and pointerup to both happen on the backdrop after `scanning`, and logs close reasons in development. | `frontend/e2e/camera-scanner.spec.js` covers normal backdrop close in `scanning`, ignored backdrop during permission, pointerdown before permission plus pointerup after permission, dialog clicks, close button during permission, stable video node, no stop after permission resolution without explicit close, visibilitychange/blur, and Scanner button no-submit behavior. |
-| IOS-004 | Safari macOS and iPadOS Safari/PWA, exact versions TBD | Production Docker build shows a preview briefly, then black, but development-only console traces are unavailable in the field. | blocking diagnostic | diagnostic added, retest required | The scanner now exposes an explicitly enabled visible diagnostic panel when the URL contains `cameraDebug=1`. It records safe session, stream, track, video, adapter and lifecycle state in memory only, adds a preview-only switch to disable detection, and provides a copy button for sanitized diagnostic text. | `frontend/e2e/camera-scanner.spec.js` covers hidden-by-default diagnostics, explicit activation, no local/session storage persistence, getUserMedia updates, track mute/ended, srcObject clearing, preview-only without adapters and sanitized copy output. |
-| IOS-005 | Safari macOS and iPadOS Safari/PWA, exact versions TBD | ZXing fallback receives a normal decode error after preview starts; the preview turns black because the shared MediaStream is stopped. | blocking | fix pending Safari macOS and iPadOS retest | Root cause proven: `ZxingBarcodeAdapter` calls `reader.decode(video)` directly and previously treated only `NotFoundException` as retryable. `ChecksumException` and `FormatException` now stay retryable, keep the stream attached, schedule the next scan at the existing interval and emit safe diagnostics. Unknown decode errors, import failures and permanent setup errors remain fatal. | `frontend/e2e/camera-scanner.spec.js` covers NotFound, Checksum and Format retries without `onError`, no premature `track.stop` or `srcObject = null`, unknown fatal errors, manual stop cancellation and a Checksum -> NotFound -> valid result flow with preview still active. |
-| IOS-006 | Safari macOS production Docker build, iPadOS Safari/PWA TBD | Production minification changes ZXing exception class names to `e`; normal decode exceptions are misclassified as fatal and stop the stream. | blocking | fix pending Safari macOS and iPadOS retest | Root cause proven in production diagnostic: first ZXing attempt emitted `detection fatal e`, then `read-error`, then the stream stopped. 15.2.5 loads `@zxing/browser` and `@zxing/library` together in the lazy ZXing chunk and classifies retryable decode errors primarily with real `instanceof` checks against `NotFoundException`, `ChecksumException` and `FormatException`. Name comparisons remain only as fallback. | `frontend/e2e/camera-scanner.spec.js` covers real `@zxing/library` exceptions, including minified subclasses whose `error.name` and `constructor.name` are `e`, while preserving retry behavior and stream attachment. |
+| IOS-001 | iPadOS tablet, Safari/PWA | Permission granted and modal opens, but the video preview remains black and no barcode is detected. | blocking | fixed and validated | ScannerService sets `autoplay`, `muted`, `playsInline`, `srcObject`, waits for metadata/dimensions, calls `video.play()`, falls back from `facingMode: ideal` to `video: true`, and reports a dedicated preview/playback error instead of leaving a black modal. | `frontend/e2e/camera-scanner/scanner-service.spec.js` covers `srcObject`, `video.play()`, iOS video properties, play rejection, zero dimensions, close before metadata, constraint fallback and ZXing shared stream. |
+| IOS-002 | iPadOS tablet, Safari/PWA | Permission granted, preview appears briefly, then becomes black. | blocking | fixed and validated | The 15.2.1 correction guarantees one `getUserMedia` call per successful scanner session; `{ video: true }` is attempted only when the first `getUserMedia` rejects before returning a stream. | `frontend/e2e/camera-scanner/scanner-service.spec.js` covers one successful `getUserMedia` call, no second call while dimensions are zero, fallback only on pre-stream rejection, muted track without a reopen loop, ZXing shared stream and close/reopen session boundaries. |
+| IOS-003 | iPadOS tablet, Safari/PWA | Safari permission is accepted, camera appears briefly, then the modal closes immediately or the stream is stopped. | blocking | fixed and validated | The 15.2.2 correction adds explicit scanner states, ignores backdrop pointer events during permission/preparing video, and requires pointerdown and pointerup to both happen on the backdrop after `scanning`. | `frontend/e2e/camera-scanner/camera-scanner-ui.spec.js` covers normal backdrop close in `scanning`, ignored backdrop during permission, pointerdown before permission plus pointerup after permission, dialog clicks, close button during permission, stable video node, visibilitychange/blur, and Scanner button no-submit behavior. |
+| IOS-004 | Safari macOS and iPadOS Safari/PWA | Production Docker build shows a preview briefly, then black, but development-only console traces are unavailable in the field. | blocking diagnostic | temporary diagnostic removed in 15.3 | A temporary visible diagnostic panel was used during field debugging and then removed from the product after validation. No debug panel, copied diagnostic text or detection-disabling UI remains in 15.3. | The retained automated coverage is split under `frontend/e2e/camera-scanner/`; panel-specific tests were removed with the feature. |
+| IOS-005 | Safari macOS and iPadOS Safari/PWA | ZXing fallback receives a normal decode error after preview starts; the preview turns black because the shared MediaStream is stopped. | blocking | fixed and validated | Root cause proven: `ZxingBarcodeAdapter` calls `reader.decode(video)` directly and now keeps `NotFoundException`, `ChecksumException` and `FormatException` retryable. Unknown decode errors, import failures and permanent setup errors remain fatal. | `frontend/e2e/camera-scanner/zxing-barcode-adapter.spec.js` covers NotFound, Checksum and Format retries without `onError`, no premature `track.stop` or `srcObject = null`, unknown fatal errors, manual stop cancellation and a Checksum -> NotFound -> valid result flow with preview still active. |
+| IOS-006 | Safari macOS production Docker build, iPadOS Safari/PWA | Production minification changes ZXing exception class names to `e`; normal decode exceptions are misclassified as fatal and stop the stream. | blocking | fixed and validated | 15.2.5 loads `@zxing/browser` and `@zxing/library` together in the lazy ZXing chunk and classifies retryable decode errors primarily with real `instanceof` checks against `NotFoundException`, `ChecksumException` and `FormatException`. Name comparisons remain only as fallback. | `frontend/e2e/camera-scanner/zxing-barcode-adapter.spec.js` covers real `@zxing/library` exceptions, including minified subclasses whose `error.name` and `constructor.name` are `e`, while preserving retry behavior and stream attachment. |
 
 ## iPadOS Retest Procedure / Procedure De Retest iPadOS
 
@@ -178,104 +178,9 @@ Utiliser l'image 15.2.1 deployee en HTTPS.
 8. Record Safari vs PWA mode, iPadOS version, browser version, Docker image,
    open time, detection time and adapter if identifiable.
 
-Development diagnostic logs may be used during retest. They must contain only
-session id, `getUserMedia` call count, constraints, stream id, track id,
-`readyState`, `muted`, `mute`/`unmute`/`ended`, `srcObject` set/null, stop calls
-adapter name, close reason, event type, event target/currentTarget,
-`document.visibilityState` and timestamps. Do not collect frames, images,
-barcodes or camera labels.
-
-## Visible Diagnostic Panel / Panneau Diagnostic Visible
-
-Use this procedure only for field debugging of the black preview issue.
-
-Utiliser cette procedure uniquement pour diagnostiquer le probleme d'aperçu
-noir sur le terrain.
-
-1. Open the same HTTPS production URL and add `?cameraDebug=1`. If the app
-   redirects to login, keep `cameraDebug=1` in the final URL.
-2. Open the scanner. A small `Diagnostic camera` panel must appear above the
-   preview without hiding the video.
-3. First test with detection enabled and note whether the preview turns black.
-4. Reopen the scanner, enable `Desactiver la detection`, then confirm whether
-   the preview remains stable without BarcodeDetector or ZXing.
-5. Tap `Copier le diagnostic` and paste the text into the field report.
-6. Remove `cameraDebug=1` from the URL after the diagnostic session.
-
-English:
-
-1. Open the same HTTPS production URL and add `?cameraDebug=1`. If the app
-   redirects to login, keep `cameraDebug=1` in the final URL.
-2. Open the scanner. A small `Diagnostic camera` panel must appear above the
-   preview without covering the video.
-3. First test with detection enabled and record whether the preview turns black.
-4. Reopen the scanner, enable `Desactiver la detection`, then check whether the
-   preview remains stable without BarcodeDetector or ZXing.
-5. Tap `Copier le diagnostic` and paste the text into the field report.
-6. Remove `cameraDebug=1` from the URL after the diagnostic session.
-
-Expected interpretation / Interpretation attendue:
-
-- preview stable with detection disabled: adapter or detection lifecycle likely;
-- preview still black with detection disabled: video, stream, CSS or Vue
-  lifecycle likely;
-- `track mute`, `track ended`, `srcObject cleared`, `stop` or `close` events
-  before user close are important observations.
-
-The copied diagnostic may include / Le diagnostic copie peut inclure:
-
-- session id, scanner state and close reason;
-- selected adapter: `native`, `zxing` or `none`;
-- `getUserMedia`, `video.play`, `stop`, `srcObject` set/null counters;
-- stream present/active status and safe generated stream identity;
-- number of tracks, `readyState`, `muted`, `mute`/`unmute`/`ended` counters;
-- `video.srcObject`, `paused`, `readyState`, `videoWidth` and `videoHeight`;
-- detection attempt counters plus separate `notFound`, `checksum`, `format`
-  and `fatal` counters;
-- for fatal detection errors only: safe `error.name`, `constructor.name`,
-  object type and a short cleaned message when available;
-- document visibility and relative timestamps;
-- the 30 most recent safe diagnostic events.
-
-The diagnostic must never include / Le diagnostic ne doit jamais inclure:
-
-- camera images, video frames or scanned frames;
-- barcode values;
-- secrets, credentials or provider identifiers;
-- exact camera labels or device names.
-
-No diagnostic payload is sent to the backend. The option is not persisted in
-`localStorage` or `sessionStorage`.
-
-Aucun diagnostic n'est transmis au backend. L'option n'est pas conservee dans
-`localStorage` ou `sessionStorage`.
-
-Example sanitized output / Exemple de sortie nettoyee:
-
-```text
-Camera diagnostic
-sessionId=7
-state=scanning
-adapter=none
-getUserMedia=1
-stream=true/true
-tracks=1 track(s): live/muted
-srcObject=true stable=true
-video=4 1280x720 paused=false
-play=1 stop=0 srcSet=1 srcNull=0
-component=mounted
-closeReason=
-error=
-detection=attempts:3 notFound:1 checksum:1 format:0 fatal:0
-visibility=visible
-events:
-12ms getUserMedia requested
-420ms getUserMedia resolved
-435ms stream attached
-451ms video play resolved
-463ms first dimensions
-510ms detection retryable ChecksumException
-```
+Temporary field diagnostics were removed from the product in 15.3. If a future
+issue needs new instrumentation, it must avoid frames, images, barcode values,
+secrets, provider identifiers and exact camera labels.
 
 ## Known Limits / Limites Connues
 
@@ -308,11 +213,9 @@ Known technical limits / Limites techniques connues:
 - 15.2.2 specifically protects the permission return path from accidental
   backdrop/focus-related closure / 15.2.2 protege le retour de permission
   contre une fermeture accidentelle liee au backdrop ou au focus.
-- 15.2.3 adds an explicit production diagnostic panel behind `cameraDebug=1`;
-  it is a field diagnostic aid, not a replacement for real iPadOS retest /
-  15.2.3 ajoute un panneau diagnostic production explicite derriere
-  `cameraDebug=1`; c'est une aide terrain, pas un remplacement du retest reel
-  iPadOS.
+- The temporary field diagnostic UI used during 15.2 was removed in 15.3 after
+  validation / l'interface temporaire de diagnostic terrain utilisee pendant
+  15.2 a ete retiree en 15.3 apres validation.
 - 15.2.4 keeps normal ZXing decode errors retryable: `NotFoundException`,
   `ChecksumException` and `FormatException` no longer stop the shared stream /
   15.2.4 conserve les erreurs normales de decodage ZXing en retry:
@@ -333,25 +236,23 @@ Completer cette section apres la campagne sur appareils reels.
 - Tested device/browser matrix / matrice appareils/navigateurs testes:
   Android reported successful; iPadOS tablet failed before correction; exact
   browser mode, iPadOS version and image version still TBD.
-- Field results / resultats terrain: Android works; iPadOS permission granted
-  but preview black before correction; first iPadOS correction showed the image
-  briefly, then black.
+- Field results / resultats terrain: Android, Safari macOS and iPadOS validated
+  after the 15.2.5 correction.
 - Observed defects / anomalies constatees: IOS-001 black camera preview on
   iPadOS after permission grant; IOS-002 stream appears to become muted or
   replaced after a brief preview; IOS-003 modal closes or stream stops just
-  after permission acceptance; IOS-004 production diagnostics needed because
-  Safari macOS/iPadOS can reproduce the black preview without development
-  console traces; IOS-005 ZXing retryable decode errors could stop the
+  after permission acceptance; IOS-004 temporary field diagnostics were needed
+  because Safari macOS/iPadOS could reproduce the black preview without
+  development console traces; IOS-005 ZXing retryable decode errors could stop the
   MediaStream and leave the modal open with a black preview; IOS-006 production
   minification renamed ZXing exception classes to `e`, breaking name-based
   retry classification.
 - Fixes applied / corrections eventuelles: IOS-001 frontend scanner startup
   hardening; IOS-002 single-stream-per-session hardening; IOS-003
-  permission/backdrop close hardening; IOS-004 explicit visible diagnostic
-  panel and preview-only mode; IOS-005 retryable ZXing decode error
-  classification; IOS-006 production-safe `instanceof` classification with
-  real ZXing classes, pending real Safari macOS and iPadOS retest.
+  permission/backdrop close hardening; IOS-004 temporary field diagnostic UI
+  removed in 15.3; IOS-005 retryable ZXing decode error classification;
+  IOS-006 production-safe `instanceof` classification with real ZXing classes.
 - Known limits / limites connues: see above
-- Decision / decision: Epic 15 incomplete until iPadOS/Safari retest and
-  required iPhone Safari row pass
+- Decision / decision: Epic 15 validated if the 15.3 cleanup test suite passes
+  without regression
 - Commit confirmation / confirmation commit: no commit created

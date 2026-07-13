@@ -231,23 +231,18 @@ Principes :
   `docs/testing/mobile-camera-validation.md` pour le lot 15.2.
 - Les anomalies terrain iPadOS d'aperçu camera noir apres permission accordee,
   d'image visible brievement avant ecran noir, puis de fermeture immediate
-  suspectee au retour de permission Safari, sont documentees. La correction
-  15.2.1 garantit un seul `getUserMedia` par session scanner reussie et reserve
-  le fallback `{ video: true }` aux rejets avant obtention d'un flux. La
-  correction 15.2.2 protege le cycle pointer/backdrop pendant la permission ;
-  un retest iPadOS reel reste requis avant merge. La branche 15.2.3 ajoute un
-  panneau diagnostic visible uniquement lorsque l'URL contient `cameraDebug=1`,
-  avec mode preview-only et copie de diagnostic nettoyee pour isoler les causes
-  d'aperçu noir en build Docker de production. La branche 15.2.4 corrige la
-  classification ZXing prouvee: `NotFoundException`, `ChecksumException` et
-  `FormatException` sont retryables et ne doivent plus arreter le MediaStream;
-  les erreurs inconnues restent fatales. La branche 15.2.5 rend ce correctif
-  robuste en production en utilisant les vraies classes `@zxing/library`, car
-  les noms de classes peuvent etre minifies en `e` dans le bundle Vite. Un
-  retest Safari macOS puis iPadOS reste requis.
-- Aucune validation reelle Android/iPhone renseignee a ce stade ; Epic 15 reste
-  incomplet tant que Chrome Android et Safari iPhone ne sont pas valides sans
-  defaut bloquant.
+  suspectee au retour de permission Safari, sont corrigees. Les correctifs
+  valides conservent un seul `getUserMedia` par session, protegent le retour de
+  permission, gardent le flux partage pour ZXing et classent
+  `NotFoundException`, `ChecksumException` et `FormatException` comme erreurs
+  retryables, y compris en bundle production minifie via les vraies classes
+  `@zxing/library`.
+- Le diagnostic camera visible et son mode de previsualisation temporaire ont
+  ete retires en 15.3 apres validation terrain Android, Safari macOS et iPadOS.
+  Les tests camera Playwright sont decoupes par responsabilite dans
+  `frontend/e2e/camera-scanner/`.
+- Epic 15 est cloture si les validations automatiques du nettoyage 15.3 passent
+  sans regression.
 - Aucune administration de configuration providers livrée
 - Aucun provider media specialise livré
 - Aucun import automatique d'image livré

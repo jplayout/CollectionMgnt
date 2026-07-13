@@ -78,11 +78,10 @@ Limites majeures connues :
 
 ### Priorité moyenne
 
-- Epic Mobile Acquisition : fondation scanner camera frontend et integration
-  formulaire livrees, validation mobile reelle restante. Le diagnostic visible
-  `cameraDebug=1`, le mode preview-only et la correction des erreurs ZXing
-  retryables, y compris en bundle production minifie, aident le retest
-  Safari/iPadOS, mais ne remplacent pas la validation terrain.
+- Epic Mobile Acquisition : scanner camera frontend, integration formulaire et
+  validation terrain Android/Safari macOS/iPadOS livres. Le nettoyage 15.3
+  retire le diagnostic temporaire et reorganise les tests Playwright ; aucun
+  runner unitaire supplementaire n'est ajoute dans ce lot.
 - Epic Provider Administration : configuration et diagnostic des providers.
 - Epic Media Providers : sources medias specialisees et selection d'assets.
 - Recherche enrichie par auteur, éditeur, série, tags et tolérance aux fautes.

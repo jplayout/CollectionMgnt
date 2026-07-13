@@ -100,7 +100,7 @@ Frontend :
 ```bash
 cd frontend
 npm exec vite build
-npx playwright test e2e/camera-scanner.spec.js
+npx playwright test e2e/camera-scanner
 ```
 
 E2E Playwright :
@@ -206,17 +206,17 @@ Le media pack de demonstration, les exports, les backups, les filtres, la
 pagination detaillee, les screenshots E2E et les navigateurs multiples restent
 hors perimetre de ce MVP.
 
-Un fichier cible le scanner camera frontend :
+Les tests du scanner camera frontend sont organises par responsabilite :
 
 ```text
-frontend/e2e/camera-scanner.spec.js
+frontend/e2e/camera-scanner/
 ```
 
-Il mocke `navigator.mediaDevices.getUserMedia`, `BarcodeDetector`, le fallback
-ZXing et le montage Vue du composant. Ces tests verifient que le fallback n'est
-pas charge dans le chemin natif, que les tracks camera sont arretees apres
-succes, fermeture et unmount, et qu'aucune requete reseau ni persistance locale
-n'est effectuee par le scanner.
+Cette suite reste sous Playwright dans le lot 15.3 pour eviter une nouvelle
+dependance de test. Elle separe les tests du service, des adaptateurs natif et
+ZXing, de l'UI modale et de l'integration formulaire. Les mocks couvrent
+`navigator.mediaDevices.getUserMedia`, `BarcodeDetector`, le fallback ZXing et le
+montage Vue du composant.
 
 ## Ce Qui Est Teste
 

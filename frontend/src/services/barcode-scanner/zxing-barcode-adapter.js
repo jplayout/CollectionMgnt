@@ -94,7 +94,6 @@ export class ZxingBarcodeAdapter {
     }
 
     async start({
-        onDiagnostic = () => {},
         onError,
         onResult,
         video
@@ -121,11 +120,6 @@ export class ZxingBarcodeAdapter {
                     if (
                         video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
                     ) {
-
-                        onDiagnostic({
-                            type:
-                                'detection attempt'
-                        });
 
                         const decoded =
                             this.reader.decode(
@@ -166,16 +160,6 @@ export class ZxingBarcodeAdapter {
                         )
                     ) {
 
-                        onDiagnostic({
-                            ...this.describeFatalError(
-                                error
-                            ),
-                            errorType:
-                                'fatal',
-                            type:
-                                'detection fatal'
-                        });
-
                         onError(
                             error
                         );
@@ -183,19 +167,6 @@ export class ZxingBarcodeAdapter {
                         return;
 
                     }
-
-                    onDiagnostic({
-                        errorName:
-                            this.getErrorName(
-                                error
-                            ),
-                        errorType:
-                            this.getDecodeErrorType(
-                                error
-                            ),
-                        type:
-                            'detection retryable'
-                    });
 
                 }
 
@@ -431,45 +402,6 @@ export class ZxingBarcodeAdapter {
         }
 
         return 'fatal';
-
-    }
-
-    describeFatalError(error) {
-
-        return {
-            constructorName:
-                error?.constructor?.name ?? '',
-            errorName:
-                error?.name ?? '',
-            message:
-                this.sanitizeErrorMessage(
-                    error?.message
-                ),
-            objectType:
-                Object.prototype.toString.call(
-                    error
-                )
-        };
-
-    }
-
-    sanitizeErrorMessage(message) {
-
-        if (
-            typeof message !== 'string'
-        ) {
-
-            return '';
-
-        }
-
-        return message.replace(
-            /[\r\n\t]+/gu,
-            ' '
-        ).slice(
-            0,
-            80
-        );
 
     }
 
