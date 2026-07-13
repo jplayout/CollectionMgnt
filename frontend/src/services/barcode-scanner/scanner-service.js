@@ -128,6 +128,7 @@ export class ScannerService {
     async start({
         onError,
         onResult,
+        onState = () => {},
         video
     }) {
 
@@ -164,8 +165,13 @@ export class ScannerService {
                 'start'
             );
 
+            onState(
+                'requesting-permission'
+            );
+
             this.stream =
                 await this.createReadableStream({
+                    onState,
                     sessionId,
                     video
                 });
@@ -346,6 +352,7 @@ export class ScannerService {
     }
 
     async createReadableStream({
+        onState,
         sessionId,
         video
     }) {
@@ -388,6 +395,10 @@ export class ScannerService {
             sessionId,
             stream
         });
+
+        onState(
+            'preparing-video'
+        );
 
         await this.attachStream({
             sessionId,
@@ -1305,6 +1316,8 @@ export class ScannerService {
                 getUserMediaCalls:
                     this.getUserMediaCalls,
                 sessionId,
+                timestamp:
+                    this.windowObject?.performance?.now?.() ?? Date.now(),
                 ...details
             }
         );

@@ -154,6 +154,7 @@ For each fix / Pour chaque correction:
 | --- | --- | --- | --- | --- | --- | --- |
 | IOS-001 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Permission granted and modal opens, but the video preview remains black and no barcode is detected. | blocking | fix pending real-device retest | ScannerService now sets `autoplay`, `muted`, `playsInline`, `srcObject`, waits for metadata/dimensions, calls `video.play()`, falls back from `facingMode: ideal` to `video: true`, and reports a dedicated preview/playback error instead of leaving a black modal. | `frontend/e2e/camera-scanner.spec.js` covers `srcObject`, `video.play()`, iOS video properties, play rejection, zero dimensions, close before metadata, constraint fallback and ZXing shared stream. |
 | IOS-002 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Permission granted, preview appears briefly, then becomes black. | blocking | fix pending real-device retest | The 15.2 correction was insufficient because zero preview dimensions could trigger the fallback constraints branch after a stream had already been obtained. The 15.2.1 correction guarantees one `getUserMedia` call per successful scanner session; `{ video: true }` is attempted only when the first `getUserMedia` rejects before returning a stream. Track `mute`, `unmute` and `ended` events are instrumented in development without camera labels, frames or barcode data. | `frontend/e2e/camera-scanner.spec.js` covers one successful `getUserMedia` call, no second call while dimensions are zero, fallback only on pre-stream rejection, muted track without a reopen loop, ZXing shared stream and close/reopen session boundaries. |
+| IOS-003 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Safari permission is accepted, camera appears briefly, then the modal closes immediately or the stream is stopped. | blocking | fix pending real-device retest | Audit found no backdrop click, focusout, blur, visibilitychange or global click close path. Closure paths are close button, Escape, scan result, parent `open=false` and unmount. The 15.2.2 correction avoids focusing the close button during permission, adds explicit scanner states, ignores backdrop pointer events during permission/preparing video, requires pointerdown and pointerup to both happen on the backdrop after `scanning`, and logs close reasons in development. | `frontend/e2e/camera-scanner.spec.js` covers normal backdrop close in `scanning`, ignored backdrop during permission, pointerdown before permission plus pointerup after permission, dialog clicks, close button during permission, stable video node, no stop after permission resolution without explicit close, visibilitychange/blur, and Scanner button no-submit behavior. |
 
 ## iPadOS Retest Procedure / Procedure De Retest iPadOS
 
@@ -165,7 +166,8 @@ Utiliser l'image 15.2.1 deployee en HTTPS.
 2. Open a scannable `isbn` or `barcode` field and tap `Scanner`.
 3. Grant camera permission.
 4. Keep the modal open for at least 10 seconds.
-5. Confirm that the preview does not flash then turn black.
+5. Confirm that the preview does not flash then turn black and that the modal
+   does not close immediately after permission acceptance.
 6. Confirm that the code can be detected or, if the preview cannot start, that
    a user-facing error appears instead of an indefinite black preview.
 7. Close and reopen the scanner, then confirm that the second session starts
@@ -176,7 +178,9 @@ Utiliser l'image 15.2.1 deployee en HTTPS.
 Development diagnostic logs may be used during retest. They must contain only
 session id, `getUserMedia` call count, constraints, stream id, track id,
 `readyState`, `muted`, `mute`/`unmute`/`ended`, `srcObject` set/null, stop calls
-and adapter name. Do not collect frames, images, barcodes or camera labels.
+adapter name, close reason, event type, event target/currentTarget,
+`document.visibilityState` and timestamps. Do not collect frames, images,
+barcodes or camera labels.
 
 ## Known Limits / Limites Connues
 
@@ -206,6 +210,9 @@ Known technical limits / Limites techniques connues:
 - 15.2.1 specifically prevents a successful stream from being replaced by an
   automatic constraints fallback / 15.2.1 empeche le remplacement d'un flux
   obtenu par un fallback automatique de contraintes.
+- 15.2.2 specifically protects the permission return path from accidental
+  backdrop/focus-related closure / 15.2.2 protege le retour de permission
+  contre une fermeture accidentelle liee au backdrop ou au focus.
 
 ## Final Field Report / Rapport Terrain Final
 
@@ -221,10 +228,11 @@ Completer cette section apres la campagne sur appareils reels.
   briefly, then black.
 - Observed defects / anomalies constatees: IOS-001 black camera preview on
   iPadOS after permission grant; IOS-002 stream appears to become muted or
-  replaced after a brief preview.
+  replaced after a brief preview; IOS-003 modal closes or stream stops just
+  after permission acceptance.
 - Fixes applied / corrections eventuelles: IOS-001 frontend scanner startup
-  hardening; IOS-002 single-stream-per-session hardening, pending real iPadOS
-  retest.
+  hardening; IOS-002 single-stream-per-session hardening; IOS-003
+  permission/backdrop close hardening, pending real iPadOS retest.
 - Known limits / limites connues: see above
 - Decision / decision: Epic 15 incomplete until iPadOS/Safari retest and
   required iPhone Safari row pass
