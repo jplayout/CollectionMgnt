@@ -2043,6 +2043,654 @@ test.describe(
         );
 
         test(
+            'retries ZXing decode exceptions without surfacing errors',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ZxingBarcodeAdapter
+                            } = await import(
+                                '/src/services/barcode-scanner/zxing-barcode-adapter.js'
+                            );
+
+                            class NotFoundException extends Error {}
+                            class FormatException extends Error {}
+
+                            const checksumError =
+                                new Error(
+                                    'checksum'
+                                );
+
+                            checksumError.name =
+                                'ChecksumException';
+
+                            const diagnostics =
+                                [];
+
+                            const errors =
+                                [];
+
+                            let decodeCalls =
+                                0;
+
+                            class ReaderMock {
+
+                                set possibleFormats(_) {}
+
+                                decode() {
+
+                                    decodeCalls +=
+                                        1;
+
+                                    if (
+                                        decodeCalls === 1
+                                    ) {
+
+                                        throw new NotFoundException(
+                                            'missing'
+                                        );
+
+                                    }
+
+                                    if (
+                                        decodeCalls === 2
+                                    ) {
+
+                                        throw checksumError;
+
+                                    }
+
+                                    if (
+                                        decodeCalls === 3
+                                    ) {
+
+                                        throw new FormatException(
+                                            'format'
+                                        );
+
+                                    }
+
+                                    return {
+                                        getBarcodeFormat: () => 7,
+                                        getText: () => '9780140328721'
+                                    };
+
+                                }
+
+                                reset() {}
+
+                            }
+
+                            const adapter =
+                                new ZxingBarcodeAdapter({
+                                    moduleLoader: async () => ({
+                                        BarcodeFormat: {
+                                            7:
+                                                'EAN_13',
+                                            EAN_13:
+                                                7,
+                                            UPC_A:
+                                                14
+                                        },
+                                        BrowserCodeReader: {
+                                            releaseAllStreams: () => {}
+                                        },
+                                        BrowserMultiFormatOneDReader:
+                                            ReaderMock
+                                    }),
+                                    scanIntervalMs:
+                                        1
+                                });
+
+                            const video =
+                                document.createElement(
+                                    'video'
+                                );
+
+                            Object.defineProperty(
+                                video,
+                                'readyState',
+                                {
+                                    value:
+                                        HTMLMediaElement.HAVE_CURRENT_DATA
+                                }
+                            );
+
+                            const scanned =
+                                await new Promise(
+                                    resolve => adapter.start({
+                                        onDiagnostic: event => diagnostics.push(
+                                            event
+                                        ),
+                                        onError: error => errors.push(
+                                            error.name
+                                        ),
+                                        onResult: resolve,
+                                        video
+                                    })
+                                );
+
+                            adapter.stop();
+
+                            return {
+                                decodeCalls,
+                                diagnostics,
+                                errors,
+                                scanned
+                            };
+
+                        }
+                    );
+
+                expect(
+                    result.errors
+                ).toEqual([]);
+
+                expect(
+                    result.decodeCalls
+                ).toBe(
+                    4
+                );
+
+                expect(
+                    result.diagnostics
+                ).toContainEqual({
+                    errorName:
+                        'NotFoundException',
+                    type:
+                        'detection retryable'
+                });
+
+                expect(
+                    result.diagnostics
+                ).toContainEqual({
+                    errorName:
+                        'ChecksumException',
+                    type:
+                        'detection retryable'
+                });
+
+                expect(
+                    result.diagnostics
+                ).toContainEqual({
+                    errorName:
+                        'FormatException',
+                    type:
+                        'detection retryable'
+                });
+
+                expect(
+                    result.scanned
+                ).toEqual({
+                    adapter:
+                        'zxing',
+                    format:
+                        'ean_13',
+                    rawValue:
+                        '9780140328721'
+                });
+
+            }
+        );
+
+        test(
+            'keeps ZXing stream alive through retryable errors until a result',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ScannerService
+                            } = await import(
+                                '/src/services/barcode-scanner/scanner-service.js'
+                            );
+
+                            const {
+                                ZxingBarcodeAdapter
+                            } = await import(
+                                '/src/services/barcode-scanner/zxing-barcode-adapter.js'
+                            );
+
+                            class NotFoundException extends Error {}
+
+                            const checksumError =
+                                new Error(
+                                    'checksum'
+                                );
+
+                            checksumError.name =
+                                'ChecksumException';
+
+                            let decodeCalls =
+                                0;
+
+                            const srcObjectDuringDecode =
+                                [];
+
+                            class ReaderMock {
+
+                                set possibleFormats(_) {}
+
+                                decode(video) {
+
+                                    decodeCalls +=
+                                        1;
+
+                                    srcObjectDuringDecode.push(
+                                        Boolean(
+                                            video.srcObject
+                                        )
+                                    );
+
+                                    if (
+                                        decodeCalls === 1
+                                    ) {
+
+                                        throw checksumError;
+
+                                    }
+
+                                    if (
+                                        decodeCalls === 2
+                                    ) {
+
+                                        throw new NotFoundException(
+                                            'missing'
+                                        );
+
+                                    }
+
+                                    return {
+                                        getBarcodeFormat: () => 7,
+                                        getText: () => '9780140328721'
+                                    };
+
+                                }
+
+                                reset() {}
+
+                            }
+
+                            let stopCalls =
+                                0;
+
+                            const stream =
+                                {
+                                    getTracks: () => [
+                                        {
+                                            stop: () => {
+
+                                                stopCalls +=
+                                                    1;
+
+                                            }
+                                        }
+                                    ]
+                                };
+
+                            const diagnostics =
+                                [];
+
+                            const errors =
+                                [];
+
+                            const service =
+                                new ScannerService({
+                                    createNativeAdapter: () => ({
+                                        isSupported: async () => false,
+                                        stop: () => {}
+                                    }),
+                                    createZxingAdapter: () => new ZxingBarcodeAdapter({
+                                        moduleLoader: async () => ({
+                                            BarcodeFormat: {
+                                                7:
+                                                    'EAN_13',
+                                                EAN_13:
+                                                    7,
+                                                UPC_A:
+                                                    14
+                                            },
+                                            BrowserCodeReader: {
+                                                releaseAllStreams: () => {}
+                                            },
+                                            BrowserMultiFormatOneDReader:
+                                                ReaderMock
+                                        }),
+                                        scanIntervalMs:
+                                            1
+                                    }),
+                                    mediaDevices: {
+                                        getUserMedia: async () => stream
+                                    },
+                                    secureContext:
+                                        true
+                                });
+
+                            const video =
+                                window.createTestVideo();
+
+                            const scanned =
+                                await new Promise(
+                                    resolve => service.start({
+                                        onDiagnostic: event => diagnostics.push(
+                                            event
+                                        ),
+                                        onError: error => errors.push(
+                                            error.code
+                                        ),
+                                        onResult: resolve,
+                                        video
+                                    })
+                                );
+
+                            return {
+                                diagnostics:
+                                    diagnostics.map(
+                                        event => [
+                                            event.type,
+                                            event.errorName
+                                        ]
+                                    ),
+                                errors,
+                                scanned,
+                                srcObjectCleared:
+                                    video.srcObject === null,
+                                srcObjectDuringDecode,
+                                stopCalls
+                            };
+
+                        }
+                    );
+
+                expect(
+                    result.errors
+                ).toEqual([]);
+
+                expect(
+                    result.srcObjectDuringDecode
+                ).toEqual([
+                    true,
+                    true,
+                    true
+                ]);
+
+                expect(
+                    result.scanned.rawValue
+                ).toBe(
+                    '9780140328721'
+                );
+
+                expect(
+                    result.stopCalls
+                ).toBe(
+                    1
+                );
+
+                expect(
+                    result.srcObjectCleared
+                ).toBeTruthy();
+
+                expect(
+                    result.diagnostics
+                ).toContainEqual([
+                    'detection retryable',
+                    'ChecksumException'
+                ]);
+
+                expect(
+                    result.diagnostics
+                ).toContainEqual([
+                    'detection retryable',
+                    'NotFoundException'
+                ]);
+
+            }
+        );
+
+        test(
+            'keeps unknown ZXing decode errors fatal',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ScannerService
+                            } = await import(
+                                '/src/services/barcode-scanner/scanner-service.js'
+                            );
+
+                            const {
+                                ZxingBarcodeAdapter
+                            } = await import(
+                                '/src/services/barcode-scanner/zxing-barcode-adapter.js'
+                            );
+
+                            class ReaderMock {
+
+                                set possibleFormats(_) {}
+
+                                decode() {
+
+                                    throw new Error(
+                                        'canvas failed'
+                                    );
+
+                                }
+
+                                reset() {}
+
+                            }
+
+                            let stopCalls =
+                                0;
+
+                            const service =
+                                new ScannerService({
+                                    createNativeAdapter: () => ({
+                                        isSupported: async () => false,
+                                        stop: () => {}
+                                    }),
+                                    createZxingAdapter: () => new ZxingBarcodeAdapter({
+                                        moduleLoader: async () => ({
+                                            BarcodeFormat: {
+                                                EAN_13:
+                                                    7,
+                                                UPC_A:
+                                                    14
+                                            },
+                                            BrowserCodeReader: {
+                                                releaseAllStreams: () => {}
+                                            },
+                                            BrowserMultiFormatOneDReader:
+                                                ReaderMock
+                                        }),
+                                        scanIntervalMs:
+                                            1
+                                    }),
+                                    mediaDevices: {
+                                        getUserMedia: async () => ({
+                                            getTracks: () => [
+                                                {
+                                                    stop: () => {
+
+                                                        stopCalls +=
+                                                            1;
+
+                                                    }
+                                                }
+                                            ]
+                                        })
+                                    },
+                                    secureContext:
+                                        true
+                                });
+
+                            const video =
+                                window.createTestVideo();
+
+                            const code =
+                                await new Promise(
+                                    resolve => service.start({
+                                        onError: error => resolve(
+                                            error.code
+                                        ),
+                                        onResult: () => resolve(
+                                            'result'
+                                        ),
+                                        video
+                                    })
+                                );
+
+                            return {
+                                code,
+                                srcObjectCleared:
+                                    video.srcObject === null,
+                                stopCalls
+                            };
+
+                        }
+                    );
+
+                expect(
+                    result.code
+                ).toBe(
+                    'read-error'
+                );
+
+                expect(
+                    result.stopCalls
+                ).toBe(
+                    1
+                );
+
+                expect(
+                    result.srcObjectCleared
+                ).toBeTruthy();
+
+            }
+        );
+
+        test(
+            'stops ZXing retry loop after manual stop',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ZxingBarcodeAdapter
+                            } = await import(
+                                '/src/services/barcode-scanner/zxing-barcode-adapter.js'
+                            );
+
+                            class NotFoundException extends Error {}
+
+                            let decodeCalls =
+                                0;
+
+                            class ReaderMock {
+
+                                set possibleFormats(_) {}
+
+                                decode() {
+
+                                    decodeCalls +=
+                                        1;
+
+                                    throw new NotFoundException(
+                                        'missing'
+                                    );
+
+                                }
+
+                                reset() {}
+
+                            }
+
+                            const adapter =
+                                new ZxingBarcodeAdapter({
+                                    moduleLoader: async () => ({
+                                        BarcodeFormat: {
+                                            EAN_13:
+                                                7,
+                                            UPC_A:
+                                                14
+                                        },
+                                        BrowserCodeReader: {
+                                            releaseAllStreams: () => {}
+                                        },
+                                        BrowserMultiFormatOneDReader:
+                                            ReaderMock
+                                    }),
+                                    scanIntervalMs:
+                                        5
+                                });
+
+                            const video =
+                                document.createElement(
+                                    'video'
+                                );
+
+                            Object.defineProperty(
+                                video,
+                                'readyState',
+                                {
+                                    value:
+                                        HTMLMediaElement.HAVE_CURRENT_DATA
+                                }
+                            );
+
+                            await adapter.start({
+                                onDiagnostic: event => {
+
+                                    if (
+                                        event.type === 'detection retryable'
+                                    ) {
+
+                                        adapter.stop();
+
+                                    }
+
+                                },
+                                onError: () => {},
+                                onResult: () => {},
+                                video
+                            });
+
+                            await new Promise(
+                                resolve => window.setTimeout(
+                                    resolve,
+                                    20
+                                )
+                            );
+
+                            return decodeCalls;
+
+                        }
+                    );
+
+                expect(
+                    result
+                ).toBe(
+                    1
+                );
+
+            }
+        );
+
+        test(
             'returns stable error when ZXing fallback cannot load',
             async ({ page }) => {
 
@@ -2876,6 +3524,50 @@ test.describe(
                                                             'track mute'
                                                     });
 
+                                                    onDiagnostic({
+                                                        errorName:
+                                                            'NotFoundException',
+                                                        getUserMediaCalls:
+                                                            1,
+                                                        sessionId:
+                                                            7,
+                                                        type:
+                                                            'detection retryable'
+                                                    });
+
+                                                    onDiagnostic({
+                                                        errorName:
+                                                            'ChecksumException',
+                                                        getUserMediaCalls:
+                                                            1,
+                                                        sessionId:
+                                                            7,
+                                                        type:
+                                                            'detection retryable'
+                                                    });
+
+                                                    onDiagnostic({
+                                                        errorName:
+                                                            'FormatException',
+                                                        getUserMediaCalls:
+                                                            1,
+                                                        sessionId:
+                                                            7,
+                                                        type:
+                                                            'detection retryable'
+                                                    });
+
+                                                    onDiagnostic({
+                                                        errorName:
+                                                            'InvalidStateError',
+                                                        getUserMediaCalls:
+                                                            1,
+                                                        sessionId:
+                                                            7,
+                                                        type:
+                                                            'detection fatal'
+                                                    });
+
                                                 },
                                                 stop: () => {}
                                             }),
@@ -2961,6 +3653,36 @@ test.describe(
                     result.panelText
                 ).toContain(
                     'track mute'
+                );
+
+                expect(
+                    result.panelText
+                ).toContain(
+                    'notFound=1'
+                );
+
+                expect(
+                    result.panelText
+                ).toContain(
+                    'checksum=1'
+                );
+
+                expect(
+                    result.panelText
+                ).toContain(
+                    'format=1'
+                );
+
+                expect(
+                    result.panelText
+                ).toContain(
+                    'fatal=1'
+                );
+
+                expect(
+                    result.panelText
+                ).toContain(
+                    'detection retryable ChecksumException'
                 );
 
                 expect(

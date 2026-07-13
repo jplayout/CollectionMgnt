@@ -202,6 +202,12 @@ const diagnosticState =
             'mounted',
         detectionAttempts:
             0,
+        detectionChecksum:
+            0,
+        detectionFatal:
+            0,
+        detectionFormat:
+            0,
         detectionNotFound:
             0,
         documentVisibility:
@@ -465,7 +471,7 @@ const diagnosticRows =
                 label:
                     'detection',
                 value:
-                    `${diagnosticState.detectionAttempts}/${diagnosticState.detectionNotFound}`
+                    `attempts=${diagnosticState.detectionAttempts} notFound=${diagnosticState.detectionNotFound} checksum=${diagnosticState.detectionChecksum} format=${diagnosticState.detectionFormat} fatal=${diagnosticState.detectionFatal}`
             },
             {
                 label:
@@ -890,6 +896,12 @@ function resetDiagnosticState() {
         'mounted';
     diagnosticState.detectionAttempts =
         0;
+    diagnosticState.detectionChecksum =
+        0;
+    diagnosticState.detectionFatal =
+        0;
+    diagnosticState.detectionFormat =
+        0;
     diagnosticState.detectionNotFound =
         0;
     diagnosticState.documentVisibility =
@@ -989,10 +1001,37 @@ function handleDiagnosticEvent(event) {
     }
 
     if (
-        event.type === 'detection not-found'
+        event.type === 'detection retryable'
     ) {
 
-        diagnosticState.detectionNotFound +=
+        if (
+            event.errorName === 'ChecksumException'
+        ) {
+
+            diagnosticState.detectionChecksum +=
+                1;
+
+        } else if (
+            event.errorName === 'FormatException'
+        ) {
+
+            diagnosticState.detectionFormat +=
+                1;
+
+        } else {
+
+            diagnosticState.detectionNotFound +=
+                1;
+
+        }
+
+    }
+
+    if (
+        event.type === 'detection fatal'
+    ) {
+
+        diagnosticState.detectionFatal +=
             1;
 
     }
@@ -1029,7 +1068,9 @@ function handleDiagnosticEvent(event) {
     );
 
     recordDiagnosticEvent(
-        event.type
+        event.errorName ?
+            `${event.type} ${event.errorName}` :
+            event.type
     );
 
     updateDiagnosticSnapshot();
@@ -1269,7 +1310,7 @@ function buildDiagnosticText() {
         `component=${diagnosticState.component}`,
         `closeReason=${diagnosticState.closeReason}`,
         `error=${diagnosticState.error}`,
-        `detection=${diagnosticState.detectionAttempts}/${diagnosticState.detectionNotFound}`,
+        `detection=attempts:${diagnosticState.detectionAttempts} notFound:${diagnosticState.detectionNotFound} checksum:${diagnosticState.detectionChecksum} format:${diagnosticState.detectionFormat} fatal:${diagnosticState.detectionFatal}`,
         `visibility=${diagnosticState.documentVisibility}`,
         'events=',
         ...diagnosticState.events.map(
