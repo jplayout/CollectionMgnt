@@ -33,6 +33,7 @@
                         autoplay
                         muted
                         playsinline
+                        webkit-playsinline
                     />
 
                     <div
@@ -112,6 +113,9 @@ const videoElement =
 let scannerService =
     null;
 
+let scannerRunId =
+    0;
+
 const message =
     computed(
         () => {
@@ -153,6 +157,22 @@ const message =
             ) {
 
                 return 'Camera indisponible ou deja utilisee. La saisie manuelle reste disponible.';
+
+            }
+
+            if (
+                status.value === 'video-play-failed'
+            ) {
+
+                return 'La camera est autorisee mais la lecture video n a pas demarre. La saisie manuelle reste disponible.';
+
+            }
+
+            if (
+                status.value === 'video-preview-unavailable'
+            ) {
+
+                return 'La camera est autorisee mais l apercu video n a pas demarre. La saisie manuelle reste disponible.';
 
             }
 
@@ -202,7 +222,9 @@ const hasError =
             'fallback-unavailable',
             'permission-denied',
             'read-error',
-            'unsupported'
+            'unsupported',
+            'video-play-failed',
+            'video-preview-unavailable'
         ].includes(
             status.value
         )
@@ -237,6 +259,11 @@ onBeforeUnmount(
 
 async function openScanner() {
 
+    stopScanner();
+
+    const runId =
+        nextScannerRunId();
+
     status.value =
         'loading';
 
@@ -244,6 +271,17 @@ async function openScanner() {
         props.scannerFactory();
 
     await nextTick();
+
+    if (
+        !isCurrentScannerRun(
+            runId
+        ) ||
+        !props.open
+    ) {
+
+        return;
+
+    }
 
     closeButton.value?.focus();
 
@@ -258,10 +296,34 @@ async function openScanner() {
                 videoElement.value
         });
 
+        if (
+            !isCurrentScannerRun(
+                runId
+            ) ||
+            !props.open
+        ) {
+
+            stopScanner();
+
+            return;
+
+        }
+
         status.value =
             'scanning';
 
     } catch (error) {
+
+        if (
+            !isCurrentScannerRun(
+                runId
+            ) ||
+            !props.open
+        ) {
+
+            return;
+
+        }
 
         handleError(
             error
@@ -314,10 +376,27 @@ function close() {
 
 function stopScanner() {
 
+    nextScannerRunId();
+
     scannerService?.stop();
 
     scannerService =
         null;
+
+}
+
+function nextScannerRunId() {
+
+    scannerRunId +=
+        1;
+
+    return scannerRunId;
+
+}
+
+function isCurrentScannerRun(runId) {
+
+    return scannerRunId === runId;
 
 }
 
@@ -442,9 +521,14 @@ function restoreFocus() {
 }
 
 .camera-scanner-preview video {
+    display: block;
     height: 100%;
+    inset: 0;
     object-fit: cover;
+    opacity: 1;
+    position: absolute;
     width: 100%;
+    z-index: 0;
 }
 
 .camera-scanner-frame {
@@ -457,6 +541,7 @@ function restoreFocus() {
     top: 50%;
     transform: translate(-50%, -50%);
     width: 78%;
+    z-index: 1;
 }
 
 .camera-scanner-message {

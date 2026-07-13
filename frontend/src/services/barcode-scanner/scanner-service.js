@@ -6,6 +6,29 @@ import {
     createZxingBarcodeAdapter
 } from './zxing-barcode-adapter.js';
 
+const defaultPreviewReadyTimeoutMs =
+    2500;
+
+const defaultCameraConstraints =
+    [
+        {
+            audio:
+                false,
+            video: {
+                facingMode: {
+                    ideal:
+                        'environment'
+                }
+            }
+        },
+        {
+            audio:
+                false,
+            video:
+                true
+        }
+    ];
+
 export class ScannerError extends Error {
 
     constructor(code, cause) {
@@ -36,6 +59,8 @@ export class ScannerService {
             createZxingBarcodeAdapter,
         mediaDevices =
             globalThis.navigator?.mediaDevices,
+        previewReadyTimeoutMs =
+            defaultPreviewReadyTimeoutMs,
         secureContext =
             globalThis.isSecureContext,
         windowObject =
@@ -50,6 +75,9 @@ export class ScannerService {
 
         this.mediaDevices =
             mediaDevices;
+
+        this.previewReadyTimeoutMs =
+            previewReadyTimeoutMs;
 
         this.secureContext =
             secureContext;
@@ -77,6 +105,9 @@ export class ScannerService {
 
         this.sessionId =
             0;
+
+        this.pendingWaits =
+            new Set();
 
     }
 
@@ -112,15 +143,9 @@ export class ScannerService {
             this.assertEnvironment();
 
             this.stream =
-                await this.mediaDevices.getUserMedia({
-                    audio:
-                        false,
-                    video: {
-                        facingMode: {
-                            ideal:
-                                'environment'
-                        }
-                    }
+                await this.createReadableStream({
+                    sessionId,
+                    video
                 });
 
             if (
@@ -135,20 +160,6 @@ export class ScannerService {
 
                 this.stream =
                     null;
-
-                return;
-
-            }
-
-            await this.attachStream(
-                video
-            );
-
-            if (
-                !this.isCurrentSession(
-                    sessionId
-                )
-            ) {
 
                 return;
 
@@ -303,26 +314,450 @@ export class ScannerService {
 
     }
 
-    async attachStream(video) {
+    async createReadableStream({
+        sessionId,
+        video
+    }) {
 
-        video.srcObject =
-            this.stream;
+        let lastError =
+            null;
+
+        for (
+            const constraints of defaultCameraConstraints
+        ) {
+
+            let stream =
+                null;
+
+            try {
+
+                stream =
+                    await this.mediaDevices.getUserMedia(
+                        constraints
+                    );
+
+                if (
+                    !this.isCurrentSession(
+                        sessionId
+                    )
+                ) {
+
+                    this.stopStream(
+                        stream
+                    );
+
+                    return null;
+
+                }
+
+                this.assertUsableStream(
+                    stream
+                );
+
+                this.stream =
+                    stream;
+
+                await this.attachStream({
+                    sessionId,
+                    stream,
+                    video
+                });
+
+                if (
+                    !this.isCurrentSession(
+                        sessionId
+                    )
+                ) {
+
+                    this.stopStream(
+                        stream
+                    );
+
+                    return null;
+
+                }
+
+                return stream;
+
+            } catch (error) {
+
+                lastError =
+                    error;
+
+                this.stopStream(
+                    stream
+                );
+
+                if (
+                    this.stream === stream
+                ) {
+
+                    this.stream =
+                        null;
+
+                }
+
+                if (
+                    video?.srcObject === stream
+                ) {
+
+                    video.pause?.();
+                    video.srcObject =
+                        null;
+
+                }
+
+                if (
+                    error instanceof ScannerError &&
+                    error.code === 'video-play-failed'
+                ) {
+
+                    throw error;
+
+                }
+
+            }
+
+        }
+
+        throw lastError ?? new ScannerError(
+            'video-preview-unavailable'
+        );
+
+    }
+
+    async attachStream({
+        sessionId,
+        stream,
+        video
+    }) {
+
+        if (
+            !video
+        ) {
+
+            throw new ScannerError(
+                'video-preview-unavailable'
+            );
+
+        }
+
+        video.autoplay =
+            true;
+
+        video.muted =
+            true;
+
+        video.playsInline =
+            true;
+
+        video.setAttribute(
+            'autoplay',
+            ''
+        );
+
+        video.setAttribute(
+            'muted',
+            ''
+        );
 
         video.setAttribute(
             'playsinline',
             ''
         );
 
-        video.muted =
-            true;
+        video.setAttribute(
+            'webkit-playsinline',
+            ''
+        );
+
+        video.srcObject =
+            stream;
+
+        await this.waitForVideoMetadata({
+            sessionId,
+            video
+        });
 
         if (
             typeof video.play === 'function'
         ) {
 
-            await video.play();
+            try {
+
+                await video.play();
+
+            } catch (error) {
+
+                throw new ScannerError(
+                    'video-play-failed',
+                    error
+                );
+
+            }
 
         }
+
+        await this.waitForVideoDimensions({
+            sessionId,
+            video
+        });
+
+    }
+
+    assertUsableStream(stream) {
+
+        if (
+            !stream ||
+            stream.active === false
+        ) {
+
+            throw new ScannerError(
+                'camera-unavailable'
+            );
+
+        }
+
+        const videoTracks =
+            typeof stream.getVideoTracks === 'function' ?
+                stream.getVideoTracks() :
+                stream.getTracks?.()
+                    ?.filter(
+                        track => !track.kind || track.kind === 'video'
+                    );
+
+        if (
+            !videoTracks?.length ||
+            videoTracks.some(
+                track => track.readyState &&
+                    track.readyState !== 'live'
+            )
+        ) {
+
+            throw new ScannerError(
+                'camera-unavailable'
+            );
+
+        }
+
+    }
+
+    waitForVideoMetadata({
+        sessionId,
+        video
+    }) {
+
+        if (
+            video.readyState >= HTMLMediaElement.HAVE_METADATA
+        ) {
+
+            return Promise.resolve();
+
+        }
+
+        return this.waitForVideoEvent({
+            events: [
+                'loadedmetadata',
+                'canplay'
+            ],
+            predicate: () => video.readyState >= HTMLMediaElement.HAVE_METADATA,
+            sessionId,
+            timeoutMs:
+                this.previewReadyTimeoutMs,
+            video
+        });
+
+    }
+
+    waitForVideoDimensions({
+        sessionId,
+        video
+    }) {
+
+        return this.waitForVideoEvent({
+            events: [
+                'loadedmetadata',
+                'canplay',
+                'playing',
+                'resize'
+            ],
+            predicate: () => video.videoWidth > 0 &&
+                video.videoHeight > 0,
+            sessionId,
+            timeoutCode:
+                'video-preview-unavailable',
+            timeoutMs:
+                this.previewReadyTimeoutMs,
+            video
+        });
+
+    }
+
+    waitForVideoEvent({
+        events,
+        predicate,
+        sessionId,
+        timeoutCode =
+            'video-preview-unavailable',
+        timeoutMs,
+        video
+    }) {
+
+        if (
+            predicate()
+        ) {
+
+            return Promise.resolve();
+
+        }
+
+        return new Promise(
+            (resolve, reject) => {
+
+                let settled =
+                    false;
+
+                const cleanup =
+                    () => {
+
+                        this.pendingWaits.delete(
+                            cancel
+                        );
+
+                        this.windowObject.clearTimeout(
+                            timeoutId
+                        );
+
+                        events.forEach(
+                            eventName => video.removeEventListener(
+                                eventName,
+                                handleEvent
+                            )
+                        );
+
+                    };
+
+                const cancel =
+                    () => {
+
+                        if (
+                            settled
+                        ) {
+
+                            return;
+
+                        }
+
+                        settled =
+                            true;
+
+                        cleanup();
+                        resolve();
+
+                    };
+
+                const finish =
+                    () => {
+
+                        if (
+                            settled
+                        ) {
+
+                            return;
+
+                        }
+
+                        if (
+                            !this.isCurrentSession(
+                                sessionId
+                            )
+                        ) {
+
+                            settled =
+                                true;
+
+                            cleanup();
+                            resolve();
+
+                            return;
+
+                        }
+
+                        if (
+                            predicate()
+                        ) {
+
+                            settled =
+                                true;
+
+                            cleanup();
+                            resolve();
+
+                        }
+
+                    };
+
+                const handleEvent =
+                    () => finish();
+
+                const timeoutId =
+                    this.windowObject.setTimeout(
+                        () => {
+
+                            if (
+                                settled
+                            ) {
+
+                                return;
+
+                            }
+
+                            settled =
+                                true;
+
+                            cleanup();
+
+                            if (
+                                this.isCurrentSession(
+                                    sessionId
+                                )
+                            ) {
+
+                                reject(
+                                    new ScannerError(
+                                        timeoutCode
+                                    )
+                                );
+
+                                return;
+
+                            }
+
+                            resolve();
+
+                        },
+                        timeoutMs
+                    );
+
+                events.forEach(
+                    eventName => video.addEventListener(
+                        eventName,
+                        handleEvent,
+                        {
+                            once:
+                                false
+                        }
+                    )
+                );
+
+                this.pendingWaits.add(
+                    cancel
+                );
+
+                finish();
+
+            }
+        );
 
     }
 
@@ -408,6 +843,12 @@ export class ScannerService {
         this.sessionId +=
             1;
 
+        this.pendingWaits.forEach(
+            cancel => cancel()
+        );
+
+        this.pendingWaits.clear();
+
         this.adapter?.stop();
 
         this.stopStream(
@@ -443,10 +884,14 @@ export class ScannerService {
 
     stopStream(stream) {
 
-        stream?.getTracks()
-            ?.forEach(
-                track => track.stop()
-            );
+        const tracks =
+            typeof stream?.getTracks === 'function' ?
+                stream.getTracks() :
+                stream?.getVideoTracks?.();
+
+        tracks?.forEach(
+            track => track.stop()
+        );
 
     }
 
