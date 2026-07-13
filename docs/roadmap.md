@@ -560,7 +560,8 @@ Contraintes :
 - Une correction de l'aperçu camera noir observe sur tablette iPadOS apres
   permission accordee est disponible. Le suivi 15.2.1 empeche le remplacement
   automatique d'un flux deja obtenu par un second `getUserMedia`, avec retest
-  iPadOS reel requis avant merge.
+  iPadOS reel requis avant merge. Le suivi 15.2.2 protege aussi le retour de la
+  fenetre de permission Safari contre une fermeture accidentelle du scanner.
 - Aucun secret provider expose au frontend.
 - Les images restent importees explicitement via `MediaService`.
 

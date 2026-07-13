@@ -8,8 +8,11 @@
             class="camera-scanner-backdrop"
             role="dialog"
             tabindex="-1"
-            @keydown.esc.prevent="close"
+            @click="handleBackdropClick"
+            @keydown.esc.prevent="closeWithReason('escape', $event)"
             @keydown.tab="trapFocus"
+            @pointerdown="handleBackdropPointerDown"
+            @pointerup="handleBackdropPointerUp"
         >
             <section class="camera-scanner-modal">
                 <header class="camera-scanner-header">
@@ -20,7 +23,7 @@
                         aria-label="Fermer le scanner camera"
                         class="camera-scanner-close"
                         type="button"
-                        @click="close"
+                        @click.stop="closeWithReason('close-button', $event)"
                     >
                         x
                     </button>
@@ -105,7 +108,7 @@ const modalElement =
     ref(null);
 
 const status =
-    ref('idle');
+    ref('closed');
 
 const videoElement =
     ref(null);
@@ -116,12 +119,33 @@ let scannerService =
 let scannerRunId =
     0;
 
+let openedAt =
+    0;
+
+let permissionResolvedAt =
+    0;
+
+let pointerDownStartedOnBackdrop =
+    false;
+
+let pointerDownAt =
+    0;
+
+const protectedStates =
+    [
+        'opening',
+        'requesting-permission',
+        'preparing-video'
+    ];
+
 const message =
     computed(
         () => {
 
             if (
                 status.value === 'loading'
+                || status.value === 'opening'
+                || status.value === 'requesting-permission'
             ) {
 
                 return 'Demande d acces a la camera...';
@@ -255,6 +279,13 @@ watch(
 
         stopScanner();
 
+        status.value =
+            'closed';
+
+        debugClose(
+            'parent-state-change'
+        );
+
     },
     {
         immediate:
@@ -263,7 +294,15 @@ watch(
 );
 
 onBeforeUnmount(
-    stopScanner
+    () => {
+
+        debugClose(
+            'unmount'
+        );
+
+        stopScanner();
+
+    }
 );
 
 async function openScanner() {
@@ -273,8 +312,18 @@ async function openScanner() {
     const runId =
         nextScannerRunId();
 
+    openedAt =
+        now();
+
+    permissionResolvedAt =
+        0;
+
     status.value =
-        'loading';
+        'opening';
+
+    debugClose(
+        'open'
+    );
 
     scannerService =
         props.scannerFactory();
@@ -292,7 +341,10 @@ async function openScanner() {
 
     }
 
-    closeButton.value?.focus();
+    modalElement.value?.focus?.({
+        preventScroll:
+            true
+    });
 
     try {
 
@@ -301,6 +353,8 @@ async function openScanner() {
                 handleError,
             onResult:
                 handleResult,
+            onState:
+                handleScannerState,
             video:
                 videoElement.value
         });
@@ -320,6 +374,10 @@ async function openScanner() {
 
         status.value =
             'scanning';
+
+        debugClose(
+            'scanning'
+        );
 
     } catch (error) {
 
@@ -352,7 +410,9 @@ function handleResult(result) {
         result
     );
 
-    close();
+    closeWithReason(
+        'result'
+    );
 
 }
 
@@ -371,7 +431,32 @@ function handleError(error) {
 
 }
 
-function close() {
+function handleScannerState(nextStatus) {
+
+    status.value =
+        nextStatus;
+
+    if (
+        nextStatus === 'preparing-video'
+    ) {
+
+        permissionResolvedAt =
+            now();
+
+        debugClose(
+            'permission-return'
+        );
+
+    }
+
+}
+
+function closeWithReason(reason, event) {
+
+    debugClose(
+        reason,
+        event
+    );
 
     stopScanner();
 
@@ -383,6 +468,73 @@ function close() {
 
 }
 
+function handleBackdropPointerDown(event) {
+
+    pointerDownStartedOnBackdrop =
+        event.target === modalElement.value;
+
+    pointerDownAt =
+        now();
+
+    debugClose(
+        'backdrop-pointerdown',
+        event
+    );
+
+}
+
+function handleBackdropPointerUp(event) {
+
+    debugClose(
+        'backdrop-pointerup',
+        event
+    );
+
+    if (
+        !canCloseFromBackdrop(
+            event
+        )
+    ) {
+
+        pointerDownStartedOnBackdrop =
+            false;
+
+        return;
+
+    }
+
+    pointerDownStartedOnBackdrop =
+        false;
+
+    closeWithReason(
+        'backdrop',
+        event
+    );
+
+}
+
+function handleBackdropClick(event) {
+
+    debugClose(
+        'backdrop-click-ignored',
+        event
+    );
+
+}
+
+function canCloseFromBackdrop(event) {
+
+    return status.value === 'scanning' &&
+        event.target === modalElement.value &&
+        pointerDownStartedOnBackdrop &&
+        pointerDownAt > openedAt &&
+        pointerDownAt > permissionResolvedAt &&
+        !protectedStates.includes(
+            status.value
+        );
+
+}
+
 function stopScanner() {
 
     nextScannerRunId();
@@ -391,6 +543,73 @@ function stopScanner() {
 
     scannerService =
         null;
+
+}
+
+function now() {
+
+    return window.performance?.now?.() ?? Date.now();
+
+}
+
+function debugClose(reason, event) {
+
+    if (
+        import.meta.env?.DEV !== true ||
+        typeof window.console?.debug !== 'function'
+    ) {
+
+        return;
+
+    }
+
+    window.console.debug(
+        '[CameraScanner]',
+        {
+            currentTarget:
+                describeEventTarget(
+                    event?.currentTarget
+                ),
+            eventType:
+                event?.type,
+            openedAt,
+            permissionResolvedAt,
+            reason,
+            sessionId:
+                scannerRunId,
+            status:
+                status.value,
+            target:
+                describeEventTarget(
+                    event?.target
+                ),
+            timestamp:
+                now(),
+            visibilityState:
+                document.visibilityState
+        }
+    );
+
+}
+
+function describeEventTarget(target) {
+
+    if (
+        !target
+    ) {
+
+        return null;
+
+    }
+
+    return {
+        className:
+            typeof target.className === 'string' ?
+                target.className :
+                undefined,
+        tagName:
+            target.tagName
+    };
 
 }
 
