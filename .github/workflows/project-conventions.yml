@@ -95,7 +95,7 @@ jobs:
             !frontend/node_modules/**
 
       - name: Check internal Markdown links
-        uses: lycheeverse/lychee-action@v2.8.0
+        uses: lycheeverse/lychee-action@v2.9.0
         with:
           args: --offline --no-progress --root-dir . --exclude "https?://.*" "**/*.md"
           fail: true
