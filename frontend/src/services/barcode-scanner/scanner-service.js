@@ -6,6 +6,10 @@ import {
     createZxingBarcodeAdapter
 } from './zxing-barcode-adapter.js';
 
+import {
+    normalizeScanMode
+} from './formats.js';
+
 const defaultPreviewReadyTimeoutMs =
     6000;
 
@@ -123,6 +127,8 @@ export class ScannerService {
         onError,
         onResult,
         onState = () => {},
+        scanMode =
+            'barcode',
         video
     }) {
 
@@ -180,7 +186,9 @@ export class ScannerService {
             }
 
             this.adapter =
-                await this.selectAdapter();
+                await this.selectAdapter(
+                    scanMode
+                );
 
             if (
                 !this.isCurrentSession(
@@ -270,10 +278,18 @@ export class ScannerService {
 
     }
 
-    async selectAdapter() {
+    async selectAdapter(scanMode) {
+
+        const normalizedScanMode =
+            normalizeScanMode(
+                scanMode
+            );
 
         const nativeAdapter =
-            this.createNativeAdapter();
+            this.createNativeAdapter({
+                scanMode:
+                    normalizedScanMode
+            });
 
         if (
             await nativeAdapter.isSupported()
@@ -284,7 +300,10 @@ export class ScannerService {
         }
 
         const zxingAdapter =
-            this.createZxingAdapter();
+            this.createZxingAdapter({
+                scanMode:
+                    normalizedScanMode
+            });
 
         if (
             await zxingAdapter.isSupported()

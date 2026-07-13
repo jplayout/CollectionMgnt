@@ -1,6 +1,7 @@
 import {
-    MVP_BARCODE_FORMATS,
-    normalizeBarcodeResult
+    getBarcodeFormatsForMode,
+    normalizeScanMode,
+    selectBarcodeResult
 } from './formats.js';
 
 const defaultScanIntervalMs =
@@ -11,6 +12,8 @@ export class NativeBarcodeAdapter {
     constructor({
         barcodeDetectorClass =
             globalThis.BarcodeDetector,
+        scanMode =
+            'barcode',
         scanIntervalMs =
             defaultScanIntervalMs
     } = {}) {
@@ -20,6 +23,16 @@ export class NativeBarcodeAdapter {
 
         this.scanIntervalMs =
             scanIntervalMs;
+
+        this.scanMode =
+            normalizeScanMode(
+                scanMode
+            );
+
+        this.formats =
+            getBarcodeFormatsForMode(
+                this.scanMode
+            );
 
         this.detector =
             null;
@@ -57,7 +70,7 @@ export class NativeBarcodeAdapter {
         }
 
         if (
-            !MVP_BARCODE_FORMATS.every(
+            !this.formats.every(
                 format => supportedFormats.includes(
                     format
                 )
@@ -73,7 +86,7 @@ export class NativeBarcodeAdapter {
             this.detector =
                 new this.barcodeDetectorClass({
                     formats:
-                        MVP_BARCODE_FORMATS
+                        this.formats
                 });
 
         } catch {
@@ -145,14 +158,19 @@ export class NativeBarcodeAdapter {
                         }
 
                         const result =
-                            normalizeBarcodeResult({
-                                adapter:
-                                    'native',
-                                format:
-                                    results?.[0]?.format,
-                                rawValue:
-                                    results?.[0]?.rawValue
-                            });
+                            selectBarcodeResult(
+                                (results ?? []).map(
+                                    candidate => ({
+                                        adapter:
+                                            'native',
+                                        format:
+                                            candidate?.format,
+                                        rawValue:
+                                            candidate?.rawValue
+                                    })
+                                ),
+                                this.scanMode
+                            );
 
                         if (
                             result

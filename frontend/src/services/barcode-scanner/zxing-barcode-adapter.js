@@ -1,5 +1,7 @@
 import {
-    normalizeBarcodeResult
+    getBarcodeFormatsForMode,
+    normalizeScanMode,
+    selectBarcodeResult
 } from './formats.js';
 
 const defaultScanIntervalMs =
@@ -44,6 +46,8 @@ export class ZxingBarcodeAdapter {
     constructor({
         moduleLoader =
             loadZxingModules,
+        scanMode =
+            'barcode',
         scanIntervalMs =
             defaultScanIntervalMs
     } = {}) {
@@ -53,6 +57,11 @@ export class ZxingBarcodeAdapter {
 
         this.scanIntervalMs =
             scanIntervalMs;
+
+        this.scanMode =
+            normalizeScanMode(
+                scanMode
+            );
 
         this.reader =
             null;
@@ -127,16 +136,21 @@ export class ZxingBarcodeAdapter {
                             );
 
                         const result =
-                            normalizeBarcodeResult({
-                                adapter:
-                                    'zxing',
-                                format:
-                                    this.normalizeZxingFormat(
-                                        decoded.getBarcodeFormat()
-                                    ),
-                                rawValue:
-                                    decoded.getText()
-                            });
+                            selectBarcodeResult(
+                                [
+                                    {
+                                        adapter:
+                                            'zxing',
+                                        format:
+                                            this.normalizeZxingFormat(
+                                                decoded.getBarcodeFormat()
+                                            ),
+                                        rawValue:
+                                            decoded.getText()
+                                    }
+                                ],
+                                this.scanMode
+                            );
 
                         if (
                             result
@@ -265,10 +279,17 @@ export class ZxingBarcodeAdapter {
             );
 
         this.reader.possibleFormats =
-            [
-                this.zxing.BarcodeFormat.EAN_13,
-                this.zxing.BarcodeFormat.UPC_A
-            ];
+            getBarcodeFormatsForMode(
+                this.scanMode
+            )
+                .map(
+                    format => this.getZxingFormat(
+                        format
+                    )
+                )
+                .filter(
+                    format => format !== undefined
+                );
 
         this.lastLoadError =
             null;
@@ -281,6 +302,28 @@ export class ZxingBarcodeAdapter {
             this.zxing?.BarcodeFormat?.[format] ??
             format
         ) ?? null;
+
+    }
+
+    getZxingFormat(format) {
+
+        if (
+            format === 'ean_13'
+        ) {
+
+            return this.zxing?.BarcodeFormat?.EAN_13;
+
+        }
+
+        if (
+            format === 'upc_a'
+        ) {
+
+            return this.zxing?.BarcodeFormat?.UPC_A;
+
+        }
+
+        return undefined;
 
     }
 

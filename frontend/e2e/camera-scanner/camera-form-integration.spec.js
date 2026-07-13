@@ -191,7 +191,9 @@ async function mockCameraScan(
     {
         delayMs = 0,
         format = 'ean_13',
-        rawValue
+        rawValue,
+        results,
+        resultsByCall
     }
 ) {
 
@@ -199,6 +201,9 @@ async function mockCameraScan(
         options => {
 
             class BarcodeDetectorMock {
+
+                static detectCalls =
+                    0;
 
                 static async getSupportedFormats() {
 
@@ -210,6 +215,35 @@ async function mockCameraScan(
                 }
 
                 async detect() {
+
+                    BarcodeDetectorMock.detectCalls +=
+                        1;
+
+                    if (
+                        Array.isArray(
+                            options.resultsByCall
+                        )
+                    ) {
+
+                        const index =
+                            Math.min(
+                                BarcodeDetectorMock.detectCalls - 1,
+                                options.resultsByCall.length - 1
+                            );
+
+                        return options.resultsByCall[index];
+
+                    }
+
+                    if (
+                        Array.isArray(
+                            options.results
+                        )
+                    ) {
+
+                        return options.results;
+
+                    }
 
                     return [
                         {
@@ -296,7 +330,9 @@ async function mockCameraScan(
         {
             delayMs,
             format,
-            rawValue
+            rawValue,
+            results,
+            resultsByCall
         }
     );
 
@@ -333,7 +369,7 @@ async function countLookupRequests(page, pattern) {
 
 
 test(
-    'camera scanner fills ISBN without launching lookup automatically',
+    'camera scanner fills the first valid Bookland ISBN without launching lookup automatically',
     async ({ page }) => {
 
         await mockCameraScan(
@@ -341,8 +377,26 @@ test(
             {
                 delayMs:
                     200,
-                rawValue:
-                    '978-0-14-032872-1'
+                results: [
+                    {
+                        format:
+                            'upc_a',
+                        rawValue:
+                            '012345678905'
+                    },
+                    {
+                        format:
+                            'ean_13',
+                        rawValue:
+                            '4006381333931'
+                    },
+                    {
+                        format:
+                            'ean_13',
+                        rawValue:
+                            '978-0-14-032872-1'
+                    }
+                ]
             }
         );
 
@@ -538,14 +592,36 @@ test(
 );
 
 test(
-    'camera scanner reports invalid scanned codes and keeps manual input available',
+    'camera scanner ignores invalid ISBN candidates and keeps scanning',
     async ({ page }) => {
 
         await mockCameraScan(
             page,
             {
-                rawValue:
-                    '1234567890123'
+                resultsByCall: [
+                    [
+                        {
+                            format:
+                                'ean_13',
+                            rawValue:
+                                '1234567890123'
+                        },
+                        {
+                            format:
+                                'upc_a',
+                            rawValue:
+                                '012345678905'
+                        }
+                    ],
+                    [
+                        {
+                            format:
+                                'ean_13',
+                            rawValue:
+                                '9780140328721'
+                        }
+                    ]
+                ]
             }
         );
 
@@ -561,99 +637,6 @@ test(
 
         await openBookCreatePage(
             page
-        );
-
-        await page.getByRole(
-            'button',
-            {
-                name:
-                    'Scanner le champ ISBN'
-            }
-        ).click();
-
-        await expect(
-            page.getByRole(
-            'textbox',
-            {
-                name:
-                    'ISBN'
-            }
-        )
-        ).toHaveValue(
-            '1234567890123'
-        );
-
-        await expect(
-            page.getByText(
-                'ISBN invalide'
-            )
-        ).toBeVisible();
-
-        await page.getByRole(
-            'textbox',
-            {
-                name:
-                    'ISBN'
-            }
-        ).fill(
-            '9780140328721'
-        );
-
-        await expect(
-            page.getByRole(
-            'textbox',
-            {
-                name:
-                    'ISBN'
-            }
-        )
-        ).toHaveValue(
-            '9780140328721'
-        );
-
-        expect(
-            getLookupCount()
-        ).toBe(
-            0
-        );
-
-    }
-);
-
-test(
-    'camera scanner keeps an existing valid value when the scanned code is invalid',
-    async ({ page }) => {
-
-        await mockCameraScan(
-            page,
-            {
-                rawValue:
-                    '1234567890123'
-            }
-        );
-
-        await mockProviders(
-            page
-        );
-
-        const getLookupCount =
-            await countLookupRequests(
-                page,
-                '**/api/acquisition/books/isbn/lookup'
-            );
-
-        await openBookCreatePage(
-            page
-        );
-
-        await page.getByRole(
-            'textbox',
-            {
-                name:
-                    'ISBN'
-            }
-        ).fill(
-            '9780140328721'
         );
 
         await page.getByRole(
@@ -678,9 +661,102 @@ test(
 
         await expect(
             page.getByText(
-                'Code scanné invalide, valeur existante conservée'
+                'ISBN invalide'
+            )
+        ).toBeHidden();
+
+        expect(
+            getLookupCount()
+        ).toBe(
+            0
+        );
+
+    }
+);
+
+test(
+    'camera scanner leaves an existing ISBN untouched while non-ISBN codes are ignored',
+    async ({ page }) => {
+
+        await mockCameraScan(
+            page,
+            {
+                results: [
+                    {
+                        format:
+                            'ean_13',
+                        rawValue:
+                            '4006381333931'
+                    },
+                    {
+                        format:
+                            'upc_a',
+                        rawValue:
+                            '012345678905'
+                    }
+                ]
+            }
+        );
+
+        await mockProviders(
+            page
+        );
+
+        const getLookupCount =
+            await countLookupRequests(
+                page,
+                '**/api/acquisition/books/isbn/lookup'
+            );
+
+        await openBookCreatePage(
+            page
+        );
+
+        await page.getByRole(
+            'textbox',
+            {
+                name:
+                    'ISBN'
+            }
+        ).fill(
+            '9780140328721'
+        );
+
+        await page.getByRole(
+            'button',
+            {
+                name:
+                    'Scanner le champ ISBN'
+            }
+        ).click();
+
+        await expect(
+            page.getByRole(
+                'dialog',
+                {
+                    name:
+                        'Scanner un code-barres'
+                }
             )
         ).toBeVisible();
+
+        await expect(
+            page.getByRole(
+                'textbox',
+                {
+                    name:
+                        'ISBN'
+                }
+            )
+        ).toHaveValue(
+            '9780140328721'
+        );
+
+        await expect(
+            page.getByText(
+                'Code scanné invalide'
+            )
+        ).toBeHidden();
 
         expect(
             getLookupCount()
