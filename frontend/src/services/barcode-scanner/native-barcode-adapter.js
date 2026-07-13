@@ -87,7 +87,6 @@ export class NativeBarcodeAdapter {
     }
 
     async start({
-        onDiagnostic = () => {},
         onError,
         onResult,
         video
@@ -131,11 +130,6 @@ export class NativeBarcodeAdapter {
                     if (
                         video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
                     ) {
-
-                        onDiagnostic({
-                            type:
-                                'detection attempt'
-                        });
 
                         const results =
                             await this.detector.detect(

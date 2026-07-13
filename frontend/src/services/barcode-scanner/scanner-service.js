@@ -117,21 +117,12 @@ export class ScannerService {
         this.pendingWaits =
             new Set();
 
-        this.trackListenerCleanups =
-            new Set();
-
-        this.getUserMediaCalls =
-            0;
-
     }
 
     async start({
-        onDiagnostic = () => {},
         onError,
         onResult,
         onState = () => {},
-        previewOnly =
-            false,
         video
     }) {
 
@@ -150,14 +141,8 @@ export class ScannerService {
         this.sessionId =
             sessionId;
 
-        this.getUserMediaCalls =
-            0;
-
         this.starting =
             true;
-
-        this.onDiagnostic =
-            onDiagnostic;
 
         try {
 
@@ -165,11 +150,6 @@ export class ScannerService {
                 video;
 
             this.assertEnvironment();
-
-            this.debug(
-                sessionId,
-                'start'
-            );
 
             onState(
                 'requesting-permission'
@@ -199,40 +179,8 @@ export class ScannerService {
 
             }
 
-            if (
-                previewOnly
-            ) {
-
-                this.started =
-                    true;
-
-                this.starting =
-                    false;
-
-                this.emitDiagnostic(
-                    sessionId,
-                    'adapter-started',
-                    {
-                        adapter:
-                            'none'
-                    }
-                );
-
-                return;
-
-            }
-
             this.adapter =
                 await this.selectAdapter();
-
-            this.debug(
-                sessionId,
-                'adapter-selected',
-                {
-                    adapter:
-                        this.adapter?.constructor?.name ?? 'unknown'
-                }
-            );
 
             if (
                 !this.isCurrentSession(
@@ -254,22 +202,7 @@ export class ScannerService {
             this.starting =
                 false;
 
-            this.emitDiagnostic(
-                sessionId,
-                'adapter-started',
-                {
-                    adapter:
-                        this.adapter?.constructor?.name ?? 'unknown'
-                }
-            );
-
             await this.adapter.start({
-                onDiagnostic:
-                    event => this.emitDiagnostic(
-                        sessionId,
-                        event.type,
-                        event
-                    ),
                 onError:
                     error => {
 
@@ -402,9 +335,7 @@ export class ScannerService {
     }) {
 
         const stream =
-            await this.openStream(
-                sessionId
-            );
+            await this.openStream();
 
         if (
             !this.isCurrentSession(
@@ -426,19 +357,6 @@ export class ScannerService {
 
         this.stream =
             stream;
-
-        this.debug(
-            sessionId,
-            'stream-selected',
-            this.describeStream(
-                stream
-            )
-        );
-
-        this.attachTrackDebugListeners({
-            sessionId,
-            stream
-        });
 
         onState(
             'preparing-video'
@@ -468,12 +386,11 @@ export class ScannerService {
 
     }
 
-    async openStream(sessionId) {
+    async openStream() {
 
         try {
 
             return await this.getUserMedia(
-                sessionId,
                 defaultCameraConstraints[0]
             );
 
@@ -489,17 +406,7 @@ export class ScannerService {
 
             }
 
-            this.debug(
-                sessionId,
-                'constraints-fallback',
-                {
-                    reason:
-                        error?.name ?? error?.code ?? 'unknown'
-                }
-            );
-
             return this.getUserMedia(
-                sessionId,
                 defaultCameraConstraints[1]
             );
 
@@ -507,66 +414,11 @@ export class ScannerService {
 
     }
 
-    async getUserMedia(sessionId, constraints) {
+    async getUserMedia(constraints) {
 
-        this.getUserMediaCalls +=
-            1;
-
-        this.debug(
-            sessionId,
-            'getUserMedia',
-            {
-                call:
-                    this.getUserMediaCalls,
-                constraints:
-                    this.describeConstraints(
-                        constraints
-                    )
-            }
+        return this.mediaDevices.getUserMedia(
+            constraints
         );
-
-        this.emitDiagnostic(
-            sessionId,
-            'getUserMedia requested',
-            {
-                constraints:
-                    this.describeConstraints(
-                        constraints
-                    )
-            }
-        );
-
-        try {
-
-            const stream =
-                await this.mediaDevices.getUserMedia(
-                    constraints
-                );
-
-            this.emitDiagnostic(
-                sessionId,
-                'getUserMedia resolved',
-                this.describeStream(
-                    stream
-                )
-            );
-
-            return stream;
-
-        } catch (error) {
-
-            this.emitDiagnostic(
-                sessionId,
-                'getUserMedia rejected',
-                {
-                    error:
-                        error?.name ?? error?.code ?? 'unknown'
-                }
-            );
-
-            throw error;
-
-        }
 
     }
 
@@ -618,22 +470,6 @@ export class ScannerService {
         video.srcObject =
             stream;
 
-        this.emitDiagnostic(
-            sessionId,
-            'stream attached',
-            this.describeStream(
-                stream
-            )
-        );
-
-        this.debug(
-            sessionId,
-            'video-srcObject-set',
-            this.describeStream(
-                stream
-            )
-        );
-
         await this.waitForVideoMetadata({
             sessionId,
             video
@@ -645,28 +481,9 @@ export class ScannerService {
 
             try {
 
-                this.emitDiagnostic(
-                    sessionId,
-                    'video play requested'
-                );
-
                 await video.play();
 
-                this.emitDiagnostic(
-                    sessionId,
-                    'video play resolved'
-                );
-
             } catch (error) {
-
-                this.emitDiagnostic(
-                    sessionId,
-                    'video play rejected',
-                    {
-                        error:
-                            error?.name ?? error?.message ?? 'unknown'
-                    }
-                );
 
                 throw new ScannerError(
                     'video-play-failed',
@@ -682,17 +499,6 @@ export class ScannerService {
             sessionId,
             video
         });
-
-        this.emitDiagnostic(
-            sessionId,
-            'first dimensions',
-            {
-                videoHeight:
-                    video.videoHeight,
-                videoWidth:
-                    video.videoWidth
-            }
-        );
 
     }
 
@@ -1111,14 +917,6 @@ export class ScannerService {
 
         }
 
-        this.debug(
-            sessionId,
-            'track-muted-wait',
-            this.describeTrack(
-                mutedTrack
-            )
-        );
-
         return new Promise(
             resolve => {
 
@@ -1222,17 +1020,6 @@ export class ScannerService {
 
         this.pendingWaits.clear();
 
-        this.trackListenerCleanups.forEach(
-            cleanup => cleanup()
-        );
-
-        this.trackListenerCleanups.clear();
-
-        this.debug(
-            this.sessionId,
-            'stop'
-        );
-
         this.adapter?.stop();
 
         this.stopStream(
@@ -1244,11 +1031,6 @@ export class ScannerService {
         ) {
 
             this.video.pause?.();
-
-            this.debug(
-                this.sessionId,
-                'video-srcObject-null'
-            );
 
             this.video.srcObject =
                 null;
@@ -1282,14 +1064,6 @@ export class ScannerService {
         tracks?.forEach(
             track => {
 
-                this.debug(
-                    this.sessionId,
-                    'track-stop',
-                    this.describeTrack(
-                        track
-                    )
-                );
-
                 track.stop();
 
             }
@@ -1315,187 +1089,6 @@ export class ScannerService {
                 .filter(
                     track => !track.kind || track.kind === 'video'
                 );
-
-    }
-
-    attachTrackDebugListeners({
-        sessionId,
-        stream
-    }) {
-
-        this.getVideoTracks(
-            stream
-        )
-            .forEach(
-                track => {
-
-                    const listeners =
-                        [
-                            'mute',
-                            'unmute',
-                            'ended'
-                        ].map(
-                            eventName => {
-
-                                const listener =
-                                    () => this.debug(
-                                        sessionId,
-                                        `track-${eventName}`,
-                                        this.describeTrack(
-                                            track
-                                        )
-                                    );
-
-                                const diagnosticListener =
-                                    () => this.emitDiagnostic(
-                                        sessionId,
-                                        `track ${eventName}`,
-                                        this.describeTrack(
-                                            track
-                                        )
-                                    );
-
-                                track.addEventListener?.(
-                                    eventName,
-                                    listener
-                                );
-
-                                track.addEventListener?.(
-                                    eventName,
-                                    diagnosticListener
-                                );
-
-                                return () => {
-
-                                    track.removeEventListener?.(
-                                        eventName,
-                                        listener
-                                    );
-
-                                    track.removeEventListener?.(
-                                        eventName,
-                                        diagnosticListener
-                                    );
-
-                                };
-
-                            }
-                        );
-
-                    this.trackListenerCleanups.add(
-                        () => listeners.forEach(
-                            cleanup => cleanup()
-                        )
-                    );
-
-                }
-            );
-
-    }
-
-    describeConstraints(constraints) {
-
-        return {
-            audio:
-                constraints.audio,
-            video:
-                constraints.video === true ?
-                    true :
-                    {
-                        facingMode:
-                            constraints.video?.facingMode
-                    }
-        };
-
-    }
-
-    describeStream(stream) {
-
-        return {
-            active:
-                stream?.active,
-            streamId:
-                stream?.id,
-            tracks:
-                this.getVideoTracks(
-                    stream
-                )
-                    .map(
-                        track => this.describeTrack(
-                            track
-                        )
-                    )
-        };
-
-    }
-
-    describeTrack(track) {
-
-        return {
-            muted:
-                track?.muted,
-            readyState:
-                track?.readyState,
-            trackId:
-                track?.id
-        };
-
-    }
-
-    debug(sessionId, event, details = {}) {
-
-        if (
-            import.meta.env?.DEV !== true ||
-            typeof this.windowObject?.console?.debug !== 'function'
-        ) {
-
-            return;
-
-        }
-
-        this.windowObject.console.debug(
-            '[CameraScanner]',
-            {
-                event,
-                getUserMediaCalls:
-                    this.getUserMediaCalls,
-                sessionId,
-                timestamp:
-                    this.windowObject?.performance?.now?.() ?? Date.now(),
-                ...details
-            }
-        );
-
-    }
-
-    emitDiagnostic(sessionId, type, details = {}) {
-
-        this.onDiagnostic?.({
-            ...details,
-            getUserMediaCalls:
-                this.getUserMediaCalls,
-            sessionId,
-            timestamp:
-                this.windowObject?.performance?.now?.() ?? Date.now(),
-            type
-        });
-
-    }
-
-    getDebugSnapshot() {
-
-        return {
-            adapter:
-                this.adapter?.constructor?.name ?? 'none',
-            getUserMediaCalls:
-                this.getUserMediaCalls,
-            sessionId:
-                this.sessionId,
-            stream:
-                this.describeStream(
-                    this.stream
-                )
-        };
 
     }
 
