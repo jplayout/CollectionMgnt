@@ -138,10 +138,19 @@ export class ZxingBarcodeAdapter {
                 } catch (error) {
 
                     if (
-                        !this.isNotFoundError(
+                        !this.isRetryableDecodeError(
                             error
                         )
                     ) {
+
+                        onDiagnostic({
+                            errorName:
+                                this.getErrorName(
+                                    error
+                                ),
+                            type:
+                                'detection fatal'
+                        });
 
                         onError(
                             error
@@ -152,17 +161,25 @@ export class ZxingBarcodeAdapter {
                     }
 
                     onDiagnostic({
+                        errorName:
+                            this.getErrorName(
+                                error
+                            ),
                         type:
-                            'detection not-found'
+                            'detection retryable'
                     });
 
                 }
 
-                this.timeoutId =
-                    window.setTimeout(
-                        scan,
-                        this.scanIntervalMs
+                if (
+                    !this.stopped
+                ) {
+
+                    this.scheduleNextScan(
+                        scan
                     );
+
+                }
 
             };
 
@@ -262,10 +279,54 @@ export class ZxingBarcodeAdapter {
 
     }
 
-    isNotFoundError(error) {
+    scheduleNextScan(scan) {
+
+        if (
+            this.timeoutId
+        ) {
+
+            window.clearTimeout(
+                this.timeoutId
+            );
+
+        }
+
+        this.timeoutId =
+            window.setTimeout(
+                () => {
+
+                    this.timeoutId =
+                        null;
+
+                    scan();
+
+                },
+                this.scanIntervalMs
+            );
+
+    }
+
+    isRetryableDecodeError(error) {
+
+        return [
+            'NotFoundException',
+            'ChecksumException',
+            'FormatException'
+        ].includes(
+            this.getErrorName(
+                error
+            )
+        );
+
+    }
+
+    getErrorName(error) {
 
         return error?.name === 'NotFoundException' ||
-            error?.constructor?.name === 'NotFoundException';
+            error?.name === 'ChecksumException' ||
+            error?.name === 'FormatException' ?
+            error.name :
+            error?.constructor?.name ?? '';
 
     }
 

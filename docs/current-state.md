@@ -238,7 +238,11 @@ Principes :
   un retest iPadOS reel reste requis avant merge. La branche 15.2.3 ajoute un
   panneau diagnostic visible uniquement lorsque l'URL contient `cameraDebug=1`,
   avec mode preview-only et copie de diagnostic nettoyee pour isoler les causes
-  d'aperçu noir en build Docker de production.
+  d'aperçu noir en build Docker de production. La branche 15.2.4 corrige la
+  classification ZXing prouvee: `NotFoundException`, `ChecksumException` et
+  `FormatException` sont retryables et ne doivent plus arreter le MediaStream;
+  les erreurs inconnues restent fatales. Un retest Safari macOS puis iPadOS
+  reste requis.
 - Aucune validation reelle Android/iPhone renseignee a ce stade ; Epic 15 reste
   incomplet tant que Chrome Android et Safari iPhone ne sont pas valides sans
   defaut bloquant.
