@@ -541,6 +541,9 @@ Travaux prévus :
   JavaScript ZXing charge a la demande.
 - Remplissage du champ `isbn` ou `barcode` sans appel provider direct depuis le
   frontend.
+- Politique de scan par type de champ : `isbn` retient seulement un EAN-13
+  Bookland `978` / `979` avec checksum valide, tandis que `barcode` conserve
+  EAN-13 et UPC-A.
 - Lancement explicite du lookup ou de la recherche par le backend apres
   validation utilisateur.
 - UX mobile pour selectionner une suggestion, creer l'item et importer une
@@ -564,6 +567,10 @@ Contraintes :
   automatique d'un flux deja obtenu par un second `getUserMedia`, avec retest
   iPadOS reel requis avant merge. Le suivi 15.2.2 protege aussi le retour de la
   fenetre de permission Safari contre une fermeture accidentelle du scanner.
+- Le suivi 15.4 corrige la priorite incorrecte lorsqu'un livre presente un ISBN
+  et un autre code a proximite : les adaptateurs ne selectionnent plus
+  systematiquement le premier candidat en mode `isbn`. Epic 15 reste ouvert
+  jusqu'a validation terrain de ce scenario sur Android et Safari/iPadOS.
 - Aucun secret provider expose au frontend.
 - Les images restent importees explicitement via `MediaService`.
 

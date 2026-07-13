@@ -59,8 +59,9 @@ et son branchement aux champs identifiants.
 
 Formats actifs :
 
-- `ean_13`
-- `upc_a`
+- champ `isbn` : `ean_13` uniquement, valeur ISBN-13 Bookland `978` ou `979`
+  avec checksum valide ;
+- champ `barcode` : `ean_13` et `upc_a`.
 
 ISBN-10 n'est pas une symbologie camera annoncee. QR Code reste hors perimetre.
 
@@ -87,8 +88,9 @@ Garanties du lot :
 - aucun stockage local browser ;
 - arret strict du `MediaStream` apres succes, fermeture, erreur et unmount ;
 - saisie clavier toujours disponible ;
-- apres un scan invalide, la modale se ferme et l'erreur reste associee au
-  champ pour permettre une correction manuelle immediate ;
+- pour un champ `isbn`, les codes voisins non Bookland, UPC-A, supplements
+  courts et ISBN-13 a checksum invalide sont ignores sans fermer la modale ;
+- pour un champ `barcode`, le comportement reste limite aux EAN-13 et UPC-A ;
 - lookup ISBN livres et recherches jeux/films toujours declenches uniquement
   par le bouton `Rechercher`.
 

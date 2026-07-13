@@ -158,6 +158,157 @@ test.describe(
 
 
         test(
+            'limits ZXing ISBN mode to EAN-13 and keeps scanning until a Bookland ISBN is decoded',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ZxingBarcodeAdapter
+                            } = await import(
+                                '/src/services/barcode-scanner/zxing-barcode-adapter.js'
+                            );
+
+                            const calls =
+                                [];
+
+                            let decodeCalls =
+                                0;
+
+                            class ReaderMock {
+
+                                set possibleFormats(formats) {
+
+                                    calls.push([
+                                        'formats',
+                                        formats
+                                    ]);
+
+                                }
+
+                                decode() {
+
+                                    decodeCalls +=
+                                        1;
+
+                                    if (
+                                        decodeCalls === 1
+                                    ) {
+
+                                        return {
+                                            getBarcodeFormat: () => 14,
+                                            getText: () => '012345678905'
+                                        };
+
+                                    }
+
+                                    if (
+                                        decodeCalls === 2
+                                    ) {
+
+                                        return {
+                                            getBarcodeFormat: () => 7,
+                                            getText: () => '4006381333931'
+                                        };
+
+                                    }
+
+                                    return {
+                                        getBarcodeFormat: () => 7,
+                                        getText: () => '9791090636071'
+                                    };
+
+                                }
+
+                                reset() {}
+
+                            }
+
+                            const adapter =
+                                new ZxingBarcodeAdapter({
+                                    moduleLoader: async () => ({
+                                        BarcodeFormat: {
+                                            7:
+                                                'EAN_13',
+                                            14:
+                                                'UPC_A',
+                                            EAN_13:
+                                                7,
+                                            UPC_A:
+                                                14
+                                        },
+                                        BrowserCodeReader: {
+                                            releaseAllStreams: () => {}
+                                        },
+                                        BrowserMultiFormatOneDReader:
+                                            ReaderMock
+                                    }),
+                                    scanIntervalMs:
+                                        1,
+                                    scanMode:
+                                        'isbn'
+                                });
+
+                            const video =
+                                window.createTestVideo();
+
+                            const scanned =
+                                await new Promise(
+                                    resolve => adapter.start({
+                                        onError: error => resolve({
+                                            error:
+                                                error.message
+                                        }),
+                                        onResult: resolve,
+                                        video
+                                    })
+                                );
+
+                            adapter.stop();
+
+                            return {
+                                calls,
+                                decodeCalls,
+                                scanned
+                            };
+
+                        }
+                    );
+
+                expect(
+                    result.calls
+                ).toContainEqual([
+                    'formats',
+                    [
+                        7
+                    ]
+                ]);
+
+                expect(
+                    result.decodeCalls
+                ).toBe(
+                    3
+                );
+
+                expect(
+                    result.scanned
+                ).toEqual({
+                    adapter:
+                        'zxing',
+                    format:
+                        'ean_13',
+                    rawValue:
+                        '9791090636071'
+                });
+
+            }
+        );
+
+
+        test(
             'retries ZXing decode exceptions without surfacing errors',
             async ({ page }) => {
 

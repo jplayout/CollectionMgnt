@@ -131,6 +131,241 @@ test.describe(
         );
 
         test(
+            'selects only Bookland EAN-13 candidates in ISBN mode',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                NativeBarcodeAdapter
+                            } = await import(
+                                '/src/services/barcode-scanner/native-barcode-adapter.js'
+                            );
+
+                            let requestedFormats;
+                            let detectCalls =
+                                0;
+
+                            class BarcodeDetectorMock {
+
+                                static async getSupportedFormats() {
+
+                                    return [
+                                        'ean_13',
+                                        'upc_a'
+                                    ];
+
+                                }
+
+                                constructor(options) {
+
+                                    requestedFormats =
+                                        options.formats;
+
+                                }
+
+                                async detect() {
+
+                                    detectCalls +=
+                                        1;
+
+                                    if (
+                                        detectCalls === 1
+                                    ) {
+
+                                        return [
+                                            {
+                                                format:
+                                                    'upc_a',
+                                                rawValue:
+                                                    '012345678905'
+                                            },
+                                            {
+                                                format:
+                                                    'ean_13',
+                                                rawValue:
+                                                    '4006381333931'
+                                            },
+                                            {
+                                                format:
+                                                    'ean_13',
+                                                rawValue:
+                                                    '9780140328720'
+                                            },
+                                            {
+                                                format:
+                                                    'ean_8',
+                                                rawValue:
+                                                    '12345670'
+                                            }
+                                        ];
+
+                                    }
+
+                                    return [
+                                        {
+                                            format:
+                                                'ean_13',
+                                            rawValue:
+                                                '9780140328721'
+                                        }
+                                    ];
+
+                                }
+
+                            }
+
+                            const adapter =
+                                new NativeBarcodeAdapter({
+                                    barcodeDetectorClass:
+                                        BarcodeDetectorMock,
+                                    scanIntervalMs:
+                                        1,
+                                    scanMode:
+                                        'isbn'
+                                });
+
+                            const video =
+                                window.createTestVideo();
+
+                            const scanned =
+                                await new Promise(
+                                    resolve => adapter.start({
+                                        onError: error => resolve({
+                                            error:
+                                                error.message
+                                        }),
+                                        onResult: resolve,
+                                        video
+                                    })
+                                );
+
+                            adapter.stop();
+
+                            return {
+                                detectCalls,
+                                requestedFormats,
+                                scanned
+                            };
+
+                        }
+                    );
+
+                expect(
+                    result.requestedFormats
+                ).toEqual([
+                    'ean_13'
+                ]);
+
+                expect(
+                    result.detectCalls
+                ).toBe(
+                    2
+                );
+
+                expect(
+                    result.scanned
+                ).toEqual({
+                    adapter:
+                        'native',
+                    format:
+                        'ean_13',
+                    rawValue:
+                        '9780140328721'
+                });
+
+            }
+        );
+
+        test(
+            'keeps generic EAN-13 and UPC-A candidates in barcode mode',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                NativeBarcodeAdapter
+                            } = await import(
+                                '/src/services/barcode-scanner/native-barcode-adapter.js'
+                            );
+
+                            class BarcodeDetectorMock {
+
+                                static async getSupportedFormats() {
+
+                                    return [
+                                        'ean_13',
+                                        'upc_a'
+                                    ];
+
+                                }
+
+                                async detect() {
+
+                                    return [
+                                        {
+                                            format:
+                                                'upc_a',
+                                            rawValue:
+                                                '012345678905'
+                                        }
+                                    ];
+
+                                }
+
+                            }
+
+                            const adapter =
+                                new NativeBarcodeAdapter({
+                                    barcodeDetectorClass:
+                                        BarcodeDetectorMock,
+                                    scanIntervalMs:
+                                        1
+                                });
+
+                            const video =
+                                window.createTestVideo();
+
+                            const scanned =
+                                await new Promise(
+                                    resolve => adapter.start({
+                                        onError: error => resolve({
+                                            error:
+                                                error.message
+                                        }),
+                                        onResult: resolve,
+                                        video
+                                    })
+                                );
+
+                            adapter.stop();
+
+                            return scanned;
+
+                        }
+                    );
+
+                expect(
+                    result
+                ).toEqual({
+                    adapter:
+                        'native',
+                    format:
+                        'upc_a',
+                    rawValue:
+                        '012345678905'
+                });
+
+            }
+        );
+
+        test(
             'rejects BarcodeDetector presence when required formats are unsupported',
             async ({ page }) => {
 

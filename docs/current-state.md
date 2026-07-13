@@ -216,8 +216,10 @@ Principes :
   en fallback.
 - Le scan camera reste local : aucune frame n'est envoyee, persistee ou stockee
   en localStorage, sessionStorage ou IndexedDB.
-- Les formats camera actifs dans ce lot sont EAN-13 et UPC-A. ISBN-10 n'est pas
-  annonce comme symbologie camera et QR Code reste hors perimetre.
+- Les formats camera actifs dependent du type de champ : `isbn` demande
+  uniquement EAN-13 et accepte seulement les ISBN-13 Bookland `978` / `979`
+  avec checksum valide ; `barcode` conserve EAN-13 et UPC-A. ISBN-10 reste une
+  possibilite de saisie manuelle uniquement et QR Code reste hors perimetre.
 - Le bouton `Scanner` est disponible sur `books.isbn` et sur les champs
   `barcode` des plugins qui en declarent un. Il remplit seulement le champ,
   normalise la valeur et applique les validations metier existantes.
@@ -241,8 +243,11 @@ Principes :
   ete retires en 15.3 apres validation terrain Android, Safari macOS et iPadOS.
   Les tests camera Playwright sont decoupes par responsabilite dans
   `frontend/e2e/camera-scanner/`.
-- Epic 15 est cloture si les validations automatiques du nettoyage 15.3 passent
-  sans regression.
+- Le correctif 15.4 empeche un champ `isbn` de retenir un code-barres voisin
+  non ISBN sur un livre : les candidats detectes sont parcourus et le scan
+  continue tant qu'aucun ISBN-13 Bookland valide n'est trouve. Epic 15 reste
+  ouvert jusqu'au retest terrain de ce correctif sur Android, Safari macOS et
+  iPadOS.
 - Aucune administration de configuration providers livrée
 - Aucun provider media specialise livré
 - Aucun import automatique d'image livré

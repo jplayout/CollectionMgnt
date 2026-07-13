@@ -108,7 +108,11 @@ Use these columns for every test case / Utiliser ces colonnes pour chaque cas:
 | BOOK-03 | Lookup declenche uniquement par l'action utilisateur decidee. | Lookup triggered only by the decided user action. | not tested | Expected: button `Rechercher`, no automatic lookup after scan. |  |  | unknown |
 | BOOK-04 | Suggestion non appliquee automatiquement. | Suggestion is not applied automatically. | not tested |  |  |  | unknown |
 | BOOK-05 | Correction manuelle possible apres scan. | Manual correction possible after scan. | not tested |  |  |  | unknown |
-| BOOK-06 | ISBN illisible ou checksum invalide signale sans bloquer la saisie. | Unreadable ISBN or invalid checksum reported without blocking input. | not tested |  |  |  | unknown |
+| BOOK-06 | ISBN illisible ou checksum invalide ignore sans fermer la modale. | Unreadable ISBN or invalid checksum ignored without closing the modal. | not tested | Expected after 15.4: scan continues until a valid Bookland ISBN is found or the user closes the modal. |  |  | unknown |
+| BOOK-07 | Code-barres voisin non ISBN ignore sur un livre. | Nearby non-ISBN barcode ignored on a book. | not tested | Test with the book that reproduced the issue. |  |  | unknown |
+| BOOK-08 | ISBN-13 `978` valide accepte. | Valid `978` ISBN-13 accepted. | not tested |  |  |  | unknown |
+| BOOK-09 | ISBN-13 `979` valide accepte si disponible. | Valid `979` ISBN-13 accepted if available. | not tested |  |  |  | unknown |
+| BOOK-10 | Supplement prix 2/5 chiffres ignore. | 2/5 digit price supplement ignored. | not tested |  |  |  | unknown |
 
 ## Barcode / Code-Barres
 
@@ -158,6 +162,7 @@ For each fix / Pour chaque correction:
 | IOS-004 | Safari macOS and iPadOS Safari/PWA | Production Docker build shows a preview briefly, then black, but development-only console traces are unavailable in the field. | blocking diagnostic | temporary diagnostic removed in 15.3 | A temporary visible diagnostic panel was used during field debugging and then removed from the product after validation. No debug panel, copied diagnostic text or detection-disabling UI remains in 15.3. | The retained automated coverage is split under `frontend/e2e/camera-scanner/`; panel-specific tests were removed with the feature. |
 | IOS-005 | Safari macOS and iPadOS Safari/PWA | ZXing fallback receives a normal decode error after preview starts; the preview turns black because the shared MediaStream is stopped. | blocking | fixed and validated | Root cause proven: `ZxingBarcodeAdapter` calls `reader.decode(video)` directly and now keeps `NotFoundException`, `ChecksumException` and `FormatException` retryable. Unknown decode errors, import failures and permanent setup errors remain fatal. | `frontend/e2e/camera-scanner/zxing-barcode-adapter.spec.js` covers NotFound, Checksum and Format retries without `onError`, no premature `track.stop` or `srcObject = null`, unknown fatal errors, manual stop cancellation and a Checksum -> NotFound -> valid result flow with preview still active. |
 | IOS-006 | Safari macOS production Docker build, iPadOS Safari/PWA | Production minification changes ZXing exception class names to `e`; normal decode exceptions are misclassified as fatal and stop the stream. | blocking | fixed and validated | 15.2.5 loads `@zxing/browser` and `@zxing/library` together in the lazy ZXing chunk and classifies retryable decode errors primarily with real `instanceof` checks against `NotFoundException`, `ChecksumException` and `FormatException`. Name comparisons remain only as fallback. | `frontend/e2e/camera-scanner/zxing-barcode-adapter.spec.js` covers real `@zxing/library` exceptions, including minified subclasses whose `error.name` and `constructor.name` are `e`, while preserving retry behavior and stream attachment. |
+| BOOK-PRIO-001 | Book with ISBN plus nearby barcode/add-on, Android and Safari/iPadOS | The scanner selected the first detected code even when it was not a Bookland ISBN for the `isbn` field. | major | fixed, real retest required | 15.4 adds scan modes: `isbn` asks for EAN-13 only when possible, selects the first valid ISBN-13 Bookland `978`/`979` candidate with checksum, and ignores other candidates without closing the modal. `barcode` keeps EAN-13 and UPC-A. | `frontend/e2e/camera-scanner/native-barcode-adapter.spec.js`, `zxing-barcode-adapter.spec.js`, `scanner-service.spec.js` and `camera-form-integration.spec.js` cover ISBN candidate selection, 978/979 acceptance, UPC/non-Bookland/checksum rejection and unchanged barcode behavior. |
 
 ## iPadOS Retest Procedure / Procedure De Retest iPadOS
 
@@ -237,7 +242,8 @@ Completer cette section apres la campagne sur appareils reels.
   Android reported successful; iPadOS tablet failed before correction; exact
   browser mode, iPadOS version and image version still TBD.
 - Field results / resultats terrain: Android, Safari macOS and iPadOS validated
-  after the 15.2.5 correction.
+  after the 15.2.5 correction. The 15.4 ISBN-priority fix still requires real
+  retest on Android and Safari/iPadOS.
 - Observed defects / anomalies constatees: IOS-001 black camera preview on
   iPadOS after permission grant; IOS-002 stream appears to become muted or
   replaced after a brief preview; IOS-003 modal closes or stream stops just
@@ -246,13 +252,15 @@ Completer cette section apres la campagne sur appareils reels.
   development console traces; IOS-005 ZXing retryable decode errors could stop the
   MediaStream and leave the modal open with a black preview; IOS-006 production
   minification renamed ZXing exception classes to `e`, breaking name-based
-  retry classification.
+  retry classification; BOOK-PRIO-001 selected a nearby non-ISBN code before a
+  valid ISBN on a real book.
 - Fixes applied / corrections eventuelles: IOS-001 frontend scanner startup
   hardening; IOS-002 single-stream-per-session hardening; IOS-003
   permission/backdrop close hardening; IOS-004 temporary field diagnostic UI
   removed in 15.3; IOS-005 retryable ZXing decode error classification;
-  IOS-006 production-safe `instanceof` classification with real ZXing classes.
+  IOS-006 production-safe `instanceof` classification with real ZXing classes;
+  BOOK-PRIO-001 scan-mode candidate selection for ISBN vs barcode fields.
 - Known limits / limites connues: see above
-- Decision / decision: Epic 15 validated if the 15.3 cleanup test suite passes
-  without regression
+- Decision / decision: Epic 15 remains incomplete until the 15.4 ISBN-priority
+  fix is retested on the real book, Android and Safari/iPadOS.
 - Commit confirmation / confirmation commit: no commit created

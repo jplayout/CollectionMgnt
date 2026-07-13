@@ -104,6 +104,7 @@
 
         <CameraScanner
             :open="scannerOpen"
+            :scan-mode="scannerMode"
             :scanner-factory="scannerFactory"
             :trigger-element="scannerTriggerElement"
             @close="closeScanner"
@@ -272,6 +273,13 @@ const scannerField =
 
 const scannerTriggerElement =
     ref(null);
+
+const scannerMode =
+    computed(
+        () => scannerField.value?.type === 'isbn'
+            ? 'isbn'
+            : 'barcode'
+    );
 
 const supportedFields =
     computed(

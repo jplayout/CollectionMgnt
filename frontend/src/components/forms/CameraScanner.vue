@@ -84,6 +84,12 @@ const props =
             type:
                 Function
         },
+        scanMode: {
+            default:
+                'barcode',
+            type:
+                String
+        },
         triggerElement: {
             default:
                 null,
@@ -326,6 +332,8 @@ async function openScanner() {
                 handleResult,
             onState:
                 handleScannerState,
+            scanMode:
+                props.scanMode,
             video:
                 videoElement.value
         });

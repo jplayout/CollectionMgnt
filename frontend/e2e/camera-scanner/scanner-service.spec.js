@@ -108,6 +108,114 @@ test.describe(
         );
 
         test(
+            'passes the scan mode to native and fallback adapters',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ScannerService
+                            } = await import(
+                                '/src/services/barcode-scanner/scanner-service.js'
+                            );
+
+                            const receivedModes =
+                                [];
+
+                            const stream = {
+                                active:
+                                    true,
+                                getVideoTracks: () => [
+                                    {
+                                        readyState:
+                                            'live',
+                                        stop: () => {}
+                                    }
+                                ],
+                                getTracks: () => [
+                                    {
+                                        stop: () => {}
+                                    }
+                                ]
+                            };
+
+                            const service =
+                                new ScannerService({
+                                    createNativeAdapter: options => {
+
+                                        receivedModes.push([
+                                            'native',
+                                            options.scanMode
+                                        ]);
+
+                                        return {
+                                            isSupported: async () => false,
+                                            stop: () => {}
+                                        };
+
+                                    },
+                                    createZxingAdapter: options => {
+
+                                        receivedModes.push([
+                                            'zxing',
+                                            options.scanMode
+                                        ]);
+
+                                        return {
+                                            isSupported: async () => true,
+                                            start: ({ onResult }) => onResult({
+                                                adapter:
+                                                    'zxing',
+                                                format:
+                                                    'ean_13',
+                                                rawValue:
+                                                    '9780140328721'
+                                            }),
+                                            stop: () => {}
+                                        };
+
+                                    },
+                                    mediaDevices: {
+                                        getUserMedia: async () => stream
+                                    },
+                                    secureContext:
+                                        true
+                                });
+
+                            await service.start({
+                                onError: () => {},
+                                onResult: () => {},
+                                scanMode:
+                                    'isbn',
+                                video:
+                                    window.createTestVideo()
+                            });
+
+                            return receivedModes;
+
+                        }
+                    );
+
+                expect(
+                    result
+                ).toEqual([
+                    [
+                        'native',
+                        'isbn'
+                    ],
+                    [
+                        'zxing',
+                        'isbn'
+                    ]
+                ]);
+
+            }
+        );
+
+        test(
             'attaches the stream and explicitly starts iOS-compatible video playback',
             async ({ page }) => {
 
