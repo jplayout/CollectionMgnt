@@ -79,7 +79,9 @@ Limites majeures connues :
 ### Priorité moyenne
 
 - Epic Mobile Acquisition : fondation scanner camera frontend et integration
-  formulaire livrees, validation mobile reelle restante.
+  formulaire livrees, validation mobile reelle restante. Le diagnostic visible
+  `cameraDebug=1` et le mode preview-only aident le retest Safari/iPadOS, mais
+  ne remplacent pas la validation terrain.
 - Epic Provider Administration : configuration et diagnostic des providers.
 - Epic Media Providers : sources medias specialisees et selection d'assets.
 - Recherche enrichie par auteur, éditeur, série, tags et tolérance aux fautes.

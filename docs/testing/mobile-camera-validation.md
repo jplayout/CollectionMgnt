@@ -155,6 +155,7 @@ For each fix / Pour chaque correction:
 | IOS-001 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Permission granted and modal opens, but the video preview remains black and no barcode is detected. | blocking | fix pending real-device retest | ScannerService now sets `autoplay`, `muted`, `playsInline`, `srcObject`, waits for metadata/dimensions, calls `video.play()`, falls back from `facingMode: ideal` to `video: true`, and reports a dedicated preview/playback error instead of leaving a black modal. | `frontend/e2e/camera-scanner.spec.js` covers `srcObject`, `video.play()`, iOS video properties, play rejection, zero dimensions, close before metadata, constraint fallback and ZXing shared stream. |
 | IOS-002 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Permission granted, preview appears briefly, then becomes black. | blocking | fix pending real-device retest | The 15.2 correction was insufficient because zero preview dimensions could trigger the fallback constraints branch after a stream had already been obtained. The 15.2.1 correction guarantees one `getUserMedia` call per successful scanner session; `{ video: true }` is attempted only when the first `getUserMedia` rejects before returning a stream. Track `mute`, `unmute` and `ended` events are instrumented in development without camera labels, frames or barcode data. | `frontend/e2e/camera-scanner.spec.js` covers one successful `getUserMedia` call, no second call while dimensions are zero, fallback only on pre-stream rejection, muted track without a reopen loop, ZXing shared stream and close/reopen session boundaries. |
 | IOS-003 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Safari permission is accepted, camera appears briefly, then the modal closes immediately or the stream is stopped. | blocking | fix pending real-device retest | Audit found no backdrop click, focusout, blur, visibilitychange or global click close path. Closure paths are close button, Escape, scan result, parent `open=false` and unmount. The 15.2.2 correction avoids focusing the close button during permission, adds explicit scanner states, ignores backdrop pointer events during permission/preparing video, requires pointerdown and pointerup to both happen on the backdrop after `scanning`, and logs close reasons in development. | `frontend/e2e/camera-scanner.spec.js` covers normal backdrop close in `scanning`, ignored backdrop during permission, pointerdown before permission plus pointerup after permission, dialog clicks, close button during permission, stable video node, no stop after permission resolution without explicit close, visibilitychange/blur, and Scanner button no-submit behavior. |
+| IOS-004 | Safari macOS and iPadOS Safari/PWA, exact versions TBD | Production Docker build shows a preview briefly, then black, but development-only console traces are unavailable in the field. | blocking diagnostic | diagnostic added, retest required | The scanner now exposes an explicitly enabled visible diagnostic panel when the URL contains `cameraDebug=1`. It records safe session, stream, track, video, adapter and lifecycle state in memory only, adds a preview-only switch to disable detection, and provides a copy button for sanitized diagnostic text. | `frontend/e2e/camera-scanner.spec.js` covers hidden-by-default diagnostics, explicit activation, no local/session storage persistence, getUserMedia updates, track mute/ended, srcObject clearing, preview-only without adapters and sanitized copy output. |
 
 ## iPadOS Retest Procedure / Procedure De Retest iPadOS
 
@@ -181,6 +182,94 @@ session id, `getUserMedia` call count, constraints, stream id, track id,
 adapter name, close reason, event type, event target/currentTarget,
 `document.visibilityState` and timestamps. Do not collect frames, images,
 barcodes or camera labels.
+
+## Visible Diagnostic Panel / Panneau Diagnostic Visible
+
+Use this procedure only for field debugging of the black preview issue.
+
+Utiliser cette procedure uniquement pour diagnostiquer le probleme d'aperçu
+noir sur le terrain.
+
+1. Open the same HTTPS production URL and add `?cameraDebug=1`. If the app
+   redirects to login, keep `cameraDebug=1` in the final URL.
+2. Open the scanner. A small `Diagnostic camera` panel must appear above the
+   preview without hiding the video.
+3. First test with detection enabled and note whether the preview turns black.
+4. Reopen the scanner, enable `Desactiver la detection`, then confirm whether
+   the preview remains stable without BarcodeDetector or ZXing.
+5. Tap `Copier le diagnostic` and paste the text into the field report.
+6. Remove `cameraDebug=1` from the URL after the diagnostic session.
+
+English:
+
+1. Open the same HTTPS production URL and add `?cameraDebug=1`. If the app
+   redirects to login, keep `cameraDebug=1` in the final URL.
+2. Open the scanner. A small `Diagnostic camera` panel must appear above the
+   preview without covering the video.
+3. First test with detection enabled and record whether the preview turns black.
+4. Reopen the scanner, enable `Desactiver la detection`, then check whether the
+   preview remains stable without BarcodeDetector or ZXing.
+5. Tap `Copier le diagnostic` and paste the text into the field report.
+6. Remove `cameraDebug=1` from the URL after the diagnostic session.
+
+Expected interpretation / Interpretation attendue:
+
+- preview stable with detection disabled: adapter or detection lifecycle likely;
+- preview still black with detection disabled: video, stream, CSS or Vue
+  lifecycle likely;
+- `track mute`, `track ended`, `srcObject cleared`, `stop` or `close` events
+  before user close are important observations.
+
+The copied diagnostic may include / Le diagnostic copie peut inclure:
+
+- session id, scanner state and close reason;
+- selected adapter: `native`, `zxing` or `none`;
+- `getUserMedia`, `video.play`, `stop`, `srcObject` set/null counters;
+- stream present/active status and safe generated stream identity;
+- number of tracks, `readyState`, `muted`, `mute`/`unmute`/`ended` counters;
+- `video.srcObject`, `paused`, `readyState`, `videoWidth` and `videoHeight`;
+- detection attempt and detection not-found counters;
+- document visibility and relative timestamps;
+- the 30 most recent safe diagnostic events.
+
+The diagnostic must never include / Le diagnostic ne doit jamais inclure:
+
+- camera images, video frames or scanned frames;
+- barcode values;
+- secrets, credentials or provider identifiers;
+- exact camera labels or device names.
+
+No diagnostic payload is sent to the backend. The option is not persisted in
+`localStorage` or `sessionStorage`.
+
+Aucun diagnostic n'est transmis au backend. L'option n'est pas conservee dans
+`localStorage` ou `sessionStorage`.
+
+Example sanitized output / Exemple de sortie nettoyee:
+
+```text
+Camera diagnostic
+sessionId=7
+state=scanning
+adapter=none
+getUserMedia=1
+stream=true/true
+tracks=1 track(s): live/muted
+srcObject=true stable=true
+video=4 1280x720 paused=false
+play=1 stop=0 srcSet=1 srcNull=0
+component=mounted
+closeReason=
+error=
+detection=0/0
+visibility=visible
+events:
+12ms getUserMedia requested
+420ms getUserMedia resolved
+435ms stream attached
+451ms video play resolved
+463ms first dimensions
+```
 
 ## Known Limits / Limites Connues
 
@@ -213,6 +302,11 @@ Known technical limits / Limites techniques connues:
 - 15.2.2 specifically protects the permission return path from accidental
   backdrop/focus-related closure / 15.2.2 protege le retour de permission
   contre une fermeture accidentelle liee au backdrop ou au focus.
+- 15.2.3 adds an explicit production diagnostic panel behind `cameraDebug=1`;
+  it is a field diagnostic aid, not a replacement for real iPadOS retest /
+  15.2.3 ajoute un panneau diagnostic production explicite derriere
+  `cameraDebug=1`; c'est une aide terrain, pas un remplacement du retest reel
+  iPadOS.
 
 ## Final Field Report / Rapport Terrain Final
 
@@ -229,10 +323,13 @@ Completer cette section apres la campagne sur appareils reels.
 - Observed defects / anomalies constatees: IOS-001 black camera preview on
   iPadOS after permission grant; IOS-002 stream appears to become muted or
   replaced after a brief preview; IOS-003 modal closes or stream stops just
-  after permission acceptance.
+  after permission acceptance; IOS-004 production diagnostics needed because
+  Safari macOS/iPadOS can reproduce the black preview without development
+  console traces.
 - Fixes applied / corrections eventuelles: IOS-001 frontend scanner startup
   hardening; IOS-002 single-stream-per-session hardening; IOS-003
-  permission/backdrop close hardening, pending real iPadOS retest.
+  permission/backdrop close hardening; IOS-004 explicit visible diagnostic
+  panel and preview-only mode, pending real iPadOS retest.
 - Known limits / limites connues: see above
 - Decision / decision: Epic 15 incomplete until iPadOS/Safari retest and
   required iPhone Safari row pass

@@ -126,9 +126,12 @@ export class ScannerService {
     }
 
     async start({
+        onDiagnostic = () => {},
         onError,
         onResult,
         onState = () => {},
+        previewOnly =
+            false,
         video
     }) {
 
@@ -152,6 +155,9 @@ export class ScannerService {
 
         this.starting =
             true;
+
+        this.onDiagnostic =
+            onDiagnostic;
 
         try {
 
@@ -193,6 +199,29 @@ export class ScannerService {
 
             }
 
+            if (
+                previewOnly
+            ) {
+
+                this.started =
+                    true;
+
+                this.starting =
+                    false;
+
+                this.emitDiagnostic(
+                    sessionId,
+                    'adapter-started',
+                    {
+                        adapter:
+                            'none'
+                    }
+                );
+
+                return;
+
+            }
+
             this.adapter =
                 await this.selectAdapter();
 
@@ -225,7 +254,22 @@ export class ScannerService {
             this.starting =
                 false;
 
+            this.emitDiagnostic(
+                sessionId,
+                'adapter-started',
+                {
+                    adapter:
+                        this.adapter?.constructor?.name ?? 'unknown'
+                }
+            );
+
             await this.adapter.start({
+                onDiagnostic:
+                    event => this.emitDiagnostic(
+                        sessionId,
+                        event.type,
+                        event
+                    ),
                 onError:
                     error => {
 
@@ -481,9 +525,48 @@ export class ScannerService {
             }
         );
 
-        return this.mediaDevices.getUserMedia(
-            constraints
+        this.emitDiagnostic(
+            sessionId,
+            'getUserMedia requested',
+            {
+                constraints:
+                    this.describeConstraints(
+                        constraints
+                    )
+            }
         );
+
+        try {
+
+            const stream =
+                await this.mediaDevices.getUserMedia(
+                    constraints
+                );
+
+            this.emitDiagnostic(
+                sessionId,
+                'getUserMedia resolved',
+                this.describeStream(
+                    stream
+                )
+            );
+
+            return stream;
+
+        } catch (error) {
+
+            this.emitDiagnostic(
+                sessionId,
+                'getUserMedia rejected',
+                {
+                    error:
+                        error?.name ?? error?.code ?? 'unknown'
+                }
+            );
+
+            throw error;
+
+        }
 
     }
 
@@ -535,6 +618,14 @@ export class ScannerService {
         video.srcObject =
             stream;
 
+        this.emitDiagnostic(
+            sessionId,
+            'stream attached',
+            this.describeStream(
+                stream
+            )
+        );
+
         this.debug(
             sessionId,
             'video-srcObject-set',
@@ -554,9 +645,28 @@ export class ScannerService {
 
             try {
 
+                this.emitDiagnostic(
+                    sessionId,
+                    'video play requested'
+                );
+
                 await video.play();
 
+                this.emitDiagnostic(
+                    sessionId,
+                    'video play resolved'
+                );
+
             } catch (error) {
+
+                this.emitDiagnostic(
+                    sessionId,
+                    'video play rejected',
+                    {
+                        error:
+                            error?.name ?? error?.message ?? 'unknown'
+                    }
+                );
 
                 throw new ScannerError(
                     'video-play-failed',
@@ -572,6 +682,17 @@ export class ScannerService {
             sessionId,
             video
         });
+
+        this.emitDiagnostic(
+            sessionId,
+            'first dimensions',
+            {
+                videoHeight:
+                    video.videoHeight,
+                videoWidth:
+                    video.videoWidth
+            }
+        );
 
     }
 
@@ -1225,15 +1346,38 @@ export class ScannerService {
                                         )
                                     );
 
+                                const diagnosticListener =
+                                    () => this.emitDiagnostic(
+                                        sessionId,
+                                        `track ${eventName}`,
+                                        this.describeTrack(
+                                            track
+                                        )
+                                    );
+
                                 track.addEventListener?.(
                                     eventName,
                                     listener
                                 );
 
-                                return () => track.removeEventListener?.(
+                                track.addEventListener?.(
                                     eventName,
-                                    listener
+                                    diagnosticListener
                                 );
+
+                                return () => {
+
+                                    track.removeEventListener?.(
+                                        eventName,
+                                        listener
+                                    );
+
+                                    track.removeEventListener?.(
+                                        eventName,
+                                        diagnosticListener
+                                    );
+
+                                };
 
                             }
                         );
@@ -1321,6 +1465,37 @@ export class ScannerService {
                 ...details
             }
         );
+
+    }
+
+    emitDiagnostic(sessionId, type, details = {}) {
+
+        this.onDiagnostic?.({
+            ...details,
+            getUserMediaCalls:
+                this.getUserMediaCalls,
+            sessionId,
+            timestamp:
+                this.windowObject?.performance?.now?.() ?? Date.now(),
+            type
+        });
+
+    }
+
+    getDebugSnapshot() {
+
+        return {
+            adapter:
+                this.adapter?.constructor?.name ?? 'none',
+            getUserMediaCalls:
+                this.getUserMediaCalls,
+            sessionId:
+                this.sessionId,
+            stream:
+                this.describeStream(
+                    this.stream
+                )
+        };
 
     }
 

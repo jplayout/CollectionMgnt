@@ -3,10 +3,10 @@ const {
     test
 } = require('@playwright/test');
 
-async function withScannerModules(page, callback) {
+async function withScannerModules(page, callback, path = '/') {
 
     await page.goto(
-        '/'
+        path
     );
 
     await page.evaluate(
@@ -2468,7 +2468,8 @@ test.describe(
                             const {
                                 createApp,
                                 h,
-                                nextTick
+                                nextTick,
+                                ref
                             } = await import(
                                 '/node_modules/.vite/deps/vue.js'
                             );
@@ -2558,6 +2559,427 @@ test.describe(
                 expect(
                     result.sameVideo
                 ).toBeTruthy();
+
+            }
+        );
+
+        test(
+            'shows camera diagnostics only when cameraDebug is enabled',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                createApp,
+                                h,
+                                nextTick
+                            } = await import(
+                                '/node_modules/.vite/deps/vue.js'
+                            );
+
+                            const {
+                                default: CameraScanner
+                            } = await import(
+                                '/src/components/forms/CameraScanner.vue'
+                            );
+
+                            async function render() {
+
+                                const root =
+                                    document.createElement(
+                                        'div'
+                                    );
+
+                                document.body.append(
+                                    root
+                                );
+
+                                const app =
+                                    createApp({
+                                        render: () => h(
+                                            CameraScanner,
+                                            {
+                                                open:
+                                                    true,
+                                                scannerFactory: () => ({
+                                                    start: async () => {},
+                                                    stop: () => {}
+                                                })
+                                            }
+                                        )
+                                    });
+
+                                app.mount(
+                                    root
+                                );
+
+                                await nextTick();
+                                await nextTick();
+
+                                const present =
+                                    Boolean(
+                                        document.querySelector(
+                                            '.camera-debug-panel'
+                                        )
+                                    );
+
+                                app.unmount();
+
+                                return present;
+
+                            }
+
+                            return render();
+
+                        }
+                    );
+
+                expect(
+                    result
+                ).toBeFalsy();
+
+                const enabled =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                createApp,
+                                h,
+                                nextTick
+                            } = await import(
+                                '/node_modules/.vite/deps/vue.js'
+                            );
+
+                            const {
+                                default: CameraScanner
+                            } = await import(
+                                '/src/components/forms/CameraScanner.vue'
+                            );
+
+                            const root =
+                                document.createElement(
+                                    'div'
+                                );
+
+                            document.body.append(
+                                root
+                            );
+
+                            const app =
+                                createApp({
+                                    render: () => h(
+                                        CameraScanner,
+                                        {
+                                            open:
+                                                true,
+                                            scannerFactory: () => ({
+                                                start: async () => {},
+                                                stop: () => {}
+                                            })
+                                        }
+                                    )
+                                });
+
+                            app.mount(
+                                root
+                            );
+
+                            await nextTick();
+                            await nextTick();
+
+                            const present =
+                                Boolean(
+                                    document.querySelector(
+                                        '.camera-debug-panel'
+                                    )
+                                );
+
+                            app.unmount();
+
+                            return {
+                                local:
+                                    localStorage.length,
+                                search:
+                                    window.location.search,
+                                present,
+                                session:
+                                    sessionStorage.length
+                            };
+
+                        },
+                        '/?cameraDebug=1'
+                    );
+
+                expect(
+                    enabled.search
+                ).toContain(
+                    'cameraDebug=1'
+                );
+
+                expect(
+                    enabled.present
+                ).toBeTruthy();
+
+                expect(
+                    enabled.local
+                ).toBe(
+                    0
+                );
+
+                expect(
+                    enabled.session
+                ).toBe(
+                    0
+                );
+
+            }
+        );
+
+        test(
+            'camera diagnostics update, copy safely, and preview-only skips adapters',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                createApp,
+                                h,
+                                nextTick,
+                                ref
+                            } = await import(
+                                '/node_modules/.vite/deps/vue.js'
+                            );
+
+                            const {
+                                default: CameraScanner
+                            } = await import(
+                                '/src/components/forms/CameraScanner.vue'
+                            );
+
+                            let copied =
+                                '';
+
+                            Object.defineProperty(
+                                navigator,
+                                'clipboard',
+                                {
+                                    configurable:
+                                        true,
+                                    value: {
+                                        writeText: async text => {
+
+                                            copied =
+                                                text;
+
+                                        }
+                                    }
+                                }
+                            );
+
+                            const root =
+                                document.createElement(
+                                    'div'
+                                );
+
+                            document.body.append(
+                                root
+                            );
+
+                            const diagnostics =
+                                [];
+
+                            const open =
+                                ref(
+                                    true
+                                );
+
+                            const app =
+                                createApp({
+                                    render: () => h(
+                                        CameraScanner,
+                                        {
+                                            open:
+                                                open.value,
+                                            scannerFactory: () => ({
+                                                getDebugSnapshot: () => ({
+                                                    adapter:
+                                                        'none',
+                                                    getUserMediaCalls:
+                                                        1,
+                                                    sessionId:
+                                                        7,
+                                                    stream: {
+                                                        active:
+                                                            true,
+                                                        streamId:
+                                                            'stream-safe',
+                                                        tracks: [
+                                                            {
+                                                                muted:
+                                                                    true,
+                                                                readyState:
+                                                                    'live',
+                                                                trackId:
+                                                                    'track-safe'
+                                                            }
+                                                        ]
+                                                    }
+                                                }),
+                                                start: async ({
+                                                    onDiagnostic,
+                                                    previewOnly
+                                                }) => {
+
+                                                    diagnostics.push(
+                                                        [
+                                                            'previewOnly',
+                                                            previewOnly
+                                                        ]
+                                                    );
+
+                                                    onDiagnostic({
+                                                        active:
+                                                            true,
+                                                        getUserMediaCalls:
+                                                            1,
+                                                        sessionId:
+                                                            7,
+                                                        streamId:
+                                                            'stream-safe',
+                                                        tracks: [
+                                                            {
+                                                                muted:
+                                                                    true,
+                                                                readyState:
+                                                                    'live',
+                                                                trackId:
+                                                                    'track-safe'
+                                                            }
+                                                        ],
+                                                        type:
+                                                            'stream attached'
+                                                    });
+
+                                                    onDiagnostic({
+                                                        getUserMediaCalls:
+                                                            1,
+                                                        sessionId:
+                                                            7,
+                                                        type:
+                                                            'track mute'
+                                                    });
+
+                                                },
+                                                stop: () => {}
+                                            }),
+                                            onClose: () => {
+
+                                                open.value =
+                                                    false;
+
+                                            }
+                                        }
+                                    )
+                                });
+
+                            app.mount(
+                                root
+                            );
+
+                            await nextTick();
+                            await nextTick();
+
+                            document.querySelector(
+                                '.camera-debug-toggle input'
+                            ).click();
+
+                            await nextTick();
+
+                            document.querySelector(
+                                '.camera-scanner-close'
+                            ).click();
+
+                            await nextTick();
+                            await nextTick();
+
+                            open.value =
+                                true;
+
+                            await nextTick();
+                            await nextTick();
+
+                            document.querySelector(
+                                '.camera-debug-header button'
+                            ).click();
+
+                            await nextTick();
+                            await new Promise(
+                                resolve => window.setTimeout(
+                                    resolve,
+                                    0
+                                )
+                            );
+
+                            const panelText =
+                                document.querySelector(
+                                    '.camera-debug-panel'
+                                ).textContent;
+
+                            app.unmount();
+
+                            return {
+                                copied,
+                                diagnostics,
+                                panelText
+                            };
+
+                        },
+                        '/?cameraDebug=1'
+                    );
+
+                expect(
+                    result.diagnostics
+                ).toContainEqual([
+                    'previewOnly',
+                    true
+                ]);
+
+                expect(
+                    result.panelText
+                ).toContain(
+                    'stream'
+                );
+
+                expect(
+                    result.panelText
+                ).toContain(
+                    'track mute'
+                );
+
+                expect(
+                    result.copied
+                ).toContain(
+                    'Camera diagnostic'
+                );
+
+                expect(
+                    result.copied
+                ).not.toContain(
+                    'barcode'
+                );
+
+                expect(
+                    result.copied
+                ).not.toContain(
+                    'password'
+                );
 
             }
         );
