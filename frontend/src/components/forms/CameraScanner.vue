@@ -177,6 +177,14 @@ const message =
             }
 
             if (
+                status.value === 'camera-track-muted'
+            ) {
+
+                return 'La camera est autorisee mais le flux video a ete interrompu. La saisie manuelle reste disponible.';
+
+            }
+
+            if (
                 status.value === 'insecure-context'
             ) {
 
@@ -223,6 +231,7 @@ const hasError =
             'permission-denied',
             'read-error',
             'unsupported',
+            'camera-track-muted',
             'video-play-failed',
             'video-preview-unavailable'
         ].includes(

@@ -229,9 +229,11 @@ Principes :
 - Aucun lookup code-barres films/jeux/autres livré
 - Checklist de validation reelle Android/iPhone disponible dans
   `docs/testing/mobile-camera-validation.md` pour le lot 15.2.
-- Une anomalie terrain iPadOS d'aperçu camera noir apres permission accordee
-  est documentee et corrigee cote demarrage video frontend ; un retest iPadOS
-  reel reste requis avant merge.
+- Les anomalies terrain iPadOS d'aperçu camera noir apres permission accordee,
+  puis d'image visible brievement avant ecran noir, sont documentees. La
+  correction 15.2.1 garantit un seul `getUserMedia` par session scanner reussie
+  et reserve le fallback `{ video: true }` aux rejets avant obtention d'un flux ;
+  un retest iPadOS reel reste requis avant merge.
 - Aucune validation reelle Android/iPhone renseignee a ce stade ; Epic 15 reste
   incomplet tant que Chrome Android et Safari iPhone ne sont pas valides sans
   defaut bloquant.

@@ -7,7 +7,10 @@ import {
 } from './zxing-barcode-adapter.js';
 
 const defaultPreviewReadyTimeoutMs =
-    2500;
+    6000;
+
+const defaultMutedTrackTimeoutMs =
+    1200;
 
 const defaultCameraConstraints =
     [
@@ -59,6 +62,8 @@ export class ScannerService {
             createZxingBarcodeAdapter,
         mediaDevices =
             globalThis.navigator?.mediaDevices,
+        mutedTrackTimeoutMs =
+            defaultMutedTrackTimeoutMs,
         previewReadyTimeoutMs =
             defaultPreviewReadyTimeoutMs,
         secureContext =
@@ -75,6 +80,9 @@ export class ScannerService {
 
         this.mediaDevices =
             mediaDevices;
+
+        this.mutedTrackTimeoutMs =
+            mutedTrackTimeoutMs;
 
         this.previewReadyTimeoutMs =
             previewReadyTimeoutMs;
@@ -109,6 +117,12 @@ export class ScannerService {
         this.pendingWaits =
             new Set();
 
+        this.trackListenerCleanups =
+            new Set();
+
+        this.getUserMediaCalls =
+            0;
+
     }
 
     async start({
@@ -132,6 +146,9 @@ export class ScannerService {
         this.sessionId =
             sessionId;
 
+        this.getUserMediaCalls =
+            0;
+
         this.starting =
             true;
 
@@ -141,6 +158,11 @@ export class ScannerService {
                 video;
 
             this.assertEnvironment();
+
+            this.debug(
+                sessionId,
+                'start'
+            );
 
             this.stream =
                 await this.createReadableStream({
@@ -167,6 +189,15 @@ export class ScannerService {
 
             this.adapter =
                 await this.selectAdapter();
+
+            this.debug(
+                sessionId,
+                'adapter-selected',
+                {
+                    adapter:
+                        this.adapter?.constructor?.name ?? 'unknown'
+                }
+            );
 
             if (
                 !this.isCurrentSession(
@@ -319,109 +350,128 @@ export class ScannerService {
         video
     }) {
 
-        let lastError =
-            null;
+        const stream =
+            await this.openStream(
+                sessionId
+            );
 
-        for (
-            const constraints of defaultCameraConstraints
+        if (
+            !this.isCurrentSession(
+                sessionId
+            )
         ) {
 
-            let stream =
-                null;
+            this.stopStream(
+                stream
+            );
 
-            try {
-
-                stream =
-                    await this.mediaDevices.getUserMedia(
-                        constraints
-                    );
-
-                if (
-                    !this.isCurrentSession(
-                        sessionId
-                    )
-                ) {
-
-                    this.stopStream(
-                        stream
-                    );
-
-                    return null;
-
-                }
-
-                this.assertUsableStream(
-                    stream
-                );
-
-                this.stream =
-                    stream;
-
-                await this.attachStream({
-                    sessionId,
-                    stream,
-                    video
-                });
-
-                if (
-                    !this.isCurrentSession(
-                        sessionId
-                    )
-                ) {
-
-                    this.stopStream(
-                        stream
-                    );
-
-                    return null;
-
-                }
-
-                return stream;
-
-            } catch (error) {
-
-                lastError =
-                    error;
-
-                this.stopStream(
-                    stream
-                );
-
-                if (
-                    this.stream === stream
-                ) {
-
-                    this.stream =
-                        null;
-
-                }
-
-                if (
-                    video?.srcObject === stream
-                ) {
-
-                    video.pause?.();
-                    video.srcObject =
-                        null;
-
-                }
-
-                if (
-                    error instanceof ScannerError &&
-                    error.code === 'video-play-failed'
-                ) {
-
-                    throw error;
-
-                }
-
-            }
+            return null;
 
         }
 
-        throw lastError ?? new ScannerError(
-            'video-preview-unavailable'
+        this.assertUsableStream(
+            stream
+        );
+
+        this.stream =
+            stream;
+
+        this.debug(
+            sessionId,
+            'stream-selected',
+            this.describeStream(
+                stream
+            )
+        );
+
+        this.attachTrackDebugListeners({
+            sessionId,
+            stream
+        });
+
+        await this.attachStream({
+            sessionId,
+            stream,
+            video
+        });
+
+        if (
+            !this.isCurrentSession(
+                sessionId
+            )
+        ) {
+
+            this.stopStream(
+                stream
+            );
+
+            return null;
+
+        }
+
+        return stream;
+
+    }
+
+    async openStream(sessionId) {
+
+        try {
+
+            return await this.getUserMedia(
+                sessionId,
+                defaultCameraConstraints[0]
+            );
+
+        } catch (error) {
+
+            if (
+                !this.shouldFallbackConstraints(
+                    error
+                )
+            ) {
+
+                throw error;
+
+            }
+
+            this.debug(
+                sessionId,
+                'constraints-fallback',
+                {
+                    reason:
+                        error?.name ?? error?.code ?? 'unknown'
+                }
+            );
+
+            return this.getUserMedia(
+                sessionId,
+                defaultCameraConstraints[1]
+            );
+
+        }
+
+    }
+
+    async getUserMedia(sessionId, constraints) {
+
+        this.getUserMediaCalls +=
+            1;
+
+        this.debug(
+            sessionId,
+            'getUserMedia',
+            {
+                call:
+                    this.getUserMediaCalls,
+                constraints:
+                    this.describeConstraints(
+                        constraints
+                    )
+            }
+        );
+
+        return this.mediaDevices.getUserMedia(
+            constraints
         );
 
     }
@@ -474,6 +524,14 @@ export class ScannerService {
         video.srcObject =
             stream;
 
+        this.debug(
+            sessionId,
+            'video-srcObject-set',
+            this.describeStream(
+                stream
+            )
+        );
+
         await this.waitForVideoMetadata({
             sessionId,
             video
@@ -499,6 +557,7 @@ export class ScannerService {
         }
 
         await this.waitForVideoDimensions({
+            stream,
             sessionId,
             video
         });
@@ -570,6 +629,7 @@ export class ScannerService {
     }
 
     waitForVideoDimensions({
+        stream,
         sessionId,
         video
     }) {
@@ -583,6 +643,11 @@ export class ScannerService {
             ],
             predicate: () => video.videoWidth > 0 &&
                 video.videoHeight > 0,
+            retryWhenTimedOut:
+                () => this.waitForMutedTrack({
+                    sessionId,
+                    stream
+                }),
             sessionId,
             timeoutCode:
                 'video-preview-unavailable',
@@ -596,6 +661,7 @@ export class ScannerService {
     waitForVideoEvent({
         events,
         predicate,
+        retryWhenTimedOut,
         sessionId,
         timeoutCode =
             'video-preview-unavailable',
@@ -700,9 +766,30 @@ export class ScannerService {
                 const handleEvent =
                     () => finish();
 
+                const waitForVideoEventAgain =
+                    () => {
+
+                        this.waitForVideoEvent({
+                            events,
+                            predicate,
+                            retryWhenTimedOut:
+                                null,
+                            sessionId,
+                            timeoutCode,
+                            timeoutMs:
+                                this.mutedTrackTimeoutMs,
+                            video
+                        })
+                            .then(
+                                resolve,
+                                reject
+                            );
+
+                    };
+
                 const timeoutId =
                     this.windowObject.setTimeout(
-                        () => {
+                        async () => {
 
                             if (
                                 settled
@@ -716,6 +803,35 @@ export class ScannerService {
                                 true;
 
                             cleanup();
+
+                            const retryResult =
+                                retryWhenTimedOut ?
+                                    await retryWhenTimedOut() :
+                                    false;
+
+                            if (
+                                retryResult === true
+                            ) {
+
+                                waitForVideoEventAgain();
+
+                                return;
+
+                            }
+
+                            if (
+                                retryResult === 'muted'
+                            ) {
+
+                                reject(
+                                    new ScannerError(
+                                        'camera-track-muted'
+                                    )
+                                );
+
+                                return;
+
+                            }
 
                             if (
                                 this.isCurrentSession(
@@ -827,6 +943,131 @@ export class ScannerService {
 
     }
 
+    shouldFallbackConstraints(error) {
+
+        return [
+            'ConstraintNotSatisfiedError',
+            'DevicesNotFoundError',
+            'NotFoundError',
+            'OverconstrainedError'
+        ].includes(
+            error?.name
+        );
+
+    }
+
+    waitForMutedTrack({
+        sessionId,
+        stream
+    }) {
+
+        const mutedTrack =
+            this.getVideoTracks(
+                stream
+            )
+                .find(
+                    track => track.muted === true
+                );
+
+        if (
+            !mutedTrack
+        ) {
+
+            return Promise.resolve(
+                false
+            );
+
+        }
+
+        this.debug(
+            sessionId,
+            'track-muted-wait',
+            this.describeTrack(
+                mutedTrack
+            )
+        );
+
+        return new Promise(
+            resolve => {
+
+                let settled =
+                    false;
+
+                const cleanup =
+                    () => {
+
+                        mutedTrack.removeEventListener?.(
+                            'unmute',
+                            handleUnmute
+                        );
+
+                        this.windowObject.clearTimeout(
+                            timeoutId
+                        );
+
+                    };
+
+                const handleUnmute =
+                    () => {
+
+                        if (
+                            settled
+                        ) {
+
+                            return;
+
+                        }
+
+                        settled =
+                            true;
+
+                        cleanup();
+                        resolve(
+                            this.isCurrentSession(
+                                sessionId
+                            )
+                        );
+
+                    };
+
+                const timeoutId =
+                    this.windowObject.setTimeout(
+                        () => {
+
+                            if (
+                                settled
+                            ) {
+
+                                return;
+
+                            }
+
+                            settled =
+                                true;
+
+                            cleanup();
+                            resolve(
+                                'muted'
+                            );
+
+                        },
+                        this.mutedTrackTimeoutMs
+                    );
+
+                mutedTrack.addEventListener?.(
+                    'unmute',
+                    handleUnmute,
+                    {
+                        once:
+                            true
+                    }
+                );
+
+            }
+        );
+
+    }
+
     stop() {
 
         if (
@@ -849,6 +1090,17 @@ export class ScannerService {
 
         this.pendingWaits.clear();
 
+        this.trackListenerCleanups.forEach(
+            cleanup => cleanup()
+        );
+
+        this.trackListenerCleanups.clear();
+
+        this.debug(
+            this.sessionId,
+            'stop'
+        );
+
         this.adapter?.stop();
 
         this.stopStream(
@@ -860,6 +1112,12 @@ export class ScannerService {
         ) {
 
             this.video.pause?.();
+
+            this.debug(
+                this.sessionId,
+                'video-srcObject-null'
+            );
+
             this.video.srcObject =
                 null;
 
@@ -885,12 +1143,170 @@ export class ScannerService {
     stopStream(stream) {
 
         const tracks =
-            typeof stream?.getTracks === 'function' ?
-                stream.getTracks() :
-                stream?.getVideoTracks?.();
+            this.getTracks(
+                stream
+            );
 
         tracks?.forEach(
-            track => track.stop()
+            track => {
+
+                this.debug(
+                    this.sessionId,
+                    'track-stop',
+                    this.describeTrack(
+                        track
+                    )
+                );
+
+                track.stop();
+
+            }
+        );
+
+    }
+
+    getTracks(stream) {
+
+        return typeof stream?.getTracks === 'function' ?
+            stream.getTracks() :
+            stream?.getVideoTracks?.() ?? [];
+
+    }
+
+    getVideoTracks(stream) {
+
+        return typeof stream?.getVideoTracks === 'function' ?
+            stream.getVideoTracks() :
+            this.getTracks(
+                stream
+            )
+                .filter(
+                    track => !track.kind || track.kind === 'video'
+                );
+
+    }
+
+    attachTrackDebugListeners({
+        sessionId,
+        stream
+    }) {
+
+        this.getVideoTracks(
+            stream
+        )
+            .forEach(
+                track => {
+
+                    const listeners =
+                        [
+                            'mute',
+                            'unmute',
+                            'ended'
+                        ].map(
+                            eventName => {
+
+                                const listener =
+                                    () => this.debug(
+                                        sessionId,
+                                        `track-${eventName}`,
+                                        this.describeTrack(
+                                            track
+                                        )
+                                    );
+
+                                track.addEventListener?.(
+                                    eventName,
+                                    listener
+                                );
+
+                                return () => track.removeEventListener?.(
+                                    eventName,
+                                    listener
+                                );
+
+                            }
+                        );
+
+                    this.trackListenerCleanups.add(
+                        () => listeners.forEach(
+                            cleanup => cleanup()
+                        )
+                    );
+
+                }
+            );
+
+    }
+
+    describeConstraints(constraints) {
+
+        return {
+            audio:
+                constraints.audio,
+            video:
+                constraints.video === true ?
+                    true :
+                    {
+                        facingMode:
+                            constraints.video?.facingMode
+                    }
+        };
+
+    }
+
+    describeStream(stream) {
+
+        return {
+            active:
+                stream?.active,
+            streamId:
+                stream?.id,
+            tracks:
+                this.getVideoTracks(
+                    stream
+                )
+                    .map(
+                        track => this.describeTrack(
+                            track
+                        )
+                    )
+        };
+
+    }
+
+    describeTrack(track) {
+
+        return {
+            muted:
+                track?.muted,
+            readyState:
+                track?.readyState,
+            trackId:
+                track?.id
+        };
+
+    }
+
+    debug(sessionId, event, details = {}) {
+
+        if (
+            import.meta.env?.DEV !== true ||
+            typeof this.windowObject?.console?.debug !== 'function'
+        ) {
+
+            return;
+
+        }
+
+        this.windowObject.console.debug(
+            '[CameraScanner]',
+            {
+                event,
+                getUserMediaCalls:
+                    this.getUserMediaCalls,
+                sessionId,
+                ...details
+            }
         );
 
     }

@@ -558,8 +558,9 @@ Contraintes :
   tant que Chrome Android et Safari iPhone ne sont pas valides sur appareils
   reels sans defaut bloquant.
 - Une correction de l'aperçu camera noir observe sur tablette iPadOS apres
-  permission accordee est disponible, avec retest iPadOS reel requis avant
-  merge.
+  permission accordee est disponible. Le suivi 15.2.1 empeche le remplacement
+  automatique d'un flux deja obtenu par un second `getUserMedia`, avec retest
+  iPadOS reel requis avant merge.
 - Aucun secret provider expose au frontend.
 - Les images restent importees explicitement via `MediaService`.
 
