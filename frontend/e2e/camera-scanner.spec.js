@@ -370,7 +370,7 @@ test.describe(
         );
 
         test(
-            'falls back to unconstrained video when the ideal environment stream has no preview frames',
+            'does not open a second stream when the ideal stream has no preview frames',
             async ({ page }) => {
 
                 const result =
@@ -390,38 +390,21 @@ test.describe(
                             const stopped =
                                 [];
 
-                            const streams = [
-                                {
-                                    active:
-                                        true,
-                                    getVideoTracks: () => [
-                                        {
-                                            readyState:
-                                                'live',
-                                            stop: () => stopped.push(
-                                                'ideal'
-                                            )
-                                        }
-                                    ],
-                                    label:
-                                        'ideal'
-                                },
-                                {
-                                    active:
-                                        true,
-                                    getVideoTracks: () => [
-                                        {
-                                            readyState:
-                                                'live',
-                                            stop: () => stopped.push(
-                                                'fallback'
-                                            )
-                                        }
-                                    ],
-                                    label:
-                                        'fallback'
-                                }
-                            ];
+                            const stream = {
+                                active:
+                                    true,
+                                getVideoTracks: () => [
+                                    {
+                                        readyState:
+                                            'live',
+                                        stop: () => stopped.push(
+                                            'ideal'
+                                        )
+                                    }
+                                ],
+                                label:
+                                    'ideal'
+                            };
 
                             const service =
                                 new ScannerService({
@@ -437,9 +420,7 @@ test.describe(
                                                 constraints
                                             );
 
-                                            return streams[
-                                                calls.length - 1
-                                            ];
+                                            return stream;
 
                                         }
                                     },
@@ -496,14 +477,26 @@ test.describe(
                                 }
                             );
 
-                            await service.start({
-                                onError: () => {},
-                                onResult: () => {},
-                                video
-                            });
+                            let code;
+
+                            try {
+
+                                await service.start({
+                                    onError: () => {},
+                                    onResult: () => {},
+                                    video
+                                });
+
+                            } catch (error) {
+
+                                code =
+                                    error.code;
+
+                            }
 
                             const resultValue = {
                                 calls,
+                                code,
                                 srcObject:
                                     video.srcObject?.label,
                                 stoppedBeforeStop:
@@ -536,12 +529,6 @@ test.describe(
                                     'environment'
                             }
                         }
-                    },
-                    {
-                        audio:
-                            false,
-                        video:
-                            true
                     }
                 ]);
 
@@ -554,15 +541,267 @@ test.describe(
                 expect(
                     result.stoppedAfterStop
                 ).toEqual([
-                    'ideal',
-                    'fallback'
+                    'ideal'
+                ]);
+
+                expect(
+                    result.code
+                ).toBe(
+                    'video-preview-unavailable'
+                );
+
+            }
+        );
+
+        test(
+            'falls back to unconstrained video only when the first getUserMedia rejects',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ScannerService
+                            } = await import(
+                                '/src/services/barcode-scanner/scanner-service.js'
+                            );
+
+                            const calls =
+                                [];
+
+                            const stream = {
+                                active:
+                                    true,
+                                getVideoTracks: () => [
+                                    {
+                                        readyState:
+                                            'live',
+                                        stop: () => {}
+                                    }
+                                ],
+                                label:
+                                    'fallback'
+                            };
+
+                            const service =
+                                new ScannerService({
+                                    createNativeAdapter: () => ({
+                                        isSupported: async () => true,
+                                        start: () => {},
+                                        stop: () => {}
+                                    }),
+                                    mediaDevices: {
+                                        getUserMedia: async constraints => {
+
+                                            calls.push(
+                                                constraints
+                                            );
+
+                                            if (
+                                                calls.length === 1
+                                            ) {
+
+                                                const error =
+                                                    new Error(
+                                                        'overconstrained'
+                                                    );
+
+                                                error.name =
+                                                    'OverconstrainedError';
+
+                                                throw error;
+
+                                            }
+
+                                            return stream;
+
+                                        }
+                                    },
+                                    secureContext:
+                                        true
+                                });
+
+                            const video =
+                                window.createTestVideo();
+
+                            await service.start({
+                                onError: () => {},
+                                onResult: () => {},
+                                video
+                            });
+
+                            const resultValue = {
+                                calls,
+                                srcObject:
+                                    video.srcObject === stream
+                            };
+
+                            service.stop();
+
+                            return resultValue;
+
+                        }
+                    );
+
+                expect(
+                    result.calls
+                ).toEqual([
+                    {
+                        audio:
+                            false,
+                        video: {
+                            facingMode: {
+                                ideal:
+                                    'environment'
+                            }
+                        }
+                    },
+                    {
+                        audio:
+                            false,
+                        video:
+                            true
+                    }
                 ]);
 
                 expect(
                     result.srcObject
+                ).toBeTruthy();
+
+            }
+        );
+
+        test(
+            'does not reopen the camera when the active video track stays muted',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ScannerService
+                            } = await import(
+                                '/src/services/barcode-scanner/scanner-service.js'
+                            );
+
+                            const calls =
+                                [];
+
+                            const stopped =
+                                [];
+
+                            const track =
+                                new EventTarget();
+
+                            track.id =
+                                'track-1';
+
+                            track.muted =
+                                true;
+
+                            track.readyState =
+                                'live';
+
+                            track.stop =
+                                () => stopped.push(
+                                    'track'
+                                );
+
+                            const stream = {
+                                active:
+                                    true,
+                                getVideoTracks: () => [
+                                    track
+                                ],
+                                id:
+                                    'stream-1'
+                            };
+
+                            const service =
+                                new ScannerService({
+                                    mediaDevices: {
+                                        getUserMedia: async constraints => {
+
+                                            calls.push(
+                                                constraints
+                                            );
+
+                                            return stream;
+
+                                        }
+                                    },
+                                    mutedTrackTimeoutMs:
+                                        1,
+                                    previewReadyTimeoutMs:
+                                        1,
+                                    secureContext:
+                                        true
+                                });
+
+                            const video =
+                                window.createTestVideo({
+                                    height:
+                                        0,
+                                    width:
+                                        0
+                                });
+
+                            track.dispatchEvent(
+                                new Event(
+                                    'mute'
+                                )
+                            );
+
+                            try {
+
+                                await service.start({
+                                    onError: () => {},
+                                    onResult: () => {},
+                                    video
+                                });
+
+                            } catch (error) {
+
+                                return {
+                                    calls,
+                                    code:
+                                        error.code,
+                                    stopped
+                                };
+
+                            }
+
+                            return {
+                                calls,
+                                code:
+                                    'none',
+                                stopped
+                            };
+
+                        }
+                    );
+
+                expect(
+                    result.calls.length
                 ).toBe(
-                    'fallback'
+                    1
                 );
+
+                expect(
+                    result.code
+                ).toBe(
+                    'camera-track-muted'
+                );
+
+                expect(
+                    result.stopped
+                ).toEqual([
+                    'track'
+                ]);
 
             }
         );
@@ -660,7 +899,6 @@ test.describe(
                 expect(
                     result.stopped
                 ).toEqual([
-                    'track',
                     'track'
                 ]);
 
@@ -2214,6 +2452,112 @@ test.describe(
                 ).toBeGreaterThanOrEqual(
                     2
                 );
+
+            }
+        );
+
+        test(
+            'keeps the same video element while moving from loading to scanning',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                createApp,
+                                h,
+                                nextTick
+                            } = await import(
+                                '/node_modules/.vite/deps/vue.js'
+                            );
+
+                            const {
+                                default: CameraScanner
+                            } = await import(
+                                '/src/components/forms/CameraScanner.vue'
+                            );
+
+                            let resolveStart;
+
+                            const startPromise =
+                                new Promise(
+                                    resolve => {
+
+                                        resolveStart =
+                                            resolve;
+
+                                    }
+                                );
+
+                            const root =
+                                document.createElement(
+                                    'div'
+                                );
+
+                            document.body.append(
+                                root
+                            );
+
+                            const app =
+                                createApp({
+                                    render: () => h(
+                                        CameraScanner,
+                                        {
+                                            open:
+                                                true,
+                                            scannerFactory: () => ({
+                                                start: () => startPromise,
+                                                stop: () => {}
+                                            })
+                                        }
+                                    )
+                                });
+
+                            app.mount(
+                                root
+                            );
+
+                            await nextTick();
+                            await nextTick();
+
+                            const loadingVideo =
+                                document.querySelector(
+                                    '.camera-scanner-preview video'
+                                );
+
+                            resolveStart();
+
+                            await nextTick();
+                            await nextTick();
+
+                            const scanningVideo =
+                                document.querySelector(
+                                    '.camera-scanner-preview video'
+                                );
+
+                            app.unmount();
+
+                            return {
+                                sameVideo:
+                                    loadingVideo === scanningVideo,
+                                videoPresent:
+                                    Boolean(
+                                        loadingVideo
+                                    )
+                            };
+
+                        }
+                    );
+
+                expect(
+                    result.videoPresent
+                ).toBeTruthy();
+
+                expect(
+                    result.sameVideo
+                ).toBeTruthy();
 
             }
         );

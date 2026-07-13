@@ -153,6 +153,30 @@ For each fix / Pour chaque correction:
 | ID | Device/browser | Scenario | Severity | Status | Fix | Automated test |
 | --- | --- | --- | --- | --- | --- | --- |
 | IOS-001 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Permission granted and modal opens, but the video preview remains black and no barcode is detected. | blocking | fix pending real-device retest | ScannerService now sets `autoplay`, `muted`, `playsInline`, `srcObject`, waits for metadata/dimensions, calls `video.play()`, falls back from `facingMode: ideal` to `video: true`, and reports a dedicated preview/playback error instead of leaving a black modal. | `frontend/e2e/camera-scanner.spec.js` covers `srcObject`, `video.play()`, iOS video properties, play rejection, zero dimensions, close before metadata, constraint fallback and ZXing shared stream. |
+| IOS-002 | iPadOS tablet, Safari or PWA mode TBD, iPadOS version TBD | Permission granted, preview appears briefly, then becomes black. | blocking | fix pending real-device retest | The 15.2 correction was insufficient because zero preview dimensions could trigger the fallback constraints branch after a stream had already been obtained. The 15.2.1 correction guarantees one `getUserMedia` call per successful scanner session; `{ video: true }` is attempted only when the first `getUserMedia` rejects before returning a stream. Track `mute`, `unmute` and `ended` events are instrumented in development without camera labels, frames or barcode data. | `frontend/e2e/camera-scanner.spec.js` covers one successful `getUserMedia` call, no second call while dimensions are zero, fallback only on pre-stream rejection, muted track without a reopen loop, ZXing shared stream and close/reopen session boundaries. |
+
+## iPadOS Retest Procedure / Procedure De Retest iPadOS
+
+Use the deployed 15.2.1 image over HTTPS.
+
+Utiliser l'image 15.2.1 deployee en HTTPS.
+
+1. Clear the browser cache or install/open the refreshed PWA.
+2. Open a scannable `isbn` or `barcode` field and tap `Scanner`.
+3. Grant camera permission.
+4. Keep the modal open for at least 10 seconds.
+5. Confirm that the preview does not flash then turn black.
+6. Confirm that the code can be detected or, if the preview cannot start, that
+   a user-facing error appears instead of an indefinite black preview.
+7. Close and reopen the scanner, then confirm that the second session starts
+   only after the first stream has stopped.
+8. Record Safari vs PWA mode, iPadOS version, browser version, Docker image,
+   open time, detection time and adapter if identifiable.
+
+Development diagnostic logs may be used during retest. They must contain only
+session id, `getUserMedia` call count, constraints, stream id, track id,
+`readyState`, `muted`, `mute`/`unmute`/`ended`, `srcObject` set/null, stop calls
+and adapter name. Do not collect frames, images, barcodes or camera labels.
 
 ## Known Limits / Limites Connues
 
@@ -179,6 +203,9 @@ Known technical limits / Limites techniques connues:
 - iPadOS fix validation still requires a real-device retest after deployment /
   la correction iPadOS necessite encore un retest sur appareil reel apres
   deploiement.
+- 15.2.1 specifically prevents a successful stream from being replaced by an
+  automatic constraints fallback / 15.2.1 empeche le remplacement d'un flux
+  obtenu par un fallback automatique de contraintes.
 
 ## Final Field Report / Rapport Terrain Final
 
@@ -190,11 +217,14 @@ Completer cette section apres la campagne sur appareils reels.
   Android reported successful; iPadOS tablet failed before correction; exact
   browser mode, iPadOS version and image version still TBD.
 - Field results / resultats terrain: Android works; iPadOS permission granted
-  but preview black before correction.
+  but preview black before correction; first iPadOS correction showed the image
+  briefly, then black.
 - Observed defects / anomalies constatees: IOS-001 black camera preview on
-  iPadOS after permission grant.
+  iPadOS after permission grant; IOS-002 stream appears to become muted or
+  replaced after a brief preview.
 - Fixes applied / corrections eventuelles: IOS-001 frontend scanner startup
-  hardening, pending real iPadOS retest.
+  hardening; IOS-002 single-stream-per-session hardening, pending real iPadOS
+  retest.
 - Known limits / limites connues: see above
 - Decision / decision: Epic 15 incomplete until iPadOS/Safari retest and
   required iPhone Safari row pass
