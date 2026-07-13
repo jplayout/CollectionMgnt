@@ -2201,6 +2201,8 @@ test.describe(
                 ).toContainEqual({
                     errorName:
                         'NotFoundException',
+                    errorType:
+                        'notFound',
                     type:
                         'detection retryable'
                 });
@@ -2210,6 +2212,8 @@ test.describe(
                 ).toContainEqual({
                     errorName:
                         'ChecksumException',
+                    errorType:
+                        'checksum',
                     type:
                         'detection retryable'
                 });
@@ -2219,6 +2223,8 @@ test.describe(
                 ).toContainEqual({
                     errorName:
                         'FormatException',
+                    errorType:
+                        'format',
                     type:
                         'detection retryable'
                 });
@@ -2233,6 +2239,237 @@ test.describe(
                     rawValue:
                         '9780140328721'
                 });
+
+            }
+        );
+
+        test(
+            'classifies real ZXing library exceptions after minification',
+            async ({ page }) => {
+
+                const result =
+                    await withScannerModules(
+                        page,
+                        async () => {
+
+                            const {
+                                ZxingBarcodeAdapter
+                            } = await import(
+                                '/src/services/barcode-scanner/zxing-barcode-adapter.js'
+                            );
+
+                            const zxingLibrary =
+                                await import(
+                                    '/node_modules/.vite/deps/@zxing_library.js'
+                                );
+
+                            const MinifiedNotFound =
+                                class e extends zxingLibrary.NotFoundException {};
+
+                            const MinifiedChecksum =
+                                class e extends zxingLibrary.ChecksumException {};
+
+                            const MinifiedFormat =
+                                class e extends zxingLibrary.FormatException {};
+
+                            let decodeCalls =
+                                0;
+
+                            const diagnostics =
+                                [];
+
+                            const errors =
+                                [];
+
+                            function minifyErrorName(error) {
+
+                                Object.defineProperty(
+                                    error,
+                                    'name',
+                                    {
+                                        configurable:
+                                            true,
+                                        value:
+                                            'e'
+                                    }
+                                );
+
+                                return error;
+
+                            }
+
+                            class ReaderMock {
+
+                                set possibleFormats(_) {}
+
+                                decode() {
+
+                                    decodeCalls +=
+                                        1;
+
+                                    if (
+                                        decodeCalls === 1
+                                    ) {
+
+                                        const error =
+                                            minifyErrorName(
+                                                new MinifiedNotFound()
+                                            );
+
+                                        throw error;
+
+                                    }
+
+                                    if (
+                                        decodeCalls === 2
+                                    ) {
+
+                                        const error =
+                                            minifyErrorName(
+                                                new MinifiedChecksum()
+                                            );
+
+                                        throw error;
+
+                                    }
+
+                                    if (
+                                        decodeCalls === 3
+                                    ) {
+
+                                        const error =
+                                            minifyErrorName(
+                                                new MinifiedFormat()
+                                            );
+
+                                        throw error;
+
+                                    }
+
+                                    return {
+                                        getBarcodeFormat: () => 7,
+                                        getText: () => '9780140328721'
+                                    };
+
+                                }
+
+                                reset() {}
+
+                            }
+
+                            const adapter =
+                                new ZxingBarcodeAdapter({
+                                    moduleLoader: async () => ({
+                                        browser: {
+                                            BarcodeFormat: {
+                                                7:
+                                                    'EAN_13',
+                                                EAN_13:
+                                                    7,
+                                                UPC_A:
+                                                    14
+                                            },
+                                            BrowserCodeReader: {
+                                                releaseAllStreams: () => {}
+                                            },
+                                            BrowserMultiFormatOneDReader:
+                                                ReaderMock
+                                        },
+                                        library:
+                                            zxingLibrary
+                                    }),
+                                    scanIntervalMs:
+                                        1
+                                });
+
+                            const video =
+                                document.createElement(
+                                    'video'
+                                );
+
+                            Object.defineProperty(
+                                video,
+                                'readyState',
+                                {
+                                    value:
+                                        HTMLMediaElement.HAVE_CURRENT_DATA
+                                }
+                            );
+
+                            const scanned =
+                                await new Promise(
+                                    resolve => adapter.start({
+                                        onDiagnostic: event => diagnostics.push(
+                                            event
+                                        ),
+                                        onError: error => {
+
+                                            errors.push(
+                                                error.name
+                                            );
+
+                                            resolve({
+                                                error:
+                                                    error.name
+                                            });
+
+                                        },
+                                        onResult: resolve,
+                                        video
+                                    })
+                                );
+
+                            adapter.stop();
+
+                            return {
+                                diagnostics:
+                                    diagnostics.map(
+                                        event => [
+                                            event.type,
+                                            event.errorName,
+                                            event.errorType
+                                        ]
+                                    ),
+                                errors,
+                                scanned
+                            };
+
+                        }
+                    );
+
+                expect(
+                    result.errors
+                ).toEqual([]);
+
+                expect(
+                    result.diagnostics
+                ).toContainEqual([
+                    'detection retryable',
+                    'e',
+                    'notFound'
+                ]);
+
+                expect(
+                    result.diagnostics
+                ).toContainEqual([
+                    'detection retryable',
+                    'e',
+                    'checksum'
+                ]);
+
+                expect(
+                    result.diagnostics
+                ).toContainEqual([
+                    'detection retryable',
+                    'e',
+                    'format'
+                ]);
+
+                expect(
+                    result.scanned.rawValue
+                ).toBe(
+                    '9780140328721'
+                );
 
             }
         );
@@ -3527,6 +3764,8 @@ test.describe(
                                                     onDiagnostic({
                                                         errorName:
                                                             'NotFoundException',
+                                                        errorType:
+                                                            'notFound',
                                                         getUserMediaCalls:
                                                             1,
                                                         sessionId:
@@ -3538,6 +3777,8 @@ test.describe(
                                                     onDiagnostic({
                                                         errorName:
                                                             'ChecksumException',
+                                                        errorType:
+                                                            'checksum',
                                                         getUserMediaCalls:
                                                             1,
                                                         sessionId:
@@ -3549,6 +3790,8 @@ test.describe(
                                                     onDiagnostic({
                                                         errorName:
                                                             'FormatException',
+                                                        errorType:
+                                                            'format',
                                                         getUserMediaCalls:
                                                             1,
                                                         sessionId:
@@ -3558,10 +3801,16 @@ test.describe(
                                                     });
 
                                                     onDiagnostic({
+                                                        constructorName:
+                                                            'e',
                                                         errorName:
-                                                            'InvalidStateError',
+                                                            'e',
+                                                        errorType:
+                                                            'fatal',
                                                         getUserMediaCalls:
                                                             1,
+                                                        objectType:
+                                                            '[object Error]',
                                                         sessionId:
                                                             7,
                                                         type:
@@ -3682,7 +3931,7 @@ test.describe(
                 expect(
                     result.panelText
                 ).toContain(
-                    'detection retryable ChecksumException'
+                    'detection retryable checksum'
                 );
 
                 expect(

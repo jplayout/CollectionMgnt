@@ -241,8 +241,10 @@ Principes :
   d'aperçu noir en build Docker de production. La branche 15.2.4 corrige la
   classification ZXing prouvee: `NotFoundException`, `ChecksumException` et
   `FormatException` sont retryables et ne doivent plus arreter le MediaStream;
-  les erreurs inconnues restent fatales. Un retest Safari macOS puis iPadOS
-  reste requis.
+  les erreurs inconnues restent fatales. La branche 15.2.5 rend ce correctif
+  robuste en production en utilisant les vraies classes `@zxing/library`, car
+  les noms de classes peuvent etre minifies en `e` dans le bundle Vite. Un
+  retest Safari macOS puis iPadOS reste requis.
 - Aucune validation reelle Android/iPhone renseignee a ce stade ; Epic 15 reste
   incomplet tant que Chrome Android et Safari iPhone ne sont pas valides sans
   defaut bloquant.

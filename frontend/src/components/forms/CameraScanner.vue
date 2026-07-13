@@ -1005,14 +1005,14 @@ function handleDiagnosticEvent(event) {
     ) {
 
         if (
-            event.errorName === 'ChecksumException'
+            event.errorType === 'checksum'
         ) {
 
             diagnosticState.detectionChecksum +=
                 1;
 
         } else if (
-            event.errorName === 'FormatException'
+            event.errorType === 'format'
         ) {
 
             diagnosticState.detectionFormat +=
@@ -1068,12 +1068,52 @@ function handleDiagnosticEvent(event) {
     );
 
     recordDiagnosticEvent(
-        event.errorName ?
-            `${event.type} ${event.errorName}` :
-            event.type
+        formatDiagnosticEvent(
+            event
+        )
     );
 
     updateDiagnosticSnapshot();
+
+}
+
+function formatDiagnosticEvent(event) {
+
+    if (
+        event.type === 'detection fatal'
+    ) {
+
+        return [
+            event.type,
+            event.errorName ? `name=${event.errorName}` : '',
+            event.constructorName ? `constructor=${event.constructorName}` : '',
+            event.objectType ? `object=${event.objectType}` : '',
+            event.message ? `message=${event.message}` : ''
+        ].filter(
+            Boolean
+        ).join(
+            ' '
+        );
+
+    }
+
+    if (
+        event.errorType
+    ) {
+
+        return `${event.type} ${event.errorType}`;
+
+    }
+
+    if (
+        event.errorName
+    ) {
+
+        return `${event.type} ${event.errorName}`;
+
+    }
+
+    return event.type;
 
 }
 
