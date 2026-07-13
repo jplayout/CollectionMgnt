@@ -71,6 +71,7 @@ export class ZxingBarcodeAdapter {
     }
 
     async start({
+        onDiagnostic = () => {},
         onError,
         onResult,
         video
@@ -97,6 +98,11 @@ export class ZxingBarcodeAdapter {
                     if (
                         video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
                     ) {
+
+                        onDiagnostic({
+                            type:
+                                'detection attempt'
+                        });
 
                         const decoded =
                             this.reader.decode(
@@ -144,6 +150,11 @@ export class ZxingBarcodeAdapter {
                         return;
 
                     }
+
+                    onDiagnostic({
+                        type:
+                            'detection not-found'
+                    });
 
                 }
 

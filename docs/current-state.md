@@ -235,7 +235,10 @@ Principes :
   15.2.1 garantit un seul `getUserMedia` par session scanner reussie et reserve
   le fallback `{ video: true }` aux rejets avant obtention d'un flux. La
   correction 15.2.2 protege le cycle pointer/backdrop pendant la permission ;
-  un retest iPadOS reel reste requis avant merge.
+  un retest iPadOS reel reste requis avant merge. La branche 15.2.3 ajoute un
+  panneau diagnostic visible uniquement lorsque l'URL contient `cameraDebug=1`,
+  avec mode preview-only et copie de diagnostic nettoyee pour isoler les causes
+  d'aperçu noir en build Docker de production.
 - Aucune validation reelle Android/iPhone renseignee a ce stade ; Epic 15 reste
   incomplet tant que Chrome Android et Safari iPhone ne sont pas valides sans
   defaut bloquant.
