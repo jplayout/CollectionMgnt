@@ -86,7 +86,7 @@ jobs:
           git diff --check
 
       - name: Lint Markdown documentation
-        uses: DavidAnson/markdownlint-cli2-action@v24.0.0
+        uses: DavidAnson/markdownlint-cli2-action@v24.1.0
         with:
           config: .markdownlint.json
           globs: |
