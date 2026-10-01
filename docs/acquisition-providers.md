@@ -2,7 +2,8 @@
 
 Etat courant : architecture acquisition backend stabilisee avec Open Library
 comme provider principal et Google Books comme provider secondaire pour les
-lookups ISBN livres. Le socle interne `movies/search` est disponible pour les
+lookups ISBN livres lorsque `GOOGLE_BOOKS_API_KEY` est configuree. Le socle interne
+`movies/search` est disponible pour les
 providers films, avec TMDb comme premier provider Movies configure par
 `TMDB_API_READ_ACCESS_TOKEN`. `games/search` est expose pour les jeux video,
 avec IGDB comme premier metadata provider quand `IGDB_CLIENT_ID` et
@@ -265,7 +266,7 @@ essaie les providers actifs compatibles dans l'ordre stable du registre.
 Pour les livres, l'ordre courant est :
 
 1. `openlibrary`
-2. `googlebooks`
+2. `googlebooks`, uniquement si `GOOGLE_BOOKS_API_KEY` est configuree
 
 Pour les films, TMDb est le premier provider `movies/search` quand
 `TMDB_API_READ_ACCESS_TOKEN` est configure.
@@ -281,13 +282,14 @@ Regles actuelles :
 - un provider explicite inconnu retourne `provider_not_found` ;
 - un provider explicite desactive retourne `provider_unavailable` ;
 - en mode implicite, un resultat vide permet d'essayer le provider suivant ;
-- en mode implicite, une erreur technique ou un timeout permet d'essayer le
-  provider suivant ;
+- en mode implicite, `provider_error`, `provider_timeout` et
+  `provider_unavailable` permettent d'essayer le provider suivant ;
 - le premier provider qui retourne des suggestions gagne ;
-- si tous les providers retournent vide, l'API retourne `200` avec
-  `results: []` ;
-- si tous les providers echouent techniquement, une erreur stable existante est
-  retournee ;
+- si tous les providers actifs tentes retournent proprement vide, l'API retourne
+  `200` avec `results: []` ;
+- si aucun resultat n'est trouve et qu'au moins un provider tente echoue
+  techniquement, la derniere erreur technique est propagee : la recherche est
+  incomplete, meme si un autre provider ou son cache a retourne vide ;
 - aucune fusion automatique n'est effectuee ;
 - la liste des providers essayes n'est pas exposee au frontend.
 
@@ -340,7 +342,8 @@ Codes publics stables :
 
 - `invalid_isbn` : identifiant ISBN invalide avant appel provider ;
 - `provider_not_found` : provider explicite inconnu ;
-- `provider_unavailable` : provider absent, desactive ou non configuré ;
+- `provider_unavailable` : provider absent, desactive, non configure ou
+  temporairement indisponible, notamment HTTP 429 Google Books ;
 - `provider_timeout` : timeout lors de l'appel provider ;
 - `provider_error` : erreur provider non exploitable.
 
@@ -351,8 +354,9 @@ Les erreurs internes ne doivent jamais etre exposees telles quelles :
 - pas de message technique issu directement d'un service externe ;
 - pas de secret ou URL signee dans une erreur.
 
-Une absence de resultat n'est pas une erreur : le lookup retourne `200` avec
-`results: []`.
+Une absence de resultat n'est pas une erreur si tous les providers tentes ont
+termine proprement : le lookup retourne `200` avec `results: []`. Un resultat
+vide ne masque jamais une panne d'un autre provider tente.
 
 ## Cache
 
@@ -453,15 +457,18 @@ Points d'attention :
 - ne pas ajouter de logique provider dans les routes ;
 - ne pas faire acceder le provider a SQLite ;
 - ne pas exposer de reponse brute externe ;
-- ne pas rendre obligatoire une cle API si le provider est optionnel ;
+- garder optionnel le provider, mais exiger sa configuration avant activation ;
 - garder le frontend provider-agnostic.
 
 ## Providers Actuels Et Evolutions
 
 Etat courant et evolutions prevues :
 
-- Google Books : provider livre secondaire livre apres Open Library, avec cle
-  API optionnelle via `GOOGLE_BOOKS_API_KEY` ;
+- Google Books : provider livre secondaire apres Open Library, avec cle API
+  requise via `GOOGLE_BOOKS_API_KEY`. Sans cle non vide, `describe()` annonce
+  `enabled: false` et `requiresConfiguration: true`, le registre le masque de
+  la liste active et un appel explicite retourne `provider_unavailable` sans
+  appel reseau. La cle reste exclusivement dans les requetes backend ;
 - TMDb : premier provider film pour `movies/search`, avec configuration
   obligatoire via `TMDB_API_READ_ACCESS_TOKEN`, sans lookup code-barres, sans
   endpoint details et sans IMDb ID dans ce lot ;
@@ -483,3 +490,25 @@ Etat courant et evolutions prevues :
 
 Ces evolutions ne doivent pas changer le principe central : providers backend
 uniquement, resultat normalise, erreurs stables, tests sans reseau externe.
+
+## English — provider configuration and incomplete searches
+
+Open Library remains the first ISBN provider. Google Books is a fallback only
+when a non-empty `GOOGLE_BOOKS_API_KEY` is configured in the backend. Without
+it, Google Books reports `enabled: false` and `requiresConfiguration: true`,
+is omitted from active registry resolution and the public provider list, and
+rejects explicit lookups with `provider_unavailable` without a network request.
+Neither descriptions, public errors, frontend bundles nor logs contain the key.
+
+Implicit acquisition returns the first successful suggestion immediately.
+It returns HTTP 200 with `results: []` only if every attempted provider completed
+cleanly with no results. If no suggestion is found and any attempted provider
+fails with `provider_error`, `provider_timeout` or `provider_unavailable`, the
+last technical error is propagated. This also applies to movie and game searches.
+A cached empty response follows the same rule as a live empty response.
+Explicit provider selection continues to disable fallback.
+
+Google Books HTTP 429 maps to HTTP 503 / `provider_unavailable` without exposing
+its raw quota payload. Cache keys remain scoped to providers; empty responses
+retain their 24-hour TTL, successful responses seven days, and errors are never
+cached. Permanent tests use local fixtures and never call external APIs.

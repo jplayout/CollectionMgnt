@@ -1603,77 +1603,84 @@ test(
     }
 );
 
-test(
-    'ISBN lookup errors are readable and keep the form usable',
-    async ({ page }) => {
+for (const {code, status, message} of [
+    {code: 'provider_timeout', status: 504, message: 'La recherche a expiré'},
+    {code: 'provider_error', status: 503, message: 'Recherche impossible pour le moment'},
+    {code: 'provider_unavailable', status: 503, message: 'Le service de recherche est indisponible'}
+]) {
 
-        await mockProviders(
-            page
-        );
+    test(
+        `ISBN lookup ${code} is readable and keeps the form usable`,
+        async ({ page }) => {
 
-        await mockLookup(
-            page,
-            async route => {
+            await mockProviders(
+                page
+            );
 
-                await route.fulfill({
-                    contentType:
-                        'application/json',
-                    json: {
-                        code:
-                            'provider_timeout',
-                        error:
-                            'provider_timeout',
-                        message:
-                            'Provider timeout'
-                    },
-                    status:
-                        504
-                });
+            await mockLookup(
+                page,
+                async route => {
 
-            }
-        );
+                    await route.fulfill({
+                        contentType:
+                            'application/json',
+                        json: {
+                            code,
+                            error: code,
+                            message: code
+                        },
+                        status
+                    });
 
-        await openBookCreatePage(
-            page
-        );
+                }
+            );
 
-        await page.getByRole(
-            'textbox',
-            {
-                name:
-                    'ISBN'
-            }
-        ).fill(
-            '9780140328721'
-        );
+            await openBookCreatePage(
+                page
+            );
 
-        await page.getByRole(
-            'button',
-            {
-                name:
-                    'Rechercher'
-            }
-        ).click();
+            await page.getByRole(
+                'textbox',
+                {
+                    name:
+                        'ISBN'
+                }
+            ).fill(
+                '9780140328721'
+            );
 
-        await expect(
-            page.getByText(
-                'La recherche a expiré'
-            )
-        ).toBeVisible();
+            await page.getByRole(
+                'button',
+                {
+                    name:
+                        'Rechercher'
+                }
+            ).click();
 
-        await page.getByLabel(
-            'Titre'
-        ).fill(
-            'Saisie après erreur'
-        );
+            await expect(
+                page.getByText(
+                    message
+                )
+            ).toBeVisible();
 
-        await expect(
-            page.getByLabel(
+            await expect(page.getByText('Aucun résultat trouvé', {exact: false})).toHaveCount(0);
+            await expect(page.locator('.suggestions')).toHaveCount(0);
+
+            await page.getByLabel(
                 'Titre'
-            )
-        ).toHaveValue(
-            'Saisie après erreur'
-        );
+            ).fill(
+                'Saisie après erreur'
+            );
 
-    }
-);
+            await expect(
+                page.getByLabel(
+                    'Titre'
+                )
+            ).toHaveValue(
+                'Saisie après erreur'
+            );
+
+        }
+    );
+
+}

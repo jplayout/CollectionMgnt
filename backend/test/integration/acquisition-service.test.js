@@ -8,6 +8,143 @@ import { AcquisitionError } from '../../src/acquisition/errors.js';
 import { AcquisitionService } from '../../src/acquisition/acquisition-service.js';
 import { AcquisitionProviderRegistry } from '../../src/acquisition/provider-registry.js';
 
+for (const code of ['provider_error', 'provider_timeout', 'provider_unavailable']) {
+    for (const failingProviderId of ['openlibrary', 'googlebooks']) {
+
+        test(`AcquisitionService propagates ${code} from ${failingProviderId} when the other provider is empty`, async () => {
+
+            const error = new AcquisitionError(code === 'provider_timeout' ? 504 : 503, code, 'Controlled failure');
+            const providers = ['openlibrary', 'googlebooks'].map(id => createProvider({
+                id,
+                error: id === failingProviderId ? error : null
+            }));
+            const service = createService(providers);
+
+            await assert.rejects(() => service.lookupBookByIsbn({
+                isbn: '9782952221702'
+            }), error);
+            for (const provider of providers) {
+                assert.deepEqual(provider.calls, ['9782952221702']);
+            }
+
+        });
+
+    }
+
+    test(`AcquisitionService returns Google Books success after Open Library ${code}`, async () => {
+
+        const providers = [
+            createProvider({id: 'openlibrary', error: new AcquisitionError(503, code, 'Controlled failure')}),
+            createProvider({id: 'googlebooks', results: [{provider: 'googlebooks', title: 'La Horde du contrevent'}]})
+        ];
+        const result = await createService(providers).lookupBookByIsbn({isbn: '9782952221702'});
+
+        assert.equal(result.results[0].provider, 'googlebooks');
+        assert.deepEqual(providers.map(provider => provider.calls), [['9782952221702'], ['9782952221702']]);
+
+    });
+
+}
+
+for (const fallbackResults of [[], [{provider: 'googlebooks', title: 'La Horde du contrevent'}]]) {
+
+    test(`AcquisitionService returns ${fallbackResults.length ? 'Google Books success' : 'empty'} after clean empty Open Library`, async () => {
+
+        const providers = [
+            createProvider({id: 'openlibrary'}),
+            createProvider({id: 'googlebooks', results: fallbackResults})
+        ];
+        const result = await createService(providers).lookupBookByIsbn({isbn: '9782952221702'});
+
+        assert.deepEqual(result, createLookupResponse('9782952221702', fallbackResults));
+        assert.deepEqual(providers.map(provider => provider.calls), [['9782952221702'], ['9782952221702']]);
+
+    });
+
+}
+
+test('AcquisitionService propagates Google Books error after cached empty Open Library and does not cache errors', async () => {
+
+    const isbn = '9782952221702';
+    const {cache, repository} = createCache();
+    cache.set({
+        capability: 'isbnLookup', identifier: isbn, plugin: 'books', providerId: 'openlibrary',
+        response: createLookupResponse(isbn, [])
+    });
+    const providers = [
+        createProvider({id: 'openlibrary', results: [{title: 'Must not be fetched'}]}),
+        createProvider({id: 'googlebooks', error: new AcquisitionError(503, 'provider_error', 'Controlled failure')})
+    ];
+    const service = createService(providers, {acquisitionCache: cache});
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+        await assert.rejects(() => service.lookupBookByIsbn({isbn}), {code: 'provider_error', statusCode: 503});
+    }
+    assert.deepEqual(providers[0].calls, []);
+    assert.deepEqual(providers[1].calls, [isbn, isbn]);
+    assert.deepEqual([...repository.rows.keys()], [`books:isbnLookup:openlibrary:mapping_v1:${isbn}`]);
+
+});
+
+test('AcquisitionService returns explicit empty Open Library without Google Books fallback', async () => {
+
+    const providers = [
+        createProvider({id: 'openlibrary'}),
+        createProvider({id: 'googlebooks', results: [{title: 'Must not be fetched'}]})
+    ];
+    const result = await createService(providers).lookupBookByIsbn({
+        isbn: '9782952221702', providerId: 'openlibrary'
+    });
+
+    assert.deepEqual(result.results, []);
+    assert.deepEqual(providers[0].calls, ['9782952221702']);
+    assert.deepEqual(providers[1].calls, []);
+
+});
+
+test('AcquisitionService propagates explicit Google Books error without Open Library fallback', async () => {
+
+    const providers = [
+        createProvider({id: 'openlibrary', results: [{title: 'Must not be fetched'}]}),
+        createProvider({id: 'googlebooks', error: new AcquisitionError(503, 'provider_error', 'Controlled failure')})
+    ];
+
+    await assert.rejects(() => createService(providers).lookupBookByIsbn({
+        isbn: '9782952221702', providerId: 'googlebooks'
+    }), {code: 'provider_error', statusCode: 503});
+    assert.deepEqual(providers[0].calls, []);
+    assert.deepEqual(providers[1].calls, ['9782952221702']);
+
+});
+
+for (const plugin of ['movies', 'games']) {
+
+    test(`AcquisitionService propagates ${plugin} incomplete search errors and still tries the next provider`, async () => {
+
+        const search = plugin === 'movies' ? 'searchMovies' : 'searchGames';
+        const providers = ['first', 'second'].map(id => ({
+            calls: [],
+            describe() {
+                return {id, enabled: true, plugin, capabilities: [`${plugin}/search`]};
+            },
+            async [search](query) {
+                this.calls.push(query);
+                if (id === 'first') {
+                    throw new AcquisitionError(503, 'provider_unavailable', 'Controlled failure');
+                }
+                return [];
+            }
+        }));
+        const service = createService(providers);
+
+        await assert.rejects(() => service[search]({query: 'Search'}), {code: 'provider_unavailable', statusCode: 503});
+        assert.equal(providers[0].calls.length, 1);
+        assert.equal(providers[1].calls.length, 1);
+
+    });
+
+}
+
 test(
     'AcquisitionService uses the default provider for ISBN lookup',
     async () => {
@@ -759,7 +896,7 @@ test(
 );
 
 test(
-    'AcquisitionService returns empty results when one implicit provider fails and another is empty',
+    'AcquisitionService propagates timeout when one implicit provider fails and another is empty',
     async () => {
 
         const failingProvider =
@@ -788,18 +925,17 @@ test(
                 emptyProvider
             ]);
 
-        const result =
-            await service.lookupBookByIsbn({
+        await assert.rejects(
+            () => service.lookupBookByIsbn({
                 isbn:
                     '9780140328721'
-            });
-
-        assert.deepEqual(
-            result,
-            createLookupResponse(
-                '9780140328721',
-                []
-            )
+            }),
+            {
+                code:
+                    'provider_timeout',
+                statusCode:
+                    504
+            }
         );
 
         assert.deepEqual(

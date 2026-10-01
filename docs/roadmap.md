@@ -433,8 +433,9 @@ Phase 5 — Extension progressive :
 #### Lot 11.4.1 - Google Books Provider - Livré
 
 - Google Books ajouté comme source livre complémentaire.
-- Fallback implicite Open Library -> Google Books actif pour le lookup ISBN livres.
-- `GOOGLE_BOOKS_API_KEY` disponible comme configuration optionnelle.
+- Fallback implicite Open Library -> Google Books pour le lookup ISBN livres,
+  actif uniquement avec `GOOGLE_BOOKS_API_KEY` configurée.
+- `GOOGLE_BOOKS_API_KEY` est désormais requise pour activer Google Books.
 - Contrat API public conservé, sans changement frontend.
 - Aucun import image, aucune fusion automatique et aucun cache global ajoutés.
 
@@ -1471,3 +1472,22 @@ Travaux futurs :
 
 - Synology NAS
 - Docker Compose
+
+## Correction acquisition : recherche incomplète
+
+- Les erreurs techniques des providers tentés ne sont plus masquées par un
+  résultat vide lorsqu'aucune suggestion n'a été trouvée.
+- Google Books exige `GOOGLE_BOOKS_API_KEY`, transmise uniquement au backend par
+  les Compose local et Synology ; Open Library reste prioritaire.
+- HTTP 429 Google Books devient `provider_unavailable` ; tests de régression
+  sur vide/erreur, cache, configuration et ISBN 979, sans appels externes.
+
+## English — incomplete acquisition searches
+
+- Attempted provider failures are propagated when no suggestion is found;
+  an empty response no longer hides an incomplete search.
+- Google Books requires `GOOGLE_BOOKS_API_KEY`, passed only to the backend by
+  local and Synology Compose files. Open Library remains first.
+- Google Books HTTP 429 becomes `provider_unavailable`; regression tests cover
+  empty/error combinations, cache, configuration and ISBN 979 without external
+  requests.

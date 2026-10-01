@@ -143,8 +143,12 @@ Frontend
 
 Cette orchestration supporte les providers multiples sans modifier l'API
 publique existante. En mode implicite, Open Library est essaye d'abord, puis
-Google Books est tente seulement si le provider precedent ne fournit aucun
-resultat exploitable ou echoue techniquement.
+Google Books est tente seulement si `GOOGLE_BOOKS_API_KEY` est configuree et si
+le provider precedent ne fournit aucun resultat exploitable ou echoue
+techniquement. Une recherche sans resultat propage la derniere erreur technique
+des providers tentes (`provider_error`, `provider_timeout`,
+`provider_unavailable`) au lieu de presenter cette recherche incomplete comme
+une absence certaine de resultats.
 
 Le lookup ISBN utilise un cache backend SQLite transparent :
 
@@ -177,9 +181,10 @@ Provider livre :
 - `googlebooks`
   - plugin : `books`
   - capacite : `isbnLookup`
-  - configuration obligatoire : non
-  - secret requis : aucun
-  - cle API optionnelle : `GOOGLE_BOOKS_API_KEY`
+  - configuration obligatoire : oui
+  - secret requis : `GOOGLE_BOOKS_API_KEY`
+  - cle API requise : `GOOGLE_BOOKS_API_KEY`
+  - sans cle : desactive, masque de la liste active et jamais appele anonymement
 
 Capability film :
 
@@ -234,7 +239,7 @@ Exemple :
       "plugin": "books",
       "capabilities": ["isbnLookup"],
       "enabled": true,
-      "requiresConfiguration": false
+      "requiresConfiguration": true
     },
     {
       "id": "tmdb",
@@ -278,8 +283,8 @@ Body :
 
 Le champ `provider` est optionnel. S'il est absent, le backend utilise la
 resolution implicite pour `books` / `isbnLookup` : Open Library d'abord, puis
-Google Books si necessaire. Si un provider est explicite, seul ce provider est
-appele.
+Google Books si necessaire et configure. Si un provider est explicite, seul ce
+provider est appele.
 
 Reponse :
 
@@ -319,12 +324,13 @@ Erreurs stables :
 
 - `invalid_isbn` : ISBN invalide ;
 - `provider_not_found` : provider demande inconnu ;
-- `provider_unavailable` : aucun provider actif disponible ;
+- `provider_unavailable` : provider non configure, aucun provider actif ou
+  indisponibilite temporaire, notamment HTTP 429 Google Books ;
 - `provider_timeout` : timeout provider ;
 - `provider_error` : erreur provider non exploitable.
 
-Si aucun provider actif ne trouve de resultat, la route retourne `200` avec
-`results: []`.
+Si tous les providers actifs tentes terminent proprement sans resultat, la
+route retourne `200` avec `results: []`.
 
 Les suggestions servent a pre-remplir localement le formulaire cote frontend
 apres choix explicite de l'utilisateur. La sauvegarde reste assuree par les
@@ -582,3 +588,23 @@ Les phases suivantes pourront s'appuyer sur ces champs :
 - providers media ou retro complementaires comme ScreenScraper
 - scan camera mobile en contexte HTTPS
 - dedoublonnage assiste par collection ou multi-collections
+
+## English — ISBN fallback and provider failures
+
+Book ISBN lookup calls Open Library first, then Google Books when needed and
+configured. `GOOGLE_BOOKS_API_KEY` is required to activate Google Books; without
+it, the provider is absent from the active registry and is never called
+anonymously. An explicit request for unconfigured Google Books returns HTTP 503
+/ `provider_unavailable`. The key stays in backend requests only.
+
+A successful suggestion wins immediately, including after a previous provider
+failure. HTTP 200 with `results: []` means all attempted providers completed
+cleanly without suggestions. If any attempted provider fails and no suggestion
+is found, the last technical error is returned, including when Open Library's
+empty response came from cache. Google Books HTTP 429 returns HTTP 503 /
+`provider_unavailable`, not an empty lookup.
+
+The existing UI error mechanism displays an unavailable, timeout or generic
+lookup error and keeps manual entry usable. It does not display “Aucun résultat
+trouvé” for failed requests. Explicit provider selection disables fallback.
+The scanner, response format and provider-scoped cache strategy are unchanged.
