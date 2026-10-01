@@ -381,6 +381,17 @@
                     <p>Résumé applicatif sans secrets ni informations utilisateurs sensibles.</p>
                 </div>
 
+                <dl class="summary-list" data-testid="application-build-info">
+                    <div>
+                        <dt>Version</dt>
+                        <dd>{{ applicationBuildInfo.version }}</dd>
+                    </div>
+                    <div>
+                        <dt>Build</dt>
+                        <dd>{{ applicationBuildInfo.build }}</dd>
+                    </div>
+                </dl>
+
                 <div
                     v-if="systemLoading"
                     class="state-text"
@@ -399,11 +410,6 @@
                     v-else-if="systemSummary"
                     class="summary-list"
                 >
-                    <div>
-                        <dt>Version</dt>
-                        <dd>{{ systemSummary.version }}</dd>
-                    </div>
-
                     <div>
                         <dt>Plugins</dt>
                         <dd>{{ systemSummary.counts.plugins }}</dd>
@@ -430,6 +436,8 @@
 </template>
 
 <script setup>
+import { getApplicationBuildInfo } from '../services/build-info.js';
+
 import {
     onMounted,
     ref
@@ -451,6 +459,8 @@ import {
     previewMediaCleanup,
     runMediaAudit
 } from '../services/admin-api.js';
+
+const applicationBuildInfo = getApplicationBuildInfo();
 
 const exporting =
     ref(false);

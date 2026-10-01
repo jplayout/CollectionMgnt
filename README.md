@@ -57,7 +57,10 @@ Le dataset contient 94 items répartis entre jeux vidéo, livres, films, console
 
 ## État du projet
 
-Version actuelle : **v0.12-lot11.3**
+Statut : branche de développement. Version produit canonique : [VERSION](VERSION).
+
+La [gouvernance de version](docs/version-governance.md) décrit la propagation
+vers l'API, les paramètres et les images. Le SHA du build est affiché séparément.
 
 Le projet est utilisable pour des collections réelles, avec un socle mature : authentification, médias, export/import, sauvegarde ZIP, déploiement Docker/Podman/Synology, CI, E2E Playwright et scans sécurité. Certaines fonctions avancées restent prévues, notamment la restauration ZIP guidée, les imports CSV avancés, la gestion utilisateur plus fine, l'amélioration des rapports d'administration et l'extension progressive de l'acquisition assistée au-delà des livres.
 
@@ -373,7 +376,10 @@ The dataset contains 94 items across video games, books, movies, consoles and mi
 
 ## Project Status
 
-Current version: **v0.12-lot11.3**
+Status: development branch. Canonical product version: [VERSION](VERSION).
+
+[Version governance](docs/version-governance.md) describes propagation to the
+API, Settings and container images. The build SHA is displayed separately.
 
 The project is usable for real collections and now has a mature foundation: authentication, media, export/import, ZIP backup, Docker/Podman/Synology deployment, CI, Playwright E2E and security scans. Planned areas include guided ZIP restore, advanced CSV imports, finer user management, improved administration reports and assisted acquisition beyond books.
 

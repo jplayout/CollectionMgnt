@@ -1,14 +1,14 @@
 # Déploiement Docker local
 
-État : v0.9-lot6.0.3.
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
 Ce lot permet une exécution locale avec Docker Compose sur Linux, NAS ou serveur personnel. Synology reste une plateforme prioritaire/testée/documentée, mais la cible principale est le Docker auto-hébergé générique.
 
 ## Prérequis
 
-- Docker
-- Docker Compose
-- ou Podman avec `podman-compose`
+- Node.js 22 pour le lanceur de build
+- Podman avec `podman-compose` sur ce système local
+- ou Docker avec Compose sur les autres hôtes
 
 ## Configuration
 
@@ -36,15 +36,18 @@ GOOGLE_BOOKS_API_KEY=
 ## Lancement
 
 ```bash
-docker compose up --build
+node scripts/container.mjs compose up --build
 ```
 
-Selon l'environnement, les variantes suivantes sont aussi supportées :
+Le lanceur lit automatiquement [VERSION](../VERSION) et le SHA Git local,
+sans variable de version dans `.env`. Sur un hôte Docker :
 
 ```bash
-docker-compose up --build
-podman-compose up --build
+CONTAINER_ENGINE=docker node scripts/container.mjs compose up --build
 ```
+
+Les builds utilisent le contexte racine et ajoutent les labels OCI version,
+revision et source. Voir la [gouvernance de version](version-governance.md).
 
 L'application est disponible par défaut sur :
 
@@ -100,7 +103,7 @@ mkdir -p backend/data
 
 ## Validation attendue
 
-- `docker-compose config` ou `podman-compose config`
+- `node scripts/container.mjs compose config --quiet`
 - Frontend accessible sur `http://localhost:8080`
 - `/api` proxifié vers le backend
 - `GET http://localhost:8080/api/plugins` retourne 401 sans token
@@ -119,7 +122,7 @@ ghcr.io/jplayout/collectionmgnt-frontend:latest
 Les tags publiés sont :
 
 - `latest` depuis la branche `main`
-- tags Git `v*`, par exemple `v0.9-lot6.0.3`
+- tags Git `v*` correspondant aux releases
 - tags `sha-*` pour tracer un commit précis
 
 Exemple :
@@ -170,7 +173,8 @@ services:
 
 Le Lot 6.0.2 ajoute une CI GitHub Actions minimale qui vérifie le backend, le frontend et le build des images Docker. Elle ne publie aucune image.
 
-Aucun test applicatif n'est lancé actuellement, faute de script `test` existant.
+La CI actuelle exécute les tests backend et Playwright, le build frontend et
+les builds des images. Project Conventions vérifie aussi l'unicité de version.
 
 Le Lot 6.0.3 ajoute un workflow de publication GHCR. Il ne publie pas sur Docker Hub et ne crée pas de release GitHub.
 
@@ -182,7 +186,7 @@ ISBN Google Books après Open Library. Le Compose local et
 avec une valeur vide par défaut. Ne pas utiliser de variable `VITE_*`, de build
 argument ou de clé réelle dans un fichier versionné.
 
-Après une modification, recréer le backend avec `docker compose up -d backend`
+Après une modification, recréer le backend avec `node scripts/container.mjs compose up -d backend`
 pour prendre en compte l'environnement. Sans clé, Open Library reste disponible
 et Google Books est désactivé. Une clé valide doit disposer d'un quota utilisable.
 Si un provider tenté échoue et qu'aucun résultat n'est trouvé, la recherche
@@ -197,7 +201,7 @@ fallback after Open Library. Both the local and Synology Compose files pass it
 only to the backend, with an empty default. The application can start without
 it; Google Books is then disabled and Open Library remains available.
 
-Recreate the backend with `docker compose up -d backend` after changing its
+Recreate the backend with `node scripts/container.mjs compose up -d backend` after changing its
 environment. A valid key also needs available quota. Google Books HTTP 429 maps
 to HTTP 503 / `provider_unavailable`. If any attempted provider fails and no
 suggestion is found, the request returns an error instead of an empty result.

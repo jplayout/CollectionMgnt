@@ -1,6 +1,14 @@
 # CollectionMgnt
 
-Version : v0.12-lot14.4
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
+
+## Gouvernance de version
+
+La version produit est lue depuis [VERSION](../VERSION) par l’API, les
+sauvegardes et Vite. Les paramètres séparent Version et Build (SHA court ou
+`development`). Les builds locaux et GHCR injectent les métadonnées et labels
+OCI ; Project Conventions contrôle l’unicité sans bump obligatoire par PR.
+Voir la [gouvernance FR/EN](version-governance.md).
 
 ## État du projet
 
@@ -613,7 +621,7 @@ Variables disponibles :
 ### Docker local
 
 - `cp .env.example .env`
-- `docker compose up --build`
+- `node scripts/container.mjs compose up --build`
 - `docker-compose up --build`
 - `podman-compose up --build`
 - Frontend disponible sur `http://localhost:8080` par défaut
@@ -948,7 +956,7 @@ Variables disponibles :
 
 #### Livré
 
-- Exécution locale via `docker compose up --build`
+- Exécution locale via `node scripts/container.mjs compose up --build`
 - Exécution locale validée aussi via `podman-compose up --build`
 - Backend Docker Node 22 avec commande de production `node src/server.js`
 - Port backend configurable via `PORT`, avec défaut 3000

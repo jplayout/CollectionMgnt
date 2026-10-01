@@ -1,6 +1,6 @@
 # Plugin API
 
-État courant : v0.12-lot10.2.0.
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
 ## Structure
 
