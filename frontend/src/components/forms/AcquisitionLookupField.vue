@@ -58,6 +58,10 @@
                     >
                         {{ suggestion.description }}
                     </p>
+
+                    <p v-if="suggestion.provider" class="suggestion-summary">
+                        Source : {{ getProviderName(suggestion.provider) }}
+                    </p>
                 </div>
 
                 <button
@@ -137,6 +141,8 @@ const suggestions =
 const lookupEnabled =
     ref(true);
 
+const providers = ref([]);
+
 const canLookup =
     computed(
         () => lookupEnabled.value &&
@@ -153,6 +159,8 @@ async function loadProviderCapabilities() {
 
         const response =
             await getAcquisitionProviders();
+
+        providers.value = response?.providers ?? [];
 
         lookupEnabled.value =
             Boolean(
@@ -340,6 +348,10 @@ function getSuggestionSummary(suggestion) {
         .filter(Boolean)
         .join(' · ');
 
+}
+
+function getProviderName(providerId) {
+    return providers.value.find(provider => provider.id === providerId)?.name ?? providerId;
 }
 </script>
 

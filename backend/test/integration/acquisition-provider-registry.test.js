@@ -16,7 +16,7 @@ for (const googleBooksApiKey of ['', '   ', null]) {
         assert.equal(googleBooks.describe().enabled, false);
         assert.equal(googleBooks.describe().requiresConfiguration, true);
         assert.deepEqual(registry.getProvidersFor({plugin: 'books', capability: 'isbnLookup'})
-            .map(provider => provider.describe().id), ['openlibrary']);
+            .map(provider => provider.describe().id), ['openlibrary', 'bnf']);
         assert.equal(registry.listProviders().some(provider => provider.id === 'googlebooks'), false);
         assert.throws(() => registry.getProvider('googlebooks'), {code: 'provider_unavailable', statusCode: 503});
 
@@ -32,7 +32,7 @@ test('Registry activates configured Google Books after Open Library without expo
     });
 
     assert.deepEqual(registry.getProvidersFor({plugin: 'books', capability: 'isbnLookup'})
-        .map(provider => provider.describe().id), ['openlibrary', 'googlebooks']);
+        .map(provider => provider.describe().id), ['openlibrary', 'bnf', 'googlebooks']);
     assert.equal(registry.getProvider('googlebooks').describe().requiresConfiguration, true);
     assert.equal(JSON.stringify(registry.listProviders()).includes('test-google-books-api-key'), false);
 

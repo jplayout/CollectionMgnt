@@ -388,6 +388,42 @@ async function mockGameSearch(page, handler) {
 
 }
 
+test('BnF suggestion displays its source and fills a book without inventing a publication date', async ({ page }) => {
+    await page.route('**/api/acquisition/providers', async route => {
+        await route.fulfill({ json: { providers: [{
+            id: 'bnf', name: 'BnF', plugin: 'books', capabilities: ['isbnLookup'],
+            enabled: true, requiresConfiguration: false
+        }] } });
+    });
+    await mockLookup(page, async route => {
+        expect(route.request().postDataJSON()).toEqual({ isbn: '9782952221702' });
+        await route.fulfill({ json: {
+            query: { plugin: 'books', type: 'isbn', value: '9782952221702' },
+            results: [{
+                provider: 'bnf', confidence: 'high', title: 'La Horde du contrevent',
+                description: 'Une notice du catalogue général.', images: [],
+                sourceUrl: 'https://catalogue.bnf.fr/ark:/12148/cb401159952',
+                metadata: {
+                    isbn: '9782952221702', author: 'Damasio, Alain', publisher: 'la Volte',
+                    publication_year: 2004, language: 'fre', ark: 'ark:/12148/cb401159952'
+                }
+            }]
+        } });
+    });
+    await openBookCreatePage(page);
+    await page.getByRole('textbox', { name: 'ISBN' }).fill('9782952221702');
+    await page.getByRole('button', { name: 'Rechercher', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'La Horde du contrevent' })).toBeVisible();
+    await expect(page.getByText('Source : BnF', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+    await expect(page.getByLabel('Titre')).toHaveValue('La Horde du contrevent');
+    await expect(page.getByLabel('Auteur')).toHaveValue('Damasio, Alain');
+    await expect(page.getByLabel('Éditeur')).toHaveValue('la Volte');
+    await expect(page.getByLabel('Description')).toHaveValue('Une notice du catalogue général.');
+    await expect(page.getByLabel('Date de publication')).toHaveValue('');
+    await expect(page.getByRole('textbox', { name: 'ISBN' })).toHaveValue('9782952221702');
+});
+
 test(
     'admin can lookup an ISBN, apply the suggestion and create a book',
     async ({ page }) => {

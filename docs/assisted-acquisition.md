@@ -8,8 +8,8 @@ existant.
 
 Les identifiants sont des champs metadata declares par plugin et stockes dans
 `items.metadata`. Le lookup ISBN livres est disponible via le backend
-CollectionMgnt avec Open Library comme provider principal et Google Books comme
-provider secondaire.
+CollectionMgnt avec Open Library comme provider principal, BnF comme provider
+public secondaire et Google Books comme fallback complementaire configure.
 
 Le backend expose aussi `movies/search` via TMDb pour les films, configure par
 `TMDB_API_READ_ACCESS_TOKEN`. Le frontend films permet une recherche par titre,
@@ -143,7 +143,7 @@ Frontend
 
 Cette orchestration supporte les providers multiples sans modifier l'API
 publique existante. En mode implicite, Open Library est essaye d'abord, puis
-Google Books est tente seulement si `GOOGLE_BOOKS_API_KEY` est configuree et si
+BnF ; Google Books est tente seulement si `GOOGLE_BOOKS_API_KEY` est configuree et si
 le provider precedent ne fournit aucun resultat exploitable ou echoue
 techniquement. Une recherche sans resultat propage la derniere erreur technique
 des providers tentes (`provider_error`, `provider_timeout`,
@@ -174,6 +174,11 @@ par `AcquisitionCache`.
 Provider livre :
 
 - `openlibrary`
+  - plugin : `books`
+  - capacite : `isbnLookup`
+  - configuration obligatoire : non
+  - secret requis : aucun
+- `bnf`
   - plugin : `books`
   - capacite : `isbnLookup`
   - configuration obligatoire : non
@@ -234,6 +239,14 @@ Exemple :
       "requiresConfiguration": false
     },
     {
+      "id": "bnf",
+      "name": "BnF",
+      "plugin": "books",
+      "capabilities": ["isbnLookup"],
+      "enabled": true,
+      "requiresConfiguration": false
+    },
+    {
       "id": "googlebooks",
       "name": "Google Books",
       "plugin": "books",
@@ -282,7 +295,7 @@ Body :
 ```
 
 Le champ `provider` est optionnel. S'il est absent, le backend utilise la
-resolution implicite pour `books` / `isbnLookup` : Open Library d'abord, puis
+resolution implicite pour `books` / `isbnLookup` : Open Library, puis BnF, puis
 Google Books si necessaire et configure. Si un provider est explicite, seul ce
 provider est appele.
 
@@ -564,7 +577,7 @@ Regles de pre-remplissage :
 ## Hors Perimetre Actuel
 
 Cette phase capture les identifiants, ajoute le lookup backend ISBN livres via
-Open Library et Google Books, expose la recherche films via TMDb et expose la
+Open Library, BnF et Google Books, expose la recherche films via TMDb et expose la
 recherche jeux via IGDB avec pre-remplissage local cote frontend.
 
 Non livre dans ce lot :
@@ -591,8 +604,8 @@ Les phases suivantes pourront s'appuyer sur ces champs :
 
 ## English — ISBN fallback and provider failures
 
-Book ISBN lookup calls Open Library first, then Google Books when needed and
-configured. `GOOGLE_BOOKS_API_KEY` is required to activate Google Books; without
+Book ISBN lookup calls Open Library first, then public BnF SRU, then Google
+Books when needed and configured. `GOOGLE_BOOKS_API_KEY` is required to activate Google Books; without
 it, the provider is absent from the active registry and is never called
 anonymously. An explicit request for unconfigured Google Books returns HTTP 503
 / `provider_unavailable`. The key stays in backend requests only.
@@ -608,3 +621,29 @@ The existing UI error mechanism displays an unavailable, timeout or generic
 lookup error and keeps manual entry usable. It does not display “Aucun résultat
 trouvé” for failed requests. Explicit provider selection disables fallback.
 The scanner, response format and provider-scoped cache strategy are unchanged.
+
+## BnF : suggestions livres publiques
+
+Sans cle Google Books, Open Library et BnF restent disponibles. BnF utilise une
+seule requete SRU publique combinant ISBN et EAN, sans authentification. La notice
+doit correspondre a l'identifiant demande, notamment via la mention EAN de la
+notice `9782952221702`. La suggestion s'affiche comme les autres ; « Source : BnF »
+identifie son origine et « Utiliser » remplit les champs disponibles sans
+sauvegarde automatique. Une annee seule reste dans `metadata.publication_year`
+et ne remplit pas artificiellement le champ date. Le scanner reste inchange.
+
+Google Books exige toujours `GOOGLE_BOOKS_API_KEY`. Seul `projection=lite` est
+supprime pour robustesse ; aucune variante de recherche ISBN n'est ajoutee.
+BnF ne propose aucune couverture dans ce lot ; le service beta de couvertures
+est reserve a un futur Media Provider selon ADR-0009.
+
+## English — public BnF book suggestions
+
+Book lookup order is Open Library -> BnF -> configured Google Books. BnF uses
+one public SRU request combining ISBN and EAN, without authentication. Matching
+edition identifiers are required. BnF suggestions use the existing normalized
+contract, display their source and fill available fields through “Utiliser”,
+without saving automatically. A year alone is preserved as `publication_year`
+and does not invent a full date. Scanner behavior is unchanged.
+Google Books still requires `GOOGLE_BOOKS_API_KEY`; `projection=lite` is removed
+without alternative ISBN queries. BnF covers remain outside this metadata lot.

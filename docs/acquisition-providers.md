@@ -1,8 +1,8 @@
 # Acquisition Providers
 
 Etat courant : architecture acquisition backend stabilisee avec Open Library
-comme provider principal et Google Books comme provider secondaire pour les
-lookups ISBN livres lorsque `GOOGLE_BOOKS_API_KEY` est configuree. Le socle interne
+comme provider principal, BnF comme provider public secondaire et Google Books
+comme fallback complementaire pour les lookups ISBN livres lorsque `GOOGLE_BOOKS_API_KEY` est configuree. Le socle interne
 `movies/search` est disponible pour les
 providers films, avec TMDb comme premier provider Movies configure par
 `TMDB_API_READ_ACCESS_TOKEN`. `games/search` est expose pour les jeux video,
@@ -16,7 +16,7 @@ ajouter un provider d'acquisition. Il complete `docs/architecture.md` et
 ## Vue D'ensemble
 
 Toute acquisition passe par le backend. Le frontend ne contacte jamais Open
-Library, Google Books, TMDb, IGDB, RAWG ou un autre provider externe.
+Library, BnF, Google Books, TMDb, IGDB, RAWG ou un autre provider externe.
 
 Flux actuel :
 
@@ -266,7 +266,8 @@ essaie les providers actifs compatibles dans l'ordre stable du registre.
 Pour les livres, l'ordre courant est :
 
 1. `openlibrary`
-2. `googlebooks`, uniquement si `GOOGLE_BOOKS_API_KEY` est configuree
+2. `bnf`, SRU public sans authentification
+3. `googlebooks`, uniquement si `GOOGLE_BOOKS_API_KEY` est configuree
 
 Pour les films, TMDb est le premier provider `movies/search` quand
 `TMDB_API_READ_ACCESS_TOKEN` est configure.
@@ -413,8 +414,8 @@ Une reponse trop volumineuse ne doit pas bloquer l'utilisateur : elle peut etre
 retournee normalement sans etre ecrite dans le cache.
 
 Le cache reste par provider. Une entree vide Open Library ne bloque donc pas la
-tentative Google Books en mode implicite, et une entree Google Books ne remplace
-pas une entree Open Library.
+tentative BnF puis Google Books en mode implicite. Les entrees `bnf` restent
+distinctes ; aucun resultat d'un provider ne remplace celui d'un autre.
 
 ## Tests
 
@@ -464,7 +465,8 @@ Points d'attention :
 
 Etat courant et evolutions prevues :
 
-- Google Books : provider livre secondaire apres Open Library, avec cle API
+- BnF : provider public `books/isbnLookup` apres Open Library, sans cle API ;
+- Google Books : fallback livre complementaire apres BnF, avec cle API
   requise via `GOOGLE_BOOKS_API_KEY`. Sans cle non vide, `describe()` annonce
   `enabled: false` et `requiresConfiguration: true`, le registre le masque de
   la liste active et un appel explicite retourne `provider_unavailable` sans
@@ -493,7 +495,8 @@ uniquement, resultat normalise, erreurs stables, tests sans reseau externe.
 
 ## English — provider configuration and incomplete searches
 
-Open Library remains the first ISBN provider. Google Books is a fallback only
+Open Library remains the first ISBN provider, followed by public BnF SRU.
+Google Books is the final fallback only
 when a non-empty `GOOGLE_BOOKS_API_KEY` is configured in the backend. Without
 it, Google Books reports `enabled: false` and `requiresConfiguration: true`,
 is omitted from active registry resolution and the public provider list, and
@@ -512,3 +515,50 @@ Google Books HTTP 429 maps to HTTP 503 / `provider_unavailable` without exposing
 its raw quota payload. Cache keys remain scoped to providers; empty responses
 retain their 24-hour TTL, successful responses seven days, and errors are never
 cached. Permanent tests use local fixtures and never call external APIs.
+
+## BnF : recherche ISBN/EAN et mapping
+
+Le provider `bnf` utilise le [SRU Catalogue general public](https://api.bnf.fr/fr/api-sru-catalogue-general), sans authentification :
+
+- endpoint : `https://catalogue.bnf.fr/api/SRU` ;
+- `version=1.2`, `operation=searchRetrieve`, `recordSchema=dublincore`, `maximumRecords=5` ;
+- une seule requete CQL : `(bib.isbn adj "<ISBN>") or (bib.ean adj "<ISBN>")` ;
+- timeout : 5 secondes, comme les autres providers livres.
+
+Une notice est acceptee seulement si ses identifiants Dublin Core ou la mention
+EAN de `dc:description` correspondent exactement a l'identifiant normalise
+demande. Le cas `9782952221702` utilise l'EAN, alors que la notice indique
+l'ISBN-10 `2952221707`. Les titres, creators, editeur, langue, identifiants et
+ARK disponibles sont conserves. `metadata.publication_year` conserve une annee ;
+`metadata.publication_date` est fourni uniquement pour une date complete. Aucun
+mois ni jour n'est invente. `sourceUrl` pointe vers la notice ARK sur
+`catalogue.bnf.fr`, `provider` vaut `bnf` et `images` reste vide.
+
+Le XML est valide puis parse avec `fast-xml-parser` **5.11.2**, licence **MIT**,
+audit sans vulnerabilite avant ajout. Les prefixes namespaces SRU/DC peuvent
+varier ; les declarations DTD/entites sont rejetees. Un XML invalide, diagnostic
+SRU ou HTTP non-2xx produit une erreur technique, pas une reponse vide.
+
+Google Books conserve `q=isbn:<ISBN>`, `maxResults=5`, `printType=books` et la cle
+backend obligatoire. `projection=lite` est supprime pour robustesse. Aucune
+variante raw, quoted, ISBN-10 ni recherche texte n'est ajoutee.
+
+Les couvertures BnF sont hors perimetre : leur integration eventuelle appartient
+a un lot Media Provider conforme a [ADR-0009](adr/ADR-0009-metadata-and-media-provider-specialization.md).
+
+## English — BnF SRU ISBN/EAN metadata
+
+Active book lookup order is **Open Library -> BnF -> Google Books**; without
+`GOOGLE_BOOKS_API_KEY`, it is **Open Library -> BnF**. Public BnF SRU uses one
+encoded combined ISBN/EAN CQL query, Dublin Core XML, five records and a five-second
+timeout. Exact edition-identifier matching is mandatory, including commercial
+EAN mentions in Dublin Core descriptions. Available titles, creators, publishers,
+languages, identifiers and ARKs are mapped; partial dates retain their year
+without invented month/day values. No BnF cover service is integrated.
+
+XML parsing uses pinned MIT-licensed `fast-xml-parser` 5.11.2, audited before
+addition, with validation, namespace-prefix handling and DTD rejection.
+Google Books still requires its backend API key and keeps the ISBN query,
+`maxResults=5` and `printType=books`; `projection=lite` is removed for robustness,
+without alternate queries. Orchestration semantics, provider-scoped cache and
+TTLs are unchanged.
