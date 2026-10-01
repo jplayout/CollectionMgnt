@@ -43,11 +43,11 @@ jobs:
 
       - name: Build backend image
         continue-on-error: true
-        run: docker build -t collectionmgnt-backend:trivy ./backend
+        run: CONTAINER_ENGINE=docker node scripts/container.mjs build backend -t collectionmgnt-backend:trivy
 
       - name: Build frontend image
         continue-on-error: true
-        run: docker build -t collectionmgnt-frontend:trivy ./frontend
+        run: CONTAINER_ENGINE=docker node scripts/container.mjs build frontend -t collectionmgnt-frontend:trivy
 
       - name: Scan backend image
         uses: aquasecurity/trivy-action@v0.36.0

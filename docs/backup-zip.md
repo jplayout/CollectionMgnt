@@ -1,6 +1,6 @@
 # Sauvegarde ZIP
 
-État courant : v0.12-lot10.0.1.
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
 ## Objectif
 
@@ -60,7 +60,7 @@ Exemple :
   "format": "collectionmgnt.full-backup",
   "format_version": 1,
   "created_at": "2026-06-09T00:00:00.000Z",
-  "application_version": "v0.12-lot10.0.1",
+  "application_version": "<contenu de VERSION>",
   "includes_database": true,
   "includes_media_files": true,
   "includes_native_export": true,

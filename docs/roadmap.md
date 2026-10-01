@@ -8,7 +8,7 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot14.4.
+- Statut : développement. Version produit canonique : [VERSION](../VERSION).
 - Dernier lot livré : Lot 14.4 - Security Governance.
 
 Capacités disponibles :
@@ -1006,7 +1006,7 @@ Travaux futurs :
 
 #### Lot 6.0.1 - Livré
 
-- Exécution locale via `docker compose up --build`, `docker-compose up --build` ou `podman-compose up --build`
+- Exécution locale via `node scripts/container.mjs compose up --build`
 - Service backend Node 22 lancé avec `node src/server.js`
 - Port backend interne 3000, configurable côté hôte via `BACKEND_PORT`
 - Chemins backend configurables via `DATA_DIR` et `PLUGINS_DIR`
@@ -1034,8 +1034,8 @@ Travaux futurs :
   - `npm ci` dans `frontend/`
   - `npm exec vite build`
 - Job Docker après succès backend et frontend :
-  - `docker build -t collectionmgnt-backend ./backend`
-  - `docker build -t collectionmgnt-frontend ./frontend`
+  - `node scripts/container.mjs build backend -t collectionmgnt-backend`
+  - `node scripts/container.mjs build frontend -t collectionmgnt-frontend`
 - Aucune publication d'image dans ce lot
 - Pas de release GitHub, pas de GHCR, pas de Docker Hub
 - Aucun test applicatif n'est lancé actuellement, faute de script `test` existant
@@ -1514,3 +1514,11 @@ attribution. XML parsing uses audited, pinned MIT-licensed `fast-xml-parser`
 5.11.2. Scanner and cache semantics are unchanged. Google Books still requires
 `GOOGLE_BOOKS_API_KEY`; `projection=lite` is removed without alternate queries.
 BnF covers remain a future Media Provider concern under ADR-0009.
+
+## Gouvernance de version produit
+
+- Source canonique [VERSION](../VERSION), indépendante des numéros de lots.
+- API, sauvegardes, Vite et images raccordés à cette source.
+- SHA de build séparé, injecté à la publication, calculé en développement.
+- Labels OCI version, revision et source ; gate d’unicité Project Conventions.
+- Aucun bump imposé à chaque PR. Voir la [gouvernance FR/EN](version-governance.md).

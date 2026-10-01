@@ -133,7 +133,7 @@ jobs:
           done
 
       - name: Build backend image
-        run: docker build -t collectionmgnt-backend ./backend
+        run: CONTAINER_ENGINE=docker node scripts/container.mjs build backend -t collectionmgnt-backend
 
       - name: Build frontend image
-        run: docker build -t collectionmgnt-frontend ./frontend
+        run: CONTAINER_ENGINE=docker node scripts/container.mjs build frontend -t collectionmgnt-frontend

@@ -1,7 +1,13 @@
 
 services:
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:?Use node scripts/container.mjs compose to read VERSION}
+        APP_REVISION: ${APP_REVISION:-development}
+        APP_SOURCE: ${APP_SOURCE:-https://github.com/jplayout/CollectionMgnt}
     environment:
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
@@ -17,7 +23,13 @@ services:
       - ./backend/plugins:${PLUGINS_DIR:-/app/plugins}:ro,Z
 
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:?Use node scripts/container.mjs compose to read VERSION}
+        APP_REVISION: ${APP_REVISION:-development}
+        APP_SOURCE: ${APP_SOURCE:-https://github.com/jplayout/CollectionMgnt}
     depends_on:
       - backend
     ports:

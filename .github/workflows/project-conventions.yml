@@ -85,6 +85,9 @@ jobs:
           echo "workflow_dispatch run: checking the current workspace with git diff --check."
           git diff --check
 
+      - name: Check version governance
+        run: node scripts/check-version-governance.mjs
+
       - name: Lint Markdown documentation
         uses: DavidAnson/markdownlint-cli2-action@v24.0.0
         with:

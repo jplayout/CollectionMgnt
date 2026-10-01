@@ -146,13 +146,13 @@ podman-compose up -d
 Si le déploiement local utilise `build:` au lieu d'images prébuildées, reconstruire les images au lieu de faire seulement un pull :
 
 ```bash
-docker compose up --build -d
+node scripts/container.mjs compose up --build -d
 ```
 
 ou :
 
 ```bash
-podman-compose up --build -d
+CONTAINER_ENGINE=docker node scripts/container.mjs compose up --build -d
 ```
 
 ### Synology Container Manager
