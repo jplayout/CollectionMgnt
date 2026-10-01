@@ -13,7 +13,7 @@ Accepted
 Context
 
 L'acquisition assistee dispose maintenant de plusieurs providers livres :
-Open Library et Google Books. Le systeme doit choisir un provider de maniere
+Open Library, BnF et Google Books. Le systeme doit choisir un provider de maniere
 previsible, tout en restant simple pour le frontend et durable pour de futurs
 providers.
 
@@ -25,8 +25,9 @@ Quand un provider est explicite, seul ce provider est interroge. Aucun fallback
 n'est applique, afin que le choix de l'appelant reste strict et observable.
 
 Quand le provider est implicite, les providers sont essayes dans l'ordre du
-registry. Pour les livres, Open Library passe avant Google Books, actif seulement
-avec `GOOGLE_BOOKS_API_KEY`. Le premier
+registry. Pour les livres : Open Library, puis BnF SRU public sans
+authentification, puis Google Books actif seulement avec `GOOGLE_BOOKS_API_KEY`.
+Sans cette cle, l'ordre actif est Open Library puis BnF. Le premier
 provider qui retourne un resultat gagne. Les resultats de plusieurs providers ne
 sont pas fusionnes automatiquement.
 
@@ -73,8 +74,8 @@ Accepted
 
 Context
 
-Assisted acquisition now has several book providers: Open Library and Google
-Books. The system must choose a provider predictably, while staying simple for
+Assisted acquisition now has several book providers: Open Library, BnF and
+Google Books. The system must choose a provider predictably, while staying simple for
 the frontend and durable for future providers.
 
 Decision
@@ -85,8 +86,9 @@ When a provider is explicit, only that provider is queried. No fallback is
 applied, so the caller's choice remains strict and observable.
 
 When the provider is implicit, providers are tried in registry order. For books,
-Open Library comes before Google Books, enabled only with `GOOGLE_BOOKS_API_KEY`.
-The first provider that returns a result
+the order is Open Library, public unauthenticated BnF SRU, then Google Books,
+enabled only with `GOOGLE_BOOKS_API_KEY`. Without that key, active order is
+Open Library then BnF. The first provider that returns a result
 wins. Results from several providers are not merged automatically.
 
 An empty result allows resolution to continue with the next provider. A

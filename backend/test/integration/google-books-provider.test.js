@@ -161,10 +161,10 @@ test(
         );
 
         assert.equal(
-            url.searchParams.get(
+            url.searchParams.has(
                 'projection'
             ),
-            'lite'
+            false
         );
 
         assert.equal(

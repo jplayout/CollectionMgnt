@@ -57,7 +57,7 @@ Epic 11 Acquisition assistee :
 
 ### Actuelles
 
-- `books/isbnLookup` : lookup ISBN livre via Open Library et Google Books.
+- `books/isbnLookup` : lookup ISBN livre via Open Library, BnF et Google Books.
 - `movies/search` : recherche texte films via TMDb, avec query, langue, region
   et annee optionnelles.
 - `games/search` : recherche texte jeux via IGDB, avec query obligatoire,
@@ -103,7 +103,7 @@ Principes :
   - `consoles`
   - `others`
 - Fondations d'acquisition assistée livrées : champs identifiants `books.isbn`, `games.barcode`, `movies.barcode` et `others.barcode`
-- Lookup ISBN livre livré via backend providers Open Library et Google Books
+- Lookup ISBN livre livré via backend providers Open Library, BnF et Google Books
 - Orchestration acquisition livrée via `AcquisitionService`
 - Capability interne `movies/search` livrée pour préparer les providers films
   par recherche texte
@@ -192,8 +192,8 @@ Principes :
   - erreurs provider, timeouts et ISBN invalides non cachés
   - aucune réponse brute provider ni image binaire stockée
 - Réponse API inchangée, sans champ `cached`
-- Fallback implicite Open Library -> Google Books pour le lookup ISBN livres,
-  uniquement avec `GOOGLE_BOOKS_API_KEY` configurée
+- Fallback implicite Open Library -> BnF -> Google Books pour le lookup ISBN livres,
+  Google Books uniquement avec `GOOGLE_BOOKS_API_KEY` configurée
 - Résolution implicite/explicite prête pour les recherches texte films
 - TMDb retourne des suggestions film normalisées avec URLs poster distantes
   `w500`, sans téléchargement provider, sans endpoint details et sans IMDb ID
@@ -1275,7 +1275,8 @@ Variables disponibles :
 
 ## Acquisition : erreurs et configuration Google Books
 
-Open Library reste prioritaire. Google Books sert de fallback uniquement avec
+Open Library reste prioritaire, suivi du SRU public BnF. Google Books sert de
+fallback complémentaire uniquement avec
 `GOOGLE_BOOKS_API_KEY` configurée. Sans clé, il est désactivé et aucun appel
 anonyme n'est effectué. HTTP 429 Google Books devient `provider_unavailable`.
 
@@ -1288,7 +1289,8 @@ par provider ne changent pas. Les tests permanents restent sans appels externes.
 
 ## English — acquisition failures and Google Books configuration
 
-Open Library remains first. Google Books is enabled as a fallback only with a
+Open Library remains first, followed by public BnF SRU. Google Books is enabled
+as the final fallback only with a
 configured `GOOGLE_BOOKS_API_KEY`, passed to the backend by local and Synology
 Compose files. Without a key it is disabled and makes no anonymous requests.
 Google Books HTTP 429 maps to `provider_unavailable`.
@@ -1299,3 +1301,26 @@ clean empty completion of all attempted providers, including cached empties.
 This covers ISBN, movie and game searches. The existing UI error handling is
 reused, scanner and provider-scoped cache behavior are unchanged, and permanent
 tests never call external services.
+
+## Acquisition BnF : couverture ISBN française
+
+- Ordre livres : **Open Library -> BnF -> Google Books** ; sans cle Google Books :
+  **Open Library -> BnF**.
+- BnF SRU public sans authentification, une requete ISBN/EAN combinee, cinq
+  notices maximum ; seules les notices avec identifiant correspondant sont retenues.
+- XML parse avec `fast-xml-parser` 5.11.2 (MIT), version exacte auditee avant ajout.
+- Suggestions BnF avec attribution visible, champs disponibles et ARK ; aucune
+  date complete ni couverture n'est inventee. Le scanner et les TTL restent inchanges.
+- Google Books exige toujours `GOOGLE_BOOKS_API_KEY`, avec `projection=lite`
+  supprime pour robustesse ; aucune variante raw/quoted/ISBN-10 n'est ajoutee.
+- Couvertures BnF beta : futur Media Provider, hors perimetre de ce lot (ADR-0009).
+
+## English — BnF metadata coverage
+
+Books resolve Open Library -> public BnF SRU -> configured Google Books, or
+Open Library -> BnF without a Google key. BnF combines ISBN/EAN in one request,
+validates matching identifiers and maps available metadata/ARKs with source
+attribution. XML parsing uses audited, pinned MIT-licensed `fast-xml-parser`
+5.11.2. Scanner and cache semantics are unchanged. Google Books still requires
+`GOOGLE_BOOKS_API_KEY`; `projection=lite` is removed without alternate queries.
+BnF covers remain a future Media Provider concern under ADR-0009.

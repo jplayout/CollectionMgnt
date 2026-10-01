@@ -22,7 +22,7 @@ Capacités disponibles :
 - Script de pack média de démonstration avec images PNG générées et uploadées via l'API média.
 - CRUD items, validation dynamique, recherche, filtres, pagination, tri et vues cartes/liste.
 - Fondations identifiants `isbn` / `barcode` livrées pour livres, jeux, films et autres.
-- Lookup ISBN livre livré via Open Library et Google Books, backend uniquement.
+- Lookup ISBN livre livré via Open Library, BnF et Google Books, backend uniquement.
 - Pré-remplissage frontend local disponible dans le formulaire livre.
 - Orchestration acquisition livrée via `AcquisitionService`.
 - Résolution multi-provider acquisition livrée côté backend.
@@ -103,7 +103,7 @@ Limites majeures connues :
 
 ### Actuelles
 
-- `books/isbnLookup` : lookup ISBN livre via Open Library et Google Books.
+- `books/isbnLookup` : lookup ISBN livre via Open Library, BnF et Google Books.
 - `movies/search` : recherche texte films via TMDb, avec query, langue, region
   et annee optionnelles.
 - `games/search` : recherche texte jeux via IGDB, avec query obligatoire,
@@ -358,7 +358,7 @@ Phase 3 — Lookup livres :
 
 - Premier cas cible livré : livres.
 - Recherche via Open Library livrée.
-- Google Books livré comme provider secondaire et fallback implicite.
+- BnF livré comme provider public secondaire ; Google Books reste le fallback complémentaire configuré.
 - Pré-remplissage disponible :
   - titre
   - auteur
@@ -1491,3 +1491,26 @@ Travaux futurs :
 - Google Books HTTP 429 becomes `provider_unavailable`; regression tests cover
   empty/error combinations, cache, configuration and ISBN 979 without external
   requests.
+
+## Acquisition BnF : couverture ISBN française
+
+- Ordre livres : **Open Library -> BnF -> Google Books** ; sans cle Google Books :
+  **Open Library -> BnF**.
+- BnF SRU public sans authentification, une requete ISBN/EAN combinee, cinq
+  notices maximum ; seules les notices avec identifiant correspondant sont retenues.
+- XML parse avec `fast-xml-parser` 5.11.2 (MIT), version exacte auditee avant ajout.
+- Suggestions BnF avec attribution visible, champs disponibles et ARK ; aucune
+  date complete ni couverture n'est inventee. Le scanner et les TTL restent inchanges.
+- Google Books exige toujours `GOOGLE_BOOKS_API_KEY`, avec `projection=lite`
+  supprime pour robustesse ; aucune variante raw/quoted/ISBN-10 n'est ajoutee.
+- Couvertures BnF beta : futur Media Provider, hors perimetre de ce lot (ADR-0009).
+
+## English — BnF metadata coverage
+
+Books resolve Open Library -> public BnF SRU -> configured Google Books, or
+Open Library -> BnF without a Google key. BnF combines ISBN/EAN in one request,
+validates matching identifiers and maps available metadata/ARKs with source
+attribution. XML parsing uses audited, pinned MIT-licensed `fast-xml-parser`
+5.11.2. Scanner and cache semantics are unchanged. Google Books still requires
+`GOOGLE_BOOKS_API_KEY`; `projection=lite` is removed without alternate queries.
+BnF covers remain a future Media Provider concern under ADR-0009.

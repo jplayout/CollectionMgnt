@@ -6,6 +6,7 @@ import {
 } from 'node:test';
 
 import { createTestApp } from '../helpers/test-app.js';
+import { xmlResponse } from '../helpers/bnf-fixtures.js';
 
 const originalFetch =
     globalThis.fetch;
@@ -44,10 +45,14 @@ before(async () => {
         async (
             url,
             options
-        ) => fetchHandler(
-            url,
-            options
-        );
+        ) => {
+            // These OL/GB regressions use an empty BnF fixture. Full three-provider
+            // resolution is covered separately by bnf-acquisition.test.js.
+            if (new URL(url).hostname === 'catalogue.bnf.fr') {
+                return xmlResponse();
+            }
+            return fetchHandler(url, options);
+        };
 
     context =
         await createTestApp();
@@ -158,6 +163,14 @@ test(
                             'books',
                         requiresConfiguration:
                             false
+                    },
+                    {
+                        capabilities: ['isbnLookup'],
+                        enabled: true,
+                        id: 'bnf',
+                        name: 'BnF',
+                        plugin: 'books',
+                        requiresConfiguration: false
                     },
                     {
                         capabilities: [
@@ -328,14 +341,17 @@ for (const status of [500, 429]) {
             assert.deepEqual(response.json(), {code, error: code, message});
         }
         assert.deepEqual(calls, ['openlibrary.org', 'www.googleapis.com', 'www.googleapis.com']);
-        const rows = context.db.prepare('SELECT provider_id, status FROM acquisition_cache WHERE identifier = ?').all(isbn);
-        assert.deepEqual(rows, [{provider_id: 'openlibrary', status: 'empty'}]);
+        const rows = context.db.prepare('SELECT provider_id, status FROM acquisition_cache WHERE identifier = ? ORDER BY provider_id').all(isbn);
+        assert.deepEqual(rows, [
+            {provider_id: 'bnf', status: 'empty'},
+            {provider_id: 'openlibrary', status: 'empty'}
+        ]);
 
     });
 
 }
 
-test('ISBN lookup without Google Books configuration attempts only Open Library and rejects explicit Google Books', async () => {
+test('ISBN lookup without Google Books configuration uses Open Library and empty BnF and rejects explicit Google Books', async () => {
 
     const configuredKey = process.env.GOOGLE_BOOKS_API_KEY;
     let unconfiguredContext;

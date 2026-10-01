@@ -175,8 +175,6 @@ function buildLookupUrl({
                 MAX_RESULTS,
             printType:
                 'books',
-            projection:
-                'lite',
             q:
                 `isbn:${isbn}`
         });
