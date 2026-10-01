@@ -26,6 +26,7 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=change-me
 DATA_DIR=/app/data
 PLUGINS_DIR=/app/plugins
+GOOGLE_BOOKS_API_KEY=
 ```
 
 `JWT_SECRET` et `ADMIN_PASSWORD` doivent être renseignés pour que le backend démarre et crée le premier administrateur. `ADMIN_USERNAME` est aussi lu depuis `.env`, avec `admin` comme valeur d'exemple.
@@ -94,6 +95,8 @@ mkdir -p backend/data
 - `ADMIN_PASSWORD` : mot de passe du premier administrateur, requis
 - `DATA_DIR` : chemin data dans le conteneur backend, défaut `/app/data`
 - `PLUGINS_DIR` : chemin plugins dans le conteneur backend, défaut `/app/plugins`
+- `GOOGLE_BOOKS_API_KEY` : clé requise pour activer le fallback Google Books ;
+  vide par défaut, sans obligation pour démarrer l'application
 
 ## Validation attendue
 
@@ -139,6 +142,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
+      GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY:-}
       DATA_DIR: ${DATA_DIR:-/app/data}
       PLUGINS_DIR: ${PLUGINS_DIR:-/app/plugins}
     ports:
@@ -169,3 +173,35 @@ Le Lot 6.0.2 ajoute une CI GitHub Actions minimale qui vérifie le backend, le f
 Aucun test applicatif n'est lancé actuellement, faute de script `test` existant.
 
 Le Lot 6.0.3 ajoute un workflow de publication GHCR. Il ne publie pas sur Docker Hub et ne crée pas de release GitHub.
+
+## Configuration Google Books
+
+Renseigner `GOOGLE_BOOKS_API_KEY` dans le `.env` racine pour activer le fallback
+ISBN Google Books après Open Library. Le Compose local et
+`deploy/compose.synology.yml` transmettent cette variable au backend uniquement,
+avec une valeur vide par défaut. Ne pas utiliser de variable `VITE_*`, de build
+argument ou de clé réelle dans un fichier versionné.
+
+Après une modification, recréer le backend avec `docker compose up -d backend`
+pour prendre en compte l'environnement. Sans clé, Open Library reste disponible
+et Google Books est désactivé. Une clé valide doit disposer d'un quota utilisable.
+Si un provider tenté échoue et qu'aucun résultat n'est trouvé, la recherche
+retourne une erreur ; un quota Google Books épuisé devient HTTP 503 /
+`provider_unavailable` et n'est pas présenté comme « Aucun résultat trouvé ».
+Ne pas partager une sortie `compose config` contenant des secrets.
+
+## English — Google Books configuration
+
+Set `GOOGLE_BOOKS_API_KEY` in the root `.env` to enable Google Books as the ISBN
+fallback after Open Library. Both the local and Synology Compose files pass it
+only to the backend, with an empty default. The application can start without
+it; Google Books is then disabled and Open Library remains available.
+
+Recreate the backend with `docker compose up -d backend` after changing its
+environment. A valid key also needs available quota. Google Books HTTP 429 maps
+to HTTP 503 / `provider_unavailable`. If any attempted provider fails and no
+suggestion is found, the request returns an error instead of an empty result.
+
+Never commit a real key or supply it through frontend `VITE_*` variables or
+Docker build arguments. Keys remain runtime backend configuration. Do not share
+Compose configuration output containing secrets.

@@ -171,7 +171,7 @@ Principes :
   via une route acquisition protegee JWT
 - Providers livrés :
   - `openlibrary`, sans clé API obligatoire
-  - `googlebooks`, sans clé API obligatoire, avec `GOOGLE_BOOKS_API_KEY` optionnelle
+  - `googlebooks`, actif uniquement avec `GOOGLE_BOOKS_API_KEY` configurée
   - `tmdb`, provider Movies configuré par `TMDB_API_READ_ACCESS_TOKEN`
   - `igdb`, Metadata Provider Games configuré par `IGDB_CLIENT_ID` et
     `IGDB_CLIENT_SECRET`
@@ -192,7 +192,8 @@ Principes :
   - erreurs provider, timeouts et ISBN invalides non cachés
   - aucune réponse brute provider ni image binaire stockée
 - Réponse API inchangée, sans champ `cached`
-- Fallback implicite Open Library -> Google Books actif pour le lookup ISBN livres
+- Fallback implicite Open Library -> Google Books pour le lookup ISBN livres,
+  uniquement avec `GOOGLE_BOOKS_API_KEY` configurée
 - Résolution implicite/explicite prête pour les recherches texte films
 - TMDb retourne des suggestions film normalisées avec URLs poster distantes
   `w500`, sans téléchargement provider, sans endpoint details et sans IMDb ID
@@ -588,7 +589,8 @@ Variables disponibles pour le déploiement Docker local :
 - `PORT`
 - `DATA_DIR`
 - `PLUGINS_DIR`
-- `GOOGLE_BOOKS_API_KEY` optionnelle pour augmenter les quotas Google Books
+- `GOOGLE_BOOKS_API_KEY` requise pour activer Google Books, transmise au backend
+  par les Compose local et Synology, jamais au frontend
 - `TMDB_API_READ_ACCESS_TOKEN` optionnelle, requise pour activer le provider
   TMDb
 - `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET` optionnelles, requises pour activer
@@ -1270,3 +1272,30 @@ Variables disponibles :
 - Priorité à la simplicité de déploiement
 - Pas de dépendances inutiles
 - Frontend piloté par les schémas plugins
+
+## Acquisition : erreurs et configuration Google Books
+
+Open Library reste prioritaire. Google Books sert de fallback uniquement avec
+`GOOGLE_BOOKS_API_KEY` configurée. Sans clé, il est désactivé et aucun appel
+anonyme n'est effectué. HTTP 429 Google Books devient `provider_unavailable`.
+
+Le premier résultat exploitable gagne. Sans résultat, toute erreur technique
+sur un provider tenté est propagée ; `200` / `results: []` est réservé aux
+recherches dont tous les providers tentés ont terminé proprement avec une
+réponse vide. Cette règle couvre ISBN, films et jeux, y compris un résultat vide
+lu depuis le cache. L'UI réutilise ses messages d'erreur, le scanner et le cache
+par provider ne changent pas. Les tests permanents restent sans appels externes.
+
+## English — acquisition failures and Google Books configuration
+
+Open Library remains first. Google Books is enabled as a fallback only with a
+configured `GOOGLE_BOOKS_API_KEY`, passed to the backend by local and Synology
+Compose files. Without a key it is disabled and makes no anonymous requests.
+Google Books HTTP 429 maps to `provider_unavailable`.
+
+The first useful result wins. If no result is found, any technical failure from
+an attempted provider is propagated. HTTP 200 / `results: []` is reserved for
+clean empty completion of all attempted providers, including cached empties.
+This covers ISBN, movie and game searches. The existing UI error handling is
+reused, scanner and provider-scoped cache behavior are unchanged, and permanent
+tests never call external services.
