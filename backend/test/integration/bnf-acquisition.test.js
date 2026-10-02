@@ -70,6 +70,31 @@ test('Cached empty OL still reaches BnF; BnF success is cached in its own provid
     assert.deepEqual(rows, [{ provider_id: 'bnf', status: 'success' }, { provider_id: 'openlibrary', status: 'empty' }]);
 });
 
+test('ISBN 9782952221702: expired SQLite empty OL cache is refreshed without BnF fallback', async (t) => {
+    const start = Date.now();
+    t.mock.timers.enable({ apis: ['Date'], now: start });
+    const calls = [];
+    fetchHandler = handler({ ol: 'empty', bnf: 'error', google: 'empty', calls });
+    assert.deepEqual((await lookup('openlibrary')).json().results, []);
+    const empty = context.db.prepare('SELECT * FROM acquisition_cache WHERE provider_id = ?').get('openlibrary');
+    assert.equal(empty.status, 'empty');
+    assert.equal(Date.parse(empty.expires_at) - Date.parse(empty.created_at), 60 * 60 * 1000);
+    fetchHandler = handler({ ol: 'success', bnf: 'error', google: 'error', calls });
+    calls.length = 0;
+    t.mock.timers.tick(60 * 60 * 1000 - 1);
+    assert.deepEqual((await lookup('openlibrary')).json().results, []);
+    assert.deepEqual(calls, []);
+    t.mock.timers.tick(2);
+    const response = await lookup();
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.json().results.length, 1);
+    assert.equal(response.json().results[0].provider, 'openlibrary');
+    assert.deepEqual(calls, ['openlibrary.org']);
+    const success = context.db.prepare('SELECT * FROM acquisition_cache WHERE provider_id = ?').get('openlibrary');
+    assert.equal(success.status, 'success');
+    assert.equal(Date.parse(success.expires_at) - Date.parse(success.created_at), 7 * 24 * 60 * 60 * 1000);
+});
+
 test('Cached empty BnF continues to Google and cannot hide its success', async () => {
     const calls = [];
     fetchHandler = handler({ ol: 'empty', bnf: 'empty', google: 'empty', calls });
@@ -130,7 +155,9 @@ function handler({ ol, bnf, google, calls }) {
         assert.ok(outcome, `Unexpected provider request: ${parsed.hostname}`);
         if (outcome === 'error') return new Response('Private error', { status: 503 });
         if (parsed.hostname === 'catalogue.bnf.fr') return xmlResponse(outcome === 'success' ? bnfFixture() : undefined);
-        if (parsed.hostname === 'openlibrary.org') return Response.json({});
+        if (parsed.hostname === 'openlibrary.org') return Response.json(outcome === 'success' ? {
+            [`ISBN:${isbn}`]: { title: 'La Horde du contrevent' }
+        } : {});
         assert.equal(parsed.searchParams.get('q'), `isbn:${isbn}`);
         assert.equal(parsed.searchParams.has('projection'), false);
         return Response.json(outcome === 'success' ? {

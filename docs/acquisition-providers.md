@@ -407,7 +407,7 @@ Le cache ne stocke jamais :
 TTL actuel :
 
 - resultat avec suggestions : 7 jours ;
-- resultat vide : 24 heures ;
+- resultat vide : 1 heure ;
 - erreur ou timeout : pas de cache.
 
 Une reponse trop volumineuse ne doit pas bloquer l'utilisateur : elle peut etre
@@ -513,7 +513,7 @@ Explicit provider selection continues to disable fallback.
 
 Google Books HTTP 429 maps to HTTP 503 / `provider_unavailable` without exposing
 its raw quota payload. Cache keys remain scoped to providers; empty responses
-retain their 24-hour TTL, successful responses seven days, and errors are never
+retain their one-hour TTL, successful responses seven days, and errors are never
 cached. Permanent tests use local fixtures and never call external APIs.
 
 ## BnF : recherche ISBN/EAN et mapping
@@ -523,7 +523,7 @@ Le provider `bnf` utilise le [SRU Catalogue general public](https://api.bnf.fr/f
 - endpoint : `https://catalogue.bnf.fr/api/SRU` ;
 - `version=1.2`, `operation=searchRetrieve`, `recordSchema=dublincore`, `maximumRecords=5` ;
 - une seule requete CQL : `(bib.isbn adj "<ISBN>") or (bib.ean adj "<ISBN>")` ;
-- timeout : 5 secondes, comme les autres providers livres.
+- timeout specifique BnF : 8 secondes.
 
 Une notice est acceptee seulement si ses identifiants Dublin Core ou la mention
 EAN de `dc:description` correspondent exactement a l'identifiant normalise
@@ -550,7 +550,7 @@ a un lot Media Provider conforme a [ADR-0009](adr/ADR-0009-metadata-and-media-pr
 
 Active book lookup order is **Open Library -> BnF -> Google Books**; without
 `GOOGLE_BOOKS_API_KEY`, it is **Open Library -> BnF**. Public BnF SRU uses one
-encoded combined ISBN/EAN CQL query, Dublin Core XML, five records and a five-second
+encoded combined ISBN/EAN CQL query, Dublin Core XML, five records and an eight-second
 timeout. Exact edition-identifier matching is mandatory, including commercial
 EAN mentions in Dublin Core descriptions. Available titles, creators, publishers,
 languages, identifiers and ARKs are mapped; partial dates retain their year
@@ -560,5 +560,21 @@ XML parsing uses pinned MIT-licensed `fast-xml-parser` 5.11.2, audited before
 addition, with validation, namespace-prefix handling and DTD rejection.
 Google Books still requires its backend API key and keeps the ISBN query,
 `maxResults=5` and `printType=books`; `projection=lite` is removed for robustness,
-without alternate queries. Orchestration semantics, provider-scoped cache and
-TTLs are unchanged.
+without alternate queries. Orchestration semantics and provider-scoped cache
+remain unchanged. Successful responses retain a seven-day TTL, empty responses
+one hour, and technical errors are never cached.
+
+## Resilience apres validation terrain
+
+Pour l'ISBN `9782952221702`, un ancien cache Open Library vide (TTL de 24 h)
+masquait une reponse devenue disponible. Le fallback BnF etait rapide sur
+Bazzite (environ 252 ms), mais expirait a 5 s sur un NAS Synology ; l'UI
+signalait `provider_timeout`. Une resolution IPv4 prioritaire lors du diagnostic
+permettait un succes BnF en environ 4412 ms. Apres purge du cache, Open Library
+retournait une suggestion et l'UI fonctionnait correctement.
+
+BnF peut donc etre significativement plus lent selon le reseau : son timeout
+specifique passe a 8 s. Le cache vide expire apres 1 h pour rappeler le provider
+et retourner immediatement ses suggestions sans fallback inutile. Les succes
+restent caches 7 jours et les erreurs techniques ne sont jamais cachees.
+Aucun retry automatique ni resolution IPv4 forcee n'est ajoute.

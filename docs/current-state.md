@@ -196,7 +196,7 @@ Principes :
   - clé `movies/search` incluant query, langue, région et année
   - clé `games/search` incluant query, langue, plateforme et année
   - résultats avec suggestions cachés 7 jours
-  - résultats vides cachés 24 heures
+  - résultats vides cachés 1 heure
   - erreurs provider, timeouts et ISBN invalides non cachés
   - aucune réponse brute provider ni image binaire stockée
 - Réponse API inchangée, sans champ `cached`
@@ -1332,3 +1332,17 @@ attribution. XML parsing uses audited, pinned MIT-licensed `fast-xml-parser`
 5.11.2. Scanner and cache semantics are unchanged. Google Books still requires
 `GOOGLE_BOOKS_API_KEY`; `projection=lite` is removed without alternate queries.
 BnF covers remain a future Media Provider concern under ADR-0009.
+
+## Resilience acquisition livres apres validation terrain
+
+- Timeout BnF specifique : 8 s ; les autres providers conservent leur timeout.
+- Cache provider : succes 7 jours, resultat vide 1 h, erreurs techniques non cachees.
+- Un cache vide Open Library expire provoque un nouvel appel ; un succes arrete
+  immediatement le fallback. La semantique AcquisitionService reste inchangee.
+- Aucun retry automatique, IPv4 force ni changement de schema DB.
+
+Le cas ISBN `9782952221702` a revele un ancien cache Open Library vide et un
+fallback BnF lent sur Synology, avec `provider_timeout` dans l'UI. Apres purge,
+Open Library retournait une suggestion et l'UI fonctionnait correctement.
+Les mesures et le diagnostic reseau sont documentes dans
+[les providers acquisition](acquisition-providers.md#resilience-apres-validation-terrain).

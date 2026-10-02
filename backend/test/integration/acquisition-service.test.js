@@ -2168,7 +2168,8 @@ function createConfiguredTmdbService({
 }
 
 function createCache({
-    maxResponseJsonBytes = 100 * 1024
+    maxResponseJsonBytes = 100 * 1024,
+    now = () => new Date('2026-01-01T00:00:00.000Z')
 } = {}) {
 
     const repository =
@@ -2178,10 +2179,7 @@ function createCache({
         cache:
             new AcquisitionCache({
                 maxResponseJsonBytes,
-                now:
-                    () => new Date(
-                        '2026-01-01T00:00:00.000Z'
-                    ),
+                now,
                 repository
             }),
         repository
@@ -2411,4 +2409,65 @@ function createMovieSearchProvider({
         }
     };
 
+}
+
+
+for (const [status, results, ttlMs] of [
+    ['success', [{ provider: 'openlibrary', title: 'Book' }], 7 * 24 * 60 * 60 * 1000],
+    ['empty', [], 60 * 60 * 1000]
+]) {
+    test(`AcquisitionCache ${status} TTL is ${ttlMs} ms`, () => {
+        let time = Date.parse('2026-01-01T00:00:00.000Z');
+        const { cache, repository } = createCache({ now: () => new Date(time) });
+        const key = { plugin: 'books', capability: 'isbnLookup', providerId: 'openlibrary', identifier: '9782952221702' };
+        const response = createLookupResponse(key.identifier, results);
+        cache.set({ ...key, response });
+        const row = repository.rows.get(cache.buildKey(key));
+        assert.equal(row.status, status);
+        assert.equal(Date.parse(row.expires_at) - time, ttlMs);
+        time += ttlMs - 1;
+        assert.deepEqual(cache.get(key), response);
+        time += 1;
+        assert.equal(cache.get(key), null);
+        assert.equal(repository.rows.size, 0);
+    });
+}
+
+test('Expired empty Open Library cache recalls the provider and returns success without BnF fallback', async () => {
+    const isbn = '9782952221702';
+    let time = Date.parse('2026-01-01T00:00:00.000Z');
+    const { cache, repository } = createCache({ now: () => new Date(time) });
+    const suggestions = [];
+    const ol = createProvider({ id: 'openlibrary', results: suggestions });
+    const bnf = createProvider({ id: 'bnf', results: [] });
+    const service = createService([ol, bnf], { acquisitionCache: cache });
+    assert.deepEqual((await service.lookupBookByIsbn({ isbn })).results, []);
+    const key = cache.buildKey({ plugin: 'books', capability: 'isbnLookup', providerId: 'openlibrary', identifier: isbn });
+    assert.equal(repository.rows.get(key).status, 'empty');
+    suggestions.push({ provider: 'openlibrary', title: 'La Horde du contrevent' });
+    time += 60 * 60 * 1000 - 1;
+    assert.deepEqual((await service.lookupBookByIsbn({ isbn })).results, []);
+    assert.deepEqual(ol.calls, [isbn]);
+    ol.calls.length = 0;
+    bnf.calls.length = 0;
+    time += 2;
+    const response = await service.lookupBookByIsbn({ isbn });
+    assert.deepEqual(response.results, suggestions);
+    assert.deepEqual(ol.calls, [isbn]);
+    assert.deepEqual(bnf.calls, []);
+    assert.ok(repository.deletedKeys.includes(key));
+    assert.equal(repository.rows.get(key).status, 'success');
+});
+
+for (const code of ['provider_error', 'provider_timeout']) {
+    test(`AcquisitionService never caches ${code} and calls again on the next lookup`, async () => {
+        const { cache, repository } = createCache();
+        const provider = createProvider({ id: 'openlibrary', error: Object.assign(new Error(code), { code, statusCode: 503 }) });
+        const service = createService([provider], { acquisitionCache: cache });
+        for (let i = 0; i < 2; i += 1) {
+            await assert.rejects(() => service.lookupBookByIsbn({ isbn: '9782952221702' }), { code });
+            assert.equal(repository.rows.size, 0);
+        }
+        assert.deepEqual(provider.calls, ['9782952221702', '9782952221702']);
+    });
 }

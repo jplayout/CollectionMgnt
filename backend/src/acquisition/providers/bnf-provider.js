@@ -8,7 +8,7 @@ import { normalizeIdentifier } from '../../services/item-validator.js';
 
 const SRU_URL = 'https://catalogue.bnf.fr/api/SRU';
 const MAX_RESULTS = 5;
-const DEFAULT_TIMEOUT_MS = 5000;
+const DEFAULT_TIMEOUT_MS = 8000;
 
 export class BnfProvider {
 
