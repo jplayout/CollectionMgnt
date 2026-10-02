@@ -1528,26 +1528,52 @@ BnF covers remain a future Media Provider concern under ADR-0009.
 Livre : premiere image HTTPS valide preselectionnee, « Changer l’image » avec
 candidats provider existants, fichier local ou aucune image. Le composant
 `AcquisitionMediaPicker` est generique et compatible avec posters TMDb et covers
-IGDB ; leur integration visuelle reste future, avec UX actuelle conservee.
+IGDB ; leur integration visuelle et la recherche media explicite sont desormais disponibles.
 La creation de l'item precede l'import via MediaService et l'image devient
 principale. Les erreurs image conservent l'item et affichent un avertissement.
 La provenance reste temporaire faute de champs media existants ; pas de schema DB.
 
-Le futur lot `feature/acquisition-media-search` pourra couvrir la recherche de
-medias multi-provider, nouveaux Media Providers (dont BnF Covers ou ScreenScraper)
-et, selon cadrage, recherche web, edition/crop ou galerie avancee.
-Aucun de ces sujets, ni saisie manuelle d'URL distante, n'est implemente ici.
+La recherche media multi-provider officielle est desormais livree dans
+`feature/acquisition-media-search`. Les futurs lots pourront etudier BnF Covers,
+ScreenScraper, recherche web, edition/crop ou galerie avancee ; ces sujets et la
+saisie manuelle d'URL distante restent hors perimetre.
 
 ## English — acquisition media picker and follow-up
 
 Book users can change a preselected provider image, choose a local file or no
-image. The generic picker also supports TMDb posters and IGDB covers; movie/game
-visual integration remains future and their current UX is preserved. Item
+image. The generic picker also supports TMDb posters and IGDB covers; movies and games now use the same picker and explicit media discovery. Item
 creation precedes import through MediaService as primary media; import failure
 keeps the item and displays a warning. Available provenance stays temporary;
 no DB schema change. Existing provider contracts and secure import/upload paths
 are reused without extra lookups or external search.
 
-`feature/acquisition-media-search` is the follow-up for external media search,
-additional media providers, multi-provider candidates and separately scoped
-editing/crop or advanced gallery work. No such features ship in this iteration.
+`feature/acquisition-media-search` now supplies explicit discovery from existing
+official providers. Additional media providers, generic web search, editing/crop
+and advanced galleries remain separately scoped future work.
+
+## Acquisition media search — premiere version livree
+
+Recherche explicite multi-provider dans le picker commun aux livres, films et
+jeux : Open Library Covers, Google Books imageLinks, TMDb posters et IGDB covers.
+MediaSearchService utilise le registre existant et agrege les providers en
+concurrence, avec limites 10/provider et 20/global, deduplication et erreurs
+partielles visibles. AcquisitionService garde sa semantique metadata inchangee.
+Aucune recherche automatique, aucun nouveau stockage avant creation, aucune
+migration DB ou persistance de provenance. L'import reste MediaService apres
+itemId et une erreur image ne supprime pas l'item.
+
+Le cache persistant de recherches media sera etudie si les limites providers le
+justifient ; cette version ne partage que les requetes identiques en cours.
+Les besoins de recherche par titre seul, nouveaux Media Providers, BnF Covers,
+ScreenScraper, moteurs web, edition/crop et galerie avancee restent futurs.
+
+## English — first media search iteration delivered
+
+Explicit discovery from existing official providers is available in the shared
+book/movie/game picker. MediaSearchService aggregates concurrently via the
+existing registry, capped at ten candidates per provider and twenty globally,
+with deduplication and visible partial errors. Metadata acquisition semantics
+remain unchanged. Discovery creates no media/item/cache; secure MediaService
+import follows creation, and failures retain the item. Provenance stays temporary
+without schema changes. Persistent search caching, title-only discovery, new
+providers, generic web search and editing/advanced galleries remain future work.

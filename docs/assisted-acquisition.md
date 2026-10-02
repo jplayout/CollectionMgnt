@@ -412,8 +412,8 @@ Reponse :
 Le frontend films utilise cette route dans le formulaire de creation. Le bouton
 `Utiliser` pre-remplit uniquement les champs vides, conserve les identifiants
 provider normalises et garde l'image proposee en memoire volatile. L'import de
-couverture reste propose uniquement apres creation de l'item et confirmation
-utilisateur.
+couverture choisi dans le picker est importe uniquement apres creation de
+l'item lors de la soumission utilisateur.
 
 ### `POST /api/acquisition/games/search`
 
@@ -477,8 +477,8 @@ Le frontend jeux utilise cette route dans le formulaire de creation. Le bouton
 `Utiliser` pre-remplit uniquement les champs vides : titre, description,
 `release_date`, `developer`, `publisher`, `platform` et `genre`. `igdbId` est
 conserve dans `metadata`. La cover distante reste en memoire volatile et
-l'import de couverture reste propose uniquement apres creation de l'item et
-confirmation utilisateur.
+l'import du choix media se fait uniquement apres creation de l'item lors de
+la soumission utilisateur.
 
 ### `POST /api/acquisition/images/import`
 
@@ -702,8 +702,8 @@ Le scenario ISBN `9782952221702`, *La Horde du contrevent*, est teste avec une
 suggestion Open Library et sa couverture, un choix sans image, un upload local,
 l'import apres creation et le media principal sur la fiche. Les tests utilisent
 des reponses provider controlees, sans consultation d'API externe.
-Les films et jeux gardent leur confirmation d'import depuis la fiche dans cette
-iteration ; le picker est compatible avec leurs candidats sans modifier leur UX.
+Les films et jeux utilisent desormais le meme picker et le meme ordre
+creation puis import, sans changer leur recherche metadata.
 
 ## English — media selection before book creation
 
@@ -724,6 +724,63 @@ Submission creates the item first, then imports the selected remote candidate vi
 primary media. Import failure preserves the item and displays a warning on its
 details page, where the gallery remains available. Available provenance stays
 temporary because the media model has no provenance fields; no DB migration.
-Movies/games retain their current gallery confirmation in this iteration.
-External media search, new media providers, manual remote URLs, BnF Covers,
-editing/crop and advanced galleries belong to `feature/acquisition-media-search`.
+Movies/games now use the same picker and creation-then-import flow.
+Official provider media discovery is now available as described below. Manual
+remote URLs, BnF Covers, editing/crop and advanced galleries remain future work.
+
+## Rechercher d'autres images — livres, films et jeux
+
+Dans « Changer l’image », l'action « Rechercher d’autres images » lance une
+recherche explicite via le backend. Aucun appel automatique au chargement du
+formulaire, au lookup metadata ou a l'application d'une suggestion. La premiere
+image proposee reste preselectionnee et peut etre remplacee, sans obligation.
+Le meme picker sert aux couvertures livres/jeux et aux posters films.
+
+Les candidats initiaux sont marques « Image proposée », les nouveaux candidats
+« Résultat de recherche ». Provider, source, attribution/licence disponibles
+sont affiches. Le choix courant reste intact apres recherche, y compris fichier
+local ou aucune image. Une recherche repetee remplace les resultats de recherche
+precedents ; un resultat deja choisi reste disponible. Les reponses obsoletes
+sont ignorees. Les appels identiques en cours sont partages dans la session,
+et le bouton est desactive pendant sa recherche. Les resultats termines ne sont
+pas caches. La langue navigateur est transmise pour classer les posters TMDb.
+
+Les erreurs partielles affichent « Recherche incomplète » avec les providers
+concernes et laissent les images disponibles selectionnables. Un resultat vide
+avec erreurs est distingue d'une absence propre de medias. Si tous les providers
+echouent, un message permet de reessayer ou de conserver le choix courant.
+
+Les identifiants deja connus (Cover ID/OLID/ISBN, TMDb ID, IGDB ID) sont utilises,
+sans recherche web ni essai de centaines d'URLs. Les limites Open Library rendent
+la recherche explicite necessaire : un seul controle d'existence, aucun crawling
+ou prechargement des tailles. Le detail du contrat et de l'aggregation est dans
+[les providers acquisition](acquisition-providers.md#recherche-media-multi-provider).
+
+Le flux reste `Metadata Provider → candidats initiaux`, `Media Provider →
+MediaSearchService → candidats fusionnes`, `AcquisitionMediaPicker → choix`,
+`creation item → MediaService → import/stockage/transformation`. Aucun media
+n'est persiste par la recherche. Le choix et sa provenance restent temporaires ;
+le schema media n'a pas de champs de provenance. L'import se fait apres itemId,
+via le pipeline existant, comme media principal. Un echec image conserve l'item
+et affiche l'avertissement sur sa fiche. Aucun import automatique de toutes les
+images, aucune URL saisie manuellement, aucun BnF Covers ou ScreenScraper.
+
+## English — explicit media discovery in the picker
+
+Books, movies and games share the same picker. “Search for other images” runs
+only on user action, never on form load or metadata lookup. Existing suggested
+images and search results are labelled separately; available provider/source,
+credits and licenses are shown without inventing missing values. Searches retain
+the current choice, including a local file or no image. Repeated searches
+replace prior search results while preserving any selected candidate; stale
+responses are ignored. Identical in-flight requests share one session request,
+with no persistent or completed-result cache.
+
+Partial failures visibly mark the search incomplete and preserve usable results.
+All-provider failures allow retry or continued use of the current choice.
+Known identifiers drive official provider discovery; Open Library uses only one
+existence check and prefers known IDs because ISBN access is rate limited.
+Discovery writes no media or DB state. Creation still precedes secure remote
+import/local upload through MediaService as primary media. Import failure keeps
+the item and warns on its details page. Provenance stays temporary; no new DB
+schema, generic web search, arbitrary remote URLs, BnF Covers or ScreenScraper.

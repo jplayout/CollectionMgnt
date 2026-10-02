@@ -99,3 +99,20 @@ export function importAcquisitionImage({
     );
 
 }
+
+const pendingMediaSearches = new Map();
+
+function canonicalQuery(value) {
+    if (Array.isArray(value)) return value.map(canonicalQuery);
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, entry]) => [key, canonicalQuery(entry)]));
+    return value;
+}
+
+export function searchAcquisitionMedia(query) {
+    const key = JSON.stringify([sessionStorage.getItem('auth_token'), canonicalQuery(query)]);
+    if (pendingMediaSearches.has(key)) return pendingMediaSearches.get(key);
+    const pending = apiFetch('/api/acquisition/media/search', { method: 'POST', body: query })
+        .finally(() => pendingMediaSearches.delete(key));
+    pendingMediaSearches.set(key, pending);
+    return pending;
+}

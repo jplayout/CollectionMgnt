@@ -1361,7 +1361,7 @@ Les mesures et le diagnostic reseau sont documentes dans
 - Aucun media persiste avant creation, aucune URL distante ajoutee aux metadata,
   aucun lookup additionnel, aucune nouvelle recherche externe ni migration DB.
 - Modele media sans champs de provenance ; attribution/licence restent
-  temporaires. Films et jeux gardent leur UX de confirmation depuis la fiche.
+  temporaires. Films et jeux utilisent desormais le meme picker avant creation.
 - Tests Playwright avec l'ISBN `9782952221702` (Open Library controle), choix
   par defaut/modifie/aucun/local, ordre creation-import, erreurs non bloquantes,
   media principal et candidats generiques TMDb poster / IGDB cover.
@@ -1375,6 +1375,48 @@ can change it, choose a local file, or no image. Creation happens before secure
 remote import or local upload via MediaService, with primary media enabled.
 Import failure preserves the item and shows a warning beside its available
 gallery. Selection/provenance remain temporary; no media provenance DB fields or
-migration are introduced. Movies/games retain gallery confirmation, while their
-poster/cover candidates are supported by the component API. No external media
-search or extra lookup is introduced.
+migration are introduced. Movies/games now use the same picker with their poster/cover candidates.
+Official-provider media search is available only on explicit user action.
+
+## Recherche media multi-provider explicite
+
+- `MediaSearchService` dedie reutilisant `AcquisitionProviderRegistry` ; capability
+  `mediaSearch` Open Library/Google Books/TMDb/IGDB. AcquisitionService inchange.
+- Route JWT `POST /api/acquisition/media/search` : identifiants et metadata
+  minimaux stricts/bornes, corps 4 KiB, aucune URL arbitraire ou item complet.
+- Aggregation concurrente avec timeout provider individuel : 10 candidats par
+  provider, 20 globaux ; dedup URL normalisee et identifiant image provider.
+- Reponse `query/results/warnings/incomplete` : erreurs partielles non bloquantes,
+  vides+erreurs explicitement incomplets, tous erreurs en erreur stable 503/504.
+- Picker unique livre/film/jeu, « Rechercher d’autres images » uniquement au clic,
+  candidats initiaux et recherches distingues, choix courant conserve, reponses
+  obsoletes ignorees, appels identiques en cours partages dans la session.
+- Open Library : Cover ID/OLID prioritaires, sinon ISBN, un seul HEAD avec
+  `default=false`, pas de crawling/probes multiples/prechargement des tailles.
+- Google Books : cle backend, exact ISBN, meilleure taille, sans projection lite.
+- TMDb : posters du movie ID, langue navigateur/originale/sans langue puis votes.
+- IGDB : covers du game ID et localisations, OAuth/cache token existants reutilises,
+  dimensions API conservees ; aucune langue ou licence inventee.
+- Aucun cache SQLite recherche media ; aucun stockage/DB avant creation.
+  Import distant/upload local via MediaService, primary en un appel, erreurs
+  image non bloquantes. Provenance temporaire et schema DB inchange.
+- Hors perimetre : recherche web, BnF Covers, ScreenScraper, hashing perceptuel,
+  edition/crop, persistance provenance et import automatique de toutes les images.
+
+## English — explicit multi-provider media search
+
+MediaSearchService reuses the registry and aggregates active Open Library,
+Google Books, TMDb and IGDB mediaSearch capabilities concurrently. The protected
+endpoint validates bounded identifier-based queries and returns at most ten
+candidates per provider, twenty total. Deduplication uses normalized URLs and
+provider image IDs. Partial errors produce sanitized warnings and explicitly
+incomplete search; all errors produce a stable acquisition error.
+
+The same book/movie/game picker launches discovery only on user action, retains
+current choices, ignores stale responses and shares identical in-flight requests.
+Open Library uses one existence check, prioritizing known IDs to limit ISBN
+access. Google Books keeps its backend-only key/exact ISBN query; TMDb supplies
+ranked posters; IGDB reuses existing OAuth. Discovery writes no SQLite cache,
+media or item. Storage remains MediaService after creation, with primary media
+and non-blocking image failures. Provenance remains temporary; no DB schema or
+web/image editing/perceptual search features are introduced.

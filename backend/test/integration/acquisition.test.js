@@ -151,7 +151,8 @@ test(
                 providers: [
                     {
                         capabilities: [
-                            'isbnLookup'
+                            'isbnLookup',
+                            'mediaSearch'
                         ],
                         enabled:
                             true,
@@ -174,7 +175,8 @@ test(
                     },
                     {
                         capabilities: [
-                            'isbnLookup'
+                            'isbnLookup',
+                            'mediaSearch'
                         ],
                         enabled:
                             true,
@@ -189,7 +191,8 @@ test(
                     },
                     {
                         capabilities: [
-                            'movies/search'
+                            'movies/search',
+                            'mediaSearch'
                         ],
                         enabled:
                             true,
@@ -204,7 +207,8 @@ test(
                     },
                     {
                         capabilities: [
-                            'games/search'
+                            'games/search',
+                            'mediaSearch'
                         ],
                         enabled:
                             true,
