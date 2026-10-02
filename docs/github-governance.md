@@ -13,6 +13,21 @@ qui doivent être configurés dans l'interface ou via l'API GitHub.
   `codeql.yml`, `semgrep.yml`, `trivy.yml` et `publish.yml`.
 - Dependabot : `.github/dependabot.yml`.
 
+## Conventions de branches et de titres
+
+Les branches humaines conservent les préfixes `analysis/`, `feature/`, `docs/`,
+`fix/`, `security/`, `refactor/`, `test/`, `ci/` et `chore/`.
+Le préfixe `dependabot/` est la seule exception automatisée autorisée.
+
+Toutes les PR, y compris celles de Dependabot, restent soumises au format
+`<prefix>: <summary>` avec `feat`, `fix`, `docs`, `security`, `refactor`, `test`,
+`ci`, `perf` ou `chore`. Dependabot utilise `commit-message.prefix: "chore"`
+pour npm backend, npm frontend et GitHub Actions. GitHub ajoute le deux-points :
+les titres commencent par `chore:`, y compris pour les mises à jour groupées.
+Les identifiants des groupes restent présents dans leurs branches et titres.
+La configuration s'applique aux nouvelles PR ; les titres des PR déjà ouvertes
+peuvent nécessiter une mise à jour pour passer le gate.
+
 ## À configurer dans GitHub
 
 - Branch Protection ou Rulesets sur `main`.
@@ -74,6 +89,20 @@ must be configured in the GitHub UI or API.
 - CI workflows: `.github/workflows/ci.yml`, `project-conventions.yml`,
   `codeql.yml`, `semgrep.yml`, `trivy.yml` and `publish.yml`.
 - Dependabot: `.github/dependabot.yml`.
+
+## Branch and Title Conventions
+
+Human branches keep the `analysis/`, `feature/`, `docs/`, `fix/`, `security/`,
+`refactor/`, `test/`, `ci/` and `chore/` prefixes.
+The `dependabot/` prefix is the only allowed automated exception.
+
+All PRs, including Dependabot PRs, must use `<prefix>: <summary>` with `feat`,
+`fix`, `docs`, `security`, `refactor`, `test`, `ci`, `perf` or `chore`.
+Dependabot uses `commit-message.prefix: "chore"` for backend npm, frontend npm
+and GitHub Actions. GitHub adds the colon, so titles start with `chore:`,
+including grouped updates. Group identifiers remain in their branches and titles.
+The configuration applies to new PRs; existing PR titles may need updating to
+pass the gate.
 
 ## To Configure in GitHub
 
