@@ -157,7 +157,7 @@ Le lookup ISBN utilise un cache backend SQLite transparent :
 - seules les reponses normalisees `{ query, results }` sont stockees ;
 - les reponses brutes provider ne sont jamais stockees ;
 - les resultats avec suggestions sont caches 7 jours ;
-- les resultats vides sont caches 24 heures ;
+- les resultats vides sont caches 1 heure ;
 - les erreurs provider, timeouts et ISBN invalides ne sont pas caches ;
 - aucune image binaire n'est stockee dans le cache.
 
@@ -647,3 +647,15 @@ without saving automatically. A year alone is preserved as `publication_year`
 and does not invent a full date. Scanner behavior is unchanged.
 Google Books still requires `GOOGLE_BOOKS_API_KEY`; `projection=lite` is removed
 without alternative ISBN queries. BnF covers remain outside this metadata lot.
+
+## Resilience des lookups livres
+
+Le timeout specifique BnF est de 8 s, car sa latence varie selon le reseau.
+Le cache provider conserve les suggestions 7 jours et les reponses vides 1 h ;
+les erreurs techniques et timeouts ne sont jamais caches. Apres expiration
+d'un cache vide Open Library, le provider est rappele : s'il retourne une
+suggestion, elle est affichee immediatement sans fallback BnF.
+
+Le cas terrain ISBN `9782952221702` (ancien cache vide, BnF lent sur Synology,
+UI `provider_timeout`, puis purge et une suggestion Open Library avec UI OK)
+est detaille dans [la documentation providers](acquisition-providers.md#resilience-apres-validation-terrain).

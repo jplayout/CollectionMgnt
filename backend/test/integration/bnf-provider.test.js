@@ -138,3 +138,47 @@ test('BnF aborts timed-out requests using the existing provider_timeout contract
         code: 'provider_timeout', statusCode: 504
     });
 });
+
+
+test('BnF default timeout expires at 8000 ms and maps to provider_timeout', async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    let signal;
+    let calls = 0;
+    const provider = new BnfProvider({
+        fetchImpl: async (_url, options) => {
+            calls += 1;
+            signal = options.signal;
+            return new Promise((_resolve, reject) => {
+                signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+            });
+        }
+    });
+    assert.equal(provider.timeoutMs, 8000);
+    const lookup = provider.lookupIsbn('9782952221702');
+    const rejected = assert.rejects(lookup, { code: 'provider_timeout', statusCode: 504 });
+    t.mock.timers.tick(7999);
+    assert.equal(signal.aborted, false);
+    t.mock.timers.tick(1);
+    await rejected;
+    assert.equal(signal.aborted, true);
+    assert.equal(calls, 1);
+});
+
+test('BnF succeeds after five seconds but before its eight-second deadline and clears the timer', async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    let signal;
+    const provider = new BnfProvider({
+        fetchImpl: async (_url, options) => {
+            signal = options.signal;
+            return new Promise(resolve => setTimeout(() => resolve(xmlResponse(bnfFixture('9782952221702'))), 6000));
+        }
+    });
+    const lookup = provider.lookupIsbn('9782952221702');
+    t.mock.timers.tick(6000);
+    const results = await lookup;
+    assert.equal(results.length, 1);
+    assert.equal(results[0].metadata.isbn, '9782952221702');
+    assert.equal(results[0].metadata.ark, 'ark:/12148/cb401159952');
+    t.mock.timers.tick(2000);
+    assert.equal(signal.aborted, false);
+});
