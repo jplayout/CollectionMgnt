@@ -5,6 +5,8 @@ updates:
     directory: /backend
     schedule:
       interval: weekly
+    commit-message:
+      prefix: "chore"
     groups:
       backend-minor-and-patch:
         update-types:
@@ -15,6 +17,8 @@ updates:
     directory: /frontend
     schedule:
       interval: weekly
+    commit-message:
+      prefix: "chore"
     groups:
       frontend-minor-and-patch:
         update-types:
@@ -25,6 +29,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    commit-message:
+      prefix: "chore"
     groups:
       github-actions-minor-and-patch:
         update-types:

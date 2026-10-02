@@ -46,12 +46,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ ! "${BRANCH_NAME}" =~ ^(analysis|feature|docs|fix|security|refactor|test|ci|chore)/.+ ]]; then
+          if [[ ! "${BRANCH_NAME}" =~ ^(analysis|feature|docs|fix|security|refactor|test|ci|chore|dependabot)/.+ ]]; then
             {
               echo "Invalid branch name: ${BRANCH_NAME}"
               echo
               echo "Expected format: '<prefix>/<name>'"
-              echo "Allowed prefixes: analysis, feature, docs, fix, security, refactor, test, ci, chore."
+              echo "Human branch prefixes: analysis, feature, docs, fix, security, refactor, test, ci, chore."
+              echo "Automated Dependabot branches: dependabot/<name>."
             } >&2
             exit 1
           fi
