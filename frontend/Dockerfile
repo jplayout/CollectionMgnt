@@ -1,4 +1,4 @@
-FROM node:22 AS build
+FROM node:22.23.3-trixie AS build
 
 ARG APP_VERSION
 ARG APP_REVISION=development
@@ -20,7 +20,10 @@ COPY frontend/src ./src
 
 RUN test -n "$APP_VERSION" && npm run build
 
-FROM nginx:1.27-alpine
+FROM nginx:1.30.5-alpine3.24
+
+# Targeted fixes newer than the base image; retain all runtime package scanning.
+RUN apk add --no-cache --upgrade libexpat pcre2
 
 ARG APP_VERSION
 ARG APP_REVISION=development
