@@ -159,3 +159,50 @@ Project Conventions validates the sole [VERSION](../VERSION) source without
 requiring a bump for each PR. CI, Trivy and GHCR inject the same version and Git
 revision into both images. Publication triggers and tags remain unchanged.
 See [version governance](version-governance.md).
+
+## Required security checks / Checks securite requis
+
+Semgrep et Trivy sont des gates bloquants : Semgrep echoue sur tout finding
+non supprime de facon ciblee et justifiee ; Trivy echoue sur HIGH/CRITICAL,
+y compris sans correctif publie. LOW/MEDIUM ne bloquent pas le gate Trivy.
+Aucune baseline HIGH/CRITICAL connue n'est toleree.
+
+Semgrep and Trivy are blocking gates: Semgrep fails on findings without a
+justified, rule-specific suppression; Trivy fails on HIGH/CRITICAL, including
+unfixed vulnerabilities. LOW/MEDIUM do not fail the Trivy gate. No known
+HIGH/CRITICAL baseline is tolerated.
+
+Avant le futur lot `ci/dependabot-auto-merge`, configurer manuellement les checks
+suivants comme Required sur `main`, avec leurs noms GitHub exacts :
+
+- `Backend`
+- `Frontend`
+- `Playwright E2E`
+- `Docker`
+- `Quality`
+- `Project Conventions`
+- `Analyze JavaScript (javascript-typescript)`
+- `Semgrep`
+- `Trivy`
+
+Lecture API du 2 octobre 2026 : seuls `Backend`, `Frontend`, `Playwright E2E`,
+`Docker` et `Quality` sont Required, avec branche a jour exigee. Aucun ruleset
+additionnel n'est configure. Ce lot ne modifie aucun parametre GitHub et
+n'ajoute aucun auto-merge. Semgrep et Trivy utilisent `pull_request` sans
+exception Dependabot ; leur echec empechera le merge une fois ces checks Required.
+
+Before `ci/dependabot-auto-merge`, manually require all checks listed above.
+The read-only API inspection on 2 October 2026 found only the five CI checks
+required, with strict up-to-date enforcement, and no additional rulesets.
+Semgrep and Trivy run on all pull requests, including Dependabot, without a
+failure bypass. Failed security checks prevent merging when configured as Required.
+No GitHub settings or auto-merge behavior are changed by this batch.
+
+`aquasecurity/trivy-action@v0.36.0` reste une reference par tag, sans pin SHA.
+Aucune politique actuelle du depot n'impose ce pin pour les Actions tierces.
+Le durcissement de ces references doit etre traite dans un lot supply-chain
+ulterieur ; la version de cette action reste identique ici.
+
+The Trivy action remains tag-pinned at `v0.36.0`, without a commit SHA. Current
+repository policy does not mandate SHA pins for third-party Actions. Track this
+hardening in a future supply-chain batch without changing the action version here.
