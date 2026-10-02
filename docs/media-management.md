@@ -127,7 +127,7 @@ Routes disponibles :
 Les suggestions provider peuvent contenir une URL de couverture distante. Le
 frontend peut l'afficher en previsualisation distante. Pour les livres, le picker
 permet de choisir le media avant creation ; la soumission cree l'item puis importe
-le choix. Les films et jeux conservent la confirmation depuis la fiche item.
+le choix. Les films et jeux utilisent desormais le meme picker avant creation.
 Le backend telecharge l'image de maniere bornee et securisee, puis appelle
 `MediaService.createOriginalMedia()`.
 
@@ -264,5 +264,39 @@ WebP and thumbnail generation. Remote imports retain HTTPS, SSRF checks,
 controlled redirects and download limits. Failures keep the item and display a
 warning with access to the gallery. Media provenance has no existing DB fields;
 this iteration adds no schema and does not persist external credits/licenses.
-Movie/game gallery confirmation stays unchanged. External media search belongs
-to the future `feature/acquisition-media-search` work.
+Movies/games now use the same picker. Official provider media discovery is
+available through MediaSearchService, as described below.
+
+## Decouverte distante sans stockage
+
+`MediaSearchService` agrege les candidats des Media Providers en concurrence,
+via le registre existant. `AcquisitionMediaPicker` declenche cette recherche
+seulement au clic « Rechercher d’autres images » et conserve le choix actuel.
+Les metadata providers peuvent toujours fournir les images proposees initiales.
+La recherche ne telecharge aucun fichier dans MediaService et n'ecrit ni media,
+ni item, ni cache SQLite. Open Library utilise un seul HEAD d'existence ; les
+previsualisations chargees dans le navigateur ne sont pas des imports.
+
+Le stockage reste strictement `creation item → itemId → import distant securise
+ou upload local → MediaService → original/WebP/thumbnail → media principal`.
+Les protections SSRF/DNS/redirects, HTTPS, MIME, taille et dimensions restent
+celles de l'import existant. Aucune URL saisie par l'utilisateur n'est fetchee
+par la decouverte ; seuls les endpoints des providers enregistres sont appeles.
+La provenance/identite provider disponible reste temporaire, sans migration DB.
+Une erreur image conserve l'item et affiche un avertissement non bloquant.
+
+## English — discovery and storage remain separate
+
+Metadata providers supply optional initial images; media providers discover
+candidates; MediaSearchService aggregates them; the shared picker handles user
+choice; MediaService stores/transforms only after item creation. Discovery is
+explicit and writes no media, item or SQLite cache. Open Library performs one
+HEAD existence check, without size probes/crawling. Preview image requests are
+not imports. Identical in-flight requests are shared, without caching completed
+results; persistent caching can be studied later if provider limits require it.
+
+Selected remote images still use the secure acquisition import endpoint, local
+files use the existing multipart upload, and primary media is set in that call.
+All existing SSRF/DNS/redirect/HTTPS/MIME/size/dimension protections remain.
+Failures preserve the created item and show a warning. Available provenance
+stays temporary because there are no media provenance DB fields.

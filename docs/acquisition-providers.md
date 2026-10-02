@@ -578,3 +578,109 @@ specifique passe a 8 s. Le cache vide expire apres 1 h pour rappeler le provider
 et retourner immediatement ses suggestions sans fallback inutile. Les succes
 restent caches 7 jours et les erreurs techniques ne sont jamais cachees.
 Aucun retry automatique ni resolution IPv4 forcee n'est ajoute.
+
+## Recherche media multi-provider
+
+`Metadata Provider → metadata + candidats initiaux` ;
+`Media Provider → decouverte de candidats` ;
+`MediaSearchService → aggregation` ;
+`AcquisitionMediaPicker → choix utilisateur` ;
+`MediaService → stockage/transformation apres creation`.
+
+Le registre `AcquisitionProviderRegistry` est reutilise. Open Library et Google
+Books exposent `books/mediaSearch` (capability `mediaSearch`, plugin `books`),
+TMDb `movies/mediaSearch` et IGDB `games/mediaSearch`, en plus de leurs capabilities
+metadata. BnF ne participe pas. Aucun second registre ni modification de la
+semantique « premier succes gagne » d'AcquisitionService.
+
+`POST /api/acquisition/media/search` est protege par JWT. Corps limite a 4 KiB,
+champs stricts : `plugin`, `kind`, `identifiers`, `title` optionnel (300 caracteres),
+`metadata` optionnel (`author` 200 caracteres, `language`/`originalLanguage` 35).
+Les combinaisons sont `books/cover`, `movies/poster`, `games/cover`. Cette premiere
+version exige un identifiant : ISBN valide ou Cover ID/OLID pour books, `tmdbId`
+pour movies, `igdbId` pour games. IDs numeriques positifs bornes ; aucune URL
+arbitraire, aucun objet item complet, aucun provider fourni par le client.
+
+La reponse contient `query`, `results`, `warnings` et `incomplete`.
+Les candidats normalises portent `kind`, `url`, `thumbnailUrl`, `provider`,
+`sourceUrl`, `width`, `height`, `attribution`, `license`, `language`, plus
+`providerImageId` et, si disponible, `providerLocalizationId` internes et temporaires.
+Les informations absentes restent `null` ; seules des URLs HTTPS sans credentials
+sont retournees. Les dimensions IGDB sont celles du fichier source annoncees par
+l'API ; sa representation `t_cover_big` est redimensionnee par le CDN.
+
+Les providers actifs compatibles sont appeles en concurrence, chacun avec son
+budget de timeout (5 s pour les quatre providers actuels, acquisition OAuth IGDB
+incluse dans le budget global du provider). Maximum 10 candidats par provider,
+20 au total, ordre deterministe du registre. Deduplication par URL normalisee
+(fragment retire) et par identifiant image dans un provider ; pour une image
+connue a plusieurs tailles, la plus grande est conservee avec une preview petite.
+Aucun hashing perceptuel.
+
+| Etat des providers | Reponse |
+| --- | --- |
+| Plusieurs succes | Candidats fusionnes, 200 |
+| Succes + erreur | Candidats disponibles, warnings provider/code, `incomplete: true`, 200 |
+| Tous vides propres | `results: []`, `incomplete: false`, 200 |
+| Erreurs + providers vides | `results: []`, warnings, `incomplete: true`, 200 |
+| Tous en erreur | Erreur acquisition stable 503/504 et warnings sans messages externes |
+| Aucun provider actif compatible | `provider_unavailable`, 503 |
+
+Les APIs officielles utilisees sont :
+
+- [Open Library Covers](https://openlibrary.org/dev/docs/api/covers) : priorite
+  Cover ID, puis OLID, puis ISBN. Un seul HEAD de la variante L avec
+  `default=false` verifie l'existence ; 404 signifie absence. URL L et preview M,
+  sans telechargement des fichiers, crawling, variantes ISBN ou prechargement
+  des tailles. L'acces ISBN est soumis aux limites Open Library ; reutiliser
+  les IDs connus evite des appels inutiles.
+- [Google Books volumes](https://developers.google.com/books/docs/v1/reference/volumes) :
+  cle backend obligatoire, requete ISBN existante sans `projection=lite`, cinq
+  volumes maximum et verification exacte des industryIdentifiers ISBN. Meilleure
+  taille disponible, thumbnail/smallThumbnail en preview ; plusieurs volumes
+  peuvent donner plusieurs images. Les liens HTTP sur les domaines Google Books
+  connus sont convertis en HTTPS ; aucune autre URL HTTP n'est acceptee.
+- [TMDb movie images](https://developer.themoviedb.org/reference/movie-images) :
+  `/movie/{tmdbId}/images`, uniquement posters, URLs `original`/`w185` sur le CDN
+  existant. Classement transparent : langue navigateur, langue originale,
+  sans langue, autres ; puis vote moyen/nombre de votes. Dimensions/langue
+  proviennent des champs API.
+- [IGDB covers](https://api-docs.igdb.com/#cover) : `/v4/covers`, filtre jeu et
+  localisations du jeu, dix covers maximum, `image_id`, `url`, dimensions et
+  reference de localisation si disponible. OAuth et cache token de l'instance
+  IGDB existante sont reutilises. Aucune langue n'est deduite d'une region.
+  Un HTTP 401 invalide le token pour la prochaine recherche explicite, sans retry.
+
+La decouverte n'ecrit ni media, ni item, ni cache SQLite et n'appelle jamais
+MediaService. Les requetes JSON/HEAD utilisent uniquement les endpoints fixes
+ci-dessus, sans suivre de redirects inattendus. Lors d'un import choisi,
+l'endpoint existant conserve toutes ses validations SSRF/DNS/redirects, HTTPS,
+MIME, taille et dimensions. Aucun cache persistant de recherche media dans ce lot ;
+son besoin pourra etre etudie si les limites providers deviennent un probleme.
+
+## English — dedicated media aggregation
+
+MediaSearchService reuses the existing provider registry and a new `mediaSearch`
+capability on Open Library, Google Books, TMDb and IGDB. It aggregates concurrent
+provider responses rather than using AcquisitionService's first-success rule.
+The JWT-protected `/api/acquisition/media/search` endpoint accepts only bounded,
+allowlisted plugin/kind/identifier/title/minimal metadata input (4 KiB body).
+This version requires an ISBN/known OL ID, TMDb ID or IGDB ID; it has no title-only
+search or explicit provider selector. It never accepts a URL to fetch.
+
+Results are capped at ten per provider and twenty globally, deduplicated by
+normalized URL and provider image ID. Available image sizes keep the largest
+candidate and a smaller preview. Missing dimensions, language, credits and
+licenses stay null. Mixed successes/errors return available candidates and
+sanitized warnings with `incomplete: true`; clean empties return 200/empty;
+errors plus empties explicitly indicate incomplete search; all errors return a
+stable acquisition error. Provider timeouts bound each concurrent search.
+
+Official Covers/Volumes/Movie Images/Covers APIs are used as documented above.
+Open Library uses one HEAD existence check with `default=false`, preferring
+known Cover ID/OLID to rate-limited ISBN access; there is no crawling or size
+probing. Google Books requires its backend-only key and exact ISBN matching.
+TMDb returns ranked posters; IGDB reuses its OAuth cache and covers/localization
+metadata without guessing language. Discovery never downloads into MediaService
+or writes items/media/cache. Import remains the existing secure MediaService
+pipeline after creation. Persistent media-search caching remains future work.

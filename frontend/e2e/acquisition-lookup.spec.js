@@ -739,15 +739,7 @@ test(
             )
         ).toBeVisible();
 
-        await expect(
-            page.getByRole(
-                'button',
-                {
-                    name:
-                        'Importer la couverture proposée'
-                }
-            )
-        ).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Importer la couverture proposée' })).toHaveCount(0);
 
         const itemId =
             page.url().match(
@@ -1207,15 +1199,7 @@ test(
             )
         ).toBeVisible();
 
-        await expect(
-            page.getByRole(
-                'button',
-                {
-                    name:
-                        'Importer la couverture proposée'
-                }
-            )
-        ).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Importer la couverture proposée' })).toHaveCount(0);
 
     }
 );
@@ -2138,6 +2122,191 @@ test.describe('Acquisition media picker', () => {
             const item = await request.get(`/api/items/${id}`, { headers: { Authorization: `Bearer ${token}` } });
             expect(item.ok()).toBeTruthy();
         } finally { await deleteItem(request, id); }
+    });
+
+});
+
+test.describe('Explicit multi-provider media search', () => {
+    const support = require('./acquisition-media-picker-tests.js')({ expect, getAdminToken: () => adminToken });
+    const { openSuggestion, create, deleteItem, urls } = support;
+    let png;
+    test.beforeAll(async () => { await support.setup(); png = support.getPng(); });
+    const searched = (provider, name, kind = 'cover') => ({ kind, url: `https://example.test/${name}.jpg`, thumbnailUrl: `https://example.test/${name}-thumb.jpg`, provider, sourceUrl: `https://example.test/${provider}`, width: null, height: null, attribution: null, license: null, language: null });
+    async function previews(page) { await page.route('https://example.test/**', route => route.fulfill({ contentType: 'image/png', body: png })); }
+
+    test('Search is explicit, concurrent duplicate clicks are blocked, providers merge and selected search result imports only after item creation', async ({ page, request }) => {
+        const traffic = await openSuggestion(page);
+        await previews(page);
+        let calls = 0;
+        let release;
+        const gate = new Promise(resolve => { release = resolve; });
+        await page.route('**/api/acquisition/media/search', async route => {
+            calls += 1;
+            expect(route.request().postDataJSON()).toEqual({ plugin: 'books', kind: 'cover', identifiers: { isbn: '9782952221702', openLibraryCoverId: 123, openLibraryId: 'OL123M' }, title: 'La Horde du contrevent', metadata: { author: 'Alain Damasio', language: 'en-US' } });
+            await gate;
+            await route.fulfill({ json: { results: [{ ...searched('openlibrary', 'initial'), url: urls[0] }, searched('googlebooks', 'alternative')], warnings: [], incomplete: false } });
+        });
+        await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        await page.getByRole('button', { name: 'Changer l’image' }).click();
+        expect(calls).toBe(0);
+        const button = page.getByRole('button', { name: 'Rechercher d’autres images' });
+        await button.evaluate(element => { element.click(); element.click(); });
+        await expect(page.getByRole('button', { name: 'Recherche d’images...' })).toBeDisabled();
+        expect(calls).toBe(1);
+        expect(traffic.media).toHaveLength(0);
+        release();
+        await expect(page.getByText('Images trouvées.', { exact: true })).toBeVisible();
+        await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', urls[0]);
+        await expect(page.getByRole('radio', { name: /openlibrary · cover ·/ })).toHaveCount(2);
+        await expect(page.getByRole('radio', { name: /googlebooks · cover ·/ })).toHaveCount(1);
+        await expect(page.getByText('Résultat de recherche', { exact: true })).toHaveCount(1);
+        await page.getByRole('radio', { name: /googlebooks · cover ·/ }).check();
+        expect(traffic.media).toHaveLength(0);
+        await page.route('**/api/acquisition/images/import', route => {
+            const body = route.request().postDataJSON();
+            expect(traffic.creations).toHaveLength(1);
+            expect(body.imageUrl).toBe('https://example.test/alternative.jpg');
+            expect(body.provider).toBe('googlebooks');
+            expect(body.isPrimary).toBe(true);
+            return route.fulfill({ status: 201, json: { id: 1 } });
+        });
+        let id;
+        try {
+            id = await create(page);
+            expect(traffic.media).toHaveLength(1);
+            expect(traffic.media[0].postDataJSON().itemId).toBe(id);
+            expect(calls).toBe(1);
+        } finally { release(); await deleteItem(request, id); }
+    });
+
+    for (const [name, response, message] of [
+        ['partial success', { results: [searched('openlibrary', 'available')], warnings: [{ provider: 'googlebooks', code: 'provider_unavailable' }], incomplete: true }, 'Recherche incomplète : googlebooks'],
+        ['incomplete empty', { results: [], warnings: [{ provider: 'googlebooks', code: 'provider_error' }], incomplete: true }, 'La recherche est incomplète.'],
+        ['clean empty', { results: [], warnings: [], incomplete: false }, 'Aucune autre image trouvée.'],
+        ['all errors', null, 'La recherche d’images est indisponible.']
+    ]) {
+        test(`Media search ${name} keeps the initial selection and allows local/none choices`, async ({ page }) => {
+            const traffic = await openSuggestion(page);
+            await previews(page);
+            await page.route('**/api/acquisition/media/search', route => route.fulfill(response ? { json: response } : { status: 503, json: { code: 'provider_error' } }));
+            await page.getByRole('button', { name: 'Changer l’image' }).click();
+            await page.getByRole('button', { name: 'Rechercher d’autres images' }).click();
+            await expect(page.getByRole('status').filter({ hasText: message })).toBeVisible();
+            await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', urls[0]);
+            await page.getByLabel('Importer un fichier').setInputFiles({ name: 'selected.png', mimeType: 'image/png', buffer: png });
+            await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', /^blob:/);
+            await page.getByRole('radio', { name: 'Aucune image', exact: true }).check();
+            await expect(page.getByAltText('Image sélectionnée')).toHaveCount(0);
+            expect(traffic.media).toHaveLength(0);
+        });
+    }
+
+    test('Repeated media search replaces results deterministically while preserving a selected remote result or explicitly chosen file', async ({ page }) => {
+        await openSuggestion(page);
+        await previews(page);
+        let calls = 0;
+        await page.route('**/api/acquisition/media/search', route => {
+            calls += 1;
+            return route.fulfill({ json: { results: [searched('googlebooks', `result${calls}`)], warnings: [], incomplete: false } });
+        });
+        await page.getByRole('button', { name: 'Changer l’image' }).click();
+        await page.getByRole('button', { name: 'Rechercher d’autres images' }).click();
+        await page.getByRole('radio', { name: /googlebooks · cover ·/ }).check();
+        await page.getByRole('button', { name: 'Rechercher d’autres images' }).click();
+        await expect(page.getByRole('radio', { name: /googlebooks · cover ·/ })).toHaveCount(2);
+        await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', 'https://example.test/result1-thumb.jpg');
+        await page.getByLabel('Importer un fichier').setInputFiles({ name: 'keep.png', mimeType: 'image/png', buffer: png });
+        await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', /^blob:/);
+        const filePreview = await page.getByAltText('Image sélectionnée').getAttribute('src');
+        await page.getByRole('button', { name: 'Rechercher d’autres images' }).click();
+        await expect(page.getByRole('radio', { name: /googlebooks · cover ·/ })).toHaveCount(1);
+        await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', filePreview);
+        expect(calls).toBe(3);
+    });
+
+    test('Late media response from a discarded acquisition result cannot reappear in a fresh result', async ({ page }) => {
+        await openSuggestion(page);
+        let release;
+        const gate = new Promise(resolve => { release = resolve; });
+        await page.route('**/api/acquisition/media/search', async route => {
+            await gate;
+            await route.fulfill({ json: { results: [searched('googlebooks', 'obsolete')], warnings: [], incomplete: false } });
+        });
+        await page.getByRole('button', { name: 'Changer l’image' }).click();
+        const started = page.waitForRequest('**/api/acquisition/media/search');
+        await page.getByRole('button', { name: 'Rechercher d’autres images' }).click();
+        await started;
+        await page.getByRole('button', { name: 'Rechercher', exact: true }).click();
+        await expect(page.getByRole('button', { name: 'Changer l’image' })).toBeVisible();
+        const completed = page.waitForResponse('**/api/acquisition/media/search');
+        release();
+        await completed;
+        await page.getByRole('button', { name: 'Changer l’image' }).click();
+        await expect(page.getByRole('radio', { name: /googlebooks/ })).toHaveCount(0);
+        await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', urls[0]);
+    });
+
+    for (const [plugin, kind, key, value, suggestion, mockMetadataSearch] of [
+        ['movies', 'poster', 'tmdbId', 78, movieSuggestion(), mockMovieSearch],
+        ['games', 'cover', 'igdbId', 119133, gameSuggestion(), mockGameSearch]
+    ]) {
+        test(`${plugin} uses the generic media query/picker and imports the searched ${kind} after itemId`, async ({ page, request }) => {
+            await (plugin === 'movies' ? mockMovieProviders : mockGameProviders)(page);
+            await mockMetadataSearch(page, route => route.fulfill({ json: { results: [{ ...suggestion, images: [{ kind, source: suggestion.provider, url: 'https://example.test/initial.jpg' }] }] } }));
+            await previews(page);
+            let calls = 0;
+            let itemId;
+            await page.route('**/api/acquisition/media/search', route => {
+                calls += 1;
+                const query = route.request().postDataJSON();
+                expect(query.plugin).toBe(plugin);
+                expect(query.kind).toBe(kind);
+                expect(query.identifiers).toEqual({ [key]: value });
+                return route.fulfill({ json: { results: [searched(suggestion.provider, 'new-image', kind)], warnings: [], incomplete: false } });
+            });
+            await page.route('**/api/acquisition/images/import', route => {
+                const body = route.request().postDataJSON();
+                itemId = body.itemId;
+                expect(body.imageUrl).toBe('https://example.test/new-image.jpg');
+                expect(body.isPrimary).toBe(true);
+                return route.fulfill({ status: 201, json: { id: 1 } });
+            });
+            await page.goto(`/collections/${plugin}/items/new`);
+            await page.getByLabel('Titre').fill(suggestion.title);
+            await page.getByRole('button', { name: 'Rechercher', exact: true }).click();
+            await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+            await page.getByRole('button', { name: 'Changer l’image' }).click();
+            expect(calls).toBe(0);
+            expect(itemId).toBeUndefined();
+            await page.getByRole('button', { name: 'Rechercher d’autres images' }).click();
+            await page.getByRole('radio', { name: new RegExp(`${suggestion.provider} · ${kind} · 2`) }).check();
+            let id;
+            try {
+                id = await create(page);
+                expect(itemId).toBe(id);
+                expect(calls).toBe(1);
+            } finally { await deleteItem(request, id); }
+        });
+    }
+    test('Identical media requests share one in-flight request across picker instances, without caching completed searches', async ({ page }) => {
+        await openSuggestion(page);
+        let calls = 0;
+        await page.route('**/api/acquisition/media/search', route => {
+            calls += 1;
+            return route.fulfill({ json: { results: [], warnings: [], incomplete: false } });
+        });
+        await page.evaluate(async () => {
+            const { searchAcquisitionMedia } = await import('/src/services/acquisition-api.js');
+            const query = { plugin: 'books', kind: 'cover', identifiers: { isbn: '9782952221702' } };
+            const reversed = { identifiers: query.identifiers, kind: query.kind, plugin: query.plugin };
+            await Promise.all([searchAcquisitionMedia(query), searchAcquisitionMedia(reversed)]);
+        });
+        expect(calls).toBe(1);
+        await page.evaluate(async () => {
+            const { searchAcquisitionMedia } = await import('/src/services/acquisition-api.js');
+            await searchAcquisitionMedia({ plugin: 'books', kind: 'cover', identifiers: { isbn: '9782952221702' } });
+        });
+        expect(calls).toBe(2);
     });
 
 });

@@ -1,3 +1,4 @@
+import { searchOpenLibraryMedia } from './media-search.js';
 import {
     createProviderError,
     createProviderTimeoutError
@@ -27,11 +28,16 @@ export class OpenLibraryProvider {
 
     }
 
+    mediaSearch(query, options) {
+        return searchOpenLibraryMedia(this, query, options);
+    }
+
     describe() {
 
         return {
             capabilities: [
-                'isbnLookup'
+                'isbnLookup',
+                'mediaSearch'
             ],
             enabled:
                 typeof this.fetchImpl === 'function',

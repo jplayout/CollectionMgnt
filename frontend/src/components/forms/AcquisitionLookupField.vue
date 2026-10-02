@@ -67,6 +67,7 @@
                 </button>
                 <AcquisitionMediaPicker
                     :candidates="suggestion.mediaCandidates"
+                    :search-query="suggestion.mediaSearchQuery"
                     :disabled="disabled"
                     :model-value="mediaSelections[getSuggestionKey(suggestion)]"
                     @update:model-value="selectMedia(suggestion, $event)"
@@ -85,7 +86,7 @@ import {
 } from 'vue';
 
 import AcquisitionMediaPicker from '../acquisition/AcquisitionMediaPicker.vue';
-import { normalizeAcquisitionMediaCandidates } from '../../services/acquisition-media.js';
+import { normalizeAcquisitionMediaCandidates, buildAcquisitionMediaQuery } from '../../services/acquisition-media.js';
 
 import DynamicField
 from './DynamicField.vue';
@@ -260,7 +261,8 @@ async function lookup() {
             (response?.results ?? []).map((suggestion, index) => ({
                 ...suggestion,
                 mediaKey: `${generation}:${index}`,
-                mediaCandidates: normalizeAcquisitionMediaCandidates(suggestion)
+                mediaCandidates: normalizeAcquisitionMediaCandidates(suggestion),
+                mediaSearchQuery: buildAcquisitionMediaQuery('books', suggestion)
             }));
 
         if (
