@@ -1,0 +1,63 @@
+name: Dependabot Auto Merge
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  dependabot:
+    name: Dependabot Auto Merge
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'jplayout/CollectionMgnt'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Keep other updates manual
+        if: steps.metadata.outputs.update-type != 'version-update:semver-patch' && steps.metadata.outputs.update-type != 'version-update:semver-minor'
+        env:
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+        run: echo "Manual review and merge required (update-type=${UPDATE_TYPE:-missing})."
+
+      - name: Approve and enable auto-merge for patch or minor updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          current_head=$(gh pr view "$PR_URL" --json headRefOid --jq '.headRefOid')
+          if [[ "$current_head" != "$PR_HEAD" ]]; then
+            echo "PR head changed; the synchronize run will handle the new revision."
+            exit 0
+          fi
+          approval=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER/reviews" --jq \
+            '[.[] | select(.user.login == "github-actions[bot]")] | last | if . == null then "" else (.state + ":" + .commit_id) end')
+          if [[ "$approval" != "APPROVED:$PR_HEAD" ]]; then
+            gh pr review --approve "$PR_URL"
+          else
+            echo "Current revision is already approved by GitHub Actions."
+          fi
+          auto_merge=$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest != null')
+          if [[ "$auto_merge" == "true" ]]; then
+            echo "GitHub auto-merge is already enabled."
+          else
+            gh pr merge --auto --merge "$PR_URL" --match-head-commit "$PR_HEAD"
+          fi
