@@ -3,13 +3,13 @@
 Etat courant : fondations identifiants, lookup backend ISBN livres, recherche
 texte films via TMDb, recherche texte jeux via IGDB, pre-remplissage frontend
 local, orchestration backend, resolution multi-provider, cache SQLite
-acquisition et import explicite de couverture provider vers le systeme media
-existant.
+acquisition, choix de media avant creation pour les livres et import via le
+systeme media existant.
 
 Les identifiants sont des champs metadata declares par plugin et stockes dans
 `items.metadata`. Le lookup ISBN livres est disponible via le backend
-CollectionMgnt avec Open Library comme provider principal et Google Books comme
-provider secondaire.
+CollectionMgnt avec Open Library comme provider principal, BnF comme provider
+public secondaire et Google Books comme fallback complementaire configure.
 
 Le backend expose aussi `movies/search` via TMDb pour les films, configure par
 `TMDB_API_READ_ACCESS_TOKEN`. Le frontend films permet une recherche par titre,
@@ -110,8 +110,9 @@ Les filtres `isbn` et `barcode` valident et normalisent la valeur de query avant
 
 ## Architecture Backend Providers
 
-Toute communication avec un fournisseur externe passe par le backend. Le
-frontend ne doit pas appeler les providers directement.
+Les lookups et imports de fichiers depuis un fournisseur externe passent par le backend.
+Les previsualisations peuvent charger une image distante via `<img>`. Le
+frontend ne doit pas appeler les APIs des providers directement.
 
 Principes :
 
@@ -143,8 +144,12 @@ Frontend
 
 Cette orchestration supporte les providers multiples sans modifier l'API
 publique existante. En mode implicite, Open Library est essaye d'abord, puis
-Google Books est tente seulement si le provider precedent ne fournit aucun
-resultat exploitable ou echoue techniquement.
+BnF ; Google Books est tente seulement si `GOOGLE_BOOKS_API_KEY` est configuree et si
+le provider precedent ne fournit aucun resultat exploitable ou echoue
+techniquement. Une recherche sans resultat propage la derniere erreur technique
+des providers tentes (`provider_error`, `provider_timeout`,
+`provider_unavailable`) au lieu de presenter cette recherche incomplete comme
+une absence certaine de resultats.
 
 Le lookup ISBN utilise un cache backend SQLite transparent :
 
@@ -153,7 +158,7 @@ Le lookup ISBN utilise un cache backend SQLite transparent :
 - seules les reponses normalisees `{ query, results }` sont stockees ;
 - les reponses brutes provider ne sont jamais stockees ;
 - les resultats avec suggestions sont caches 7 jours ;
-- les resultats vides sont caches 24 heures ;
+- les resultats vides sont caches 1 heure ;
 - les erreurs provider, timeouts et ISBN invalides ne sont pas caches ;
 - aucune image binaire n'est stockee dans le cache.
 
@@ -174,12 +179,18 @@ Provider livre :
   - capacite : `isbnLookup`
   - configuration obligatoire : non
   - secret requis : aucun
-- `googlebooks`
+- `bnf`
   - plugin : `books`
   - capacite : `isbnLookup`
   - configuration obligatoire : non
   - secret requis : aucun
-  - cle API optionnelle : `GOOGLE_BOOKS_API_KEY`
+- `googlebooks`
+  - plugin : `books`
+  - capacite : `isbnLookup`
+  - configuration obligatoire : oui
+  - secret requis : `GOOGLE_BOOKS_API_KEY`
+  - cle API requise : `GOOGLE_BOOKS_API_KEY`
+  - sans cle : desactive, masque de la liste active et jamais appele anonymement
 
 Capability film :
 
@@ -229,12 +240,20 @@ Exemple :
       "requiresConfiguration": false
     },
     {
+      "id": "bnf",
+      "name": "BnF",
+      "plugin": "books",
+      "capabilities": ["isbnLookup"],
+      "enabled": true,
+      "requiresConfiguration": false
+    },
+    {
       "id": "googlebooks",
       "name": "Google Books",
       "plugin": "books",
       "capabilities": ["isbnLookup"],
       "enabled": true,
-      "requiresConfiguration": false
+      "requiresConfiguration": true
     },
     {
       "id": "tmdb",
@@ -277,9 +296,9 @@ Body :
 ```
 
 Le champ `provider` est optionnel. S'il est absent, le backend utilise la
-resolution implicite pour `books` / `isbnLookup` : Open Library d'abord, puis
-Google Books si necessaire. Si un provider est explicite, seul ce provider est
-appele.
+resolution implicite pour `books` / `isbnLookup` : Open Library, puis BnF, puis
+Google Books si necessaire et configure. Si un provider est explicite, seul ce
+provider est appele.
 
 Reponse :
 
@@ -319,12 +338,13 @@ Erreurs stables :
 
 - `invalid_isbn` : ISBN invalide ;
 - `provider_not_found` : provider demande inconnu ;
-- `provider_unavailable` : aucun provider actif disponible ;
+- `provider_unavailable` : provider non configure, aucun provider actif ou
+  indisponibilite temporaire, notamment HTTP 429 Google Books ;
 - `provider_timeout` : timeout provider ;
 - `provider_error` : erreur provider non exploitable.
 
-Si aucun provider actif ne trouve de resultat, la route retourne `200` avec
-`results: []`.
+Si tous les providers actifs tentes terminent proprement sans resultat, la
+route retourne `200` avec `results: []`.
 
 Les suggestions servent a pre-remplir localement le formulaire cote frontend
 apres choix explicite de l'utilisateur. La sauvegarde reste assuree par les
@@ -506,8 +526,8 @@ Flux utilisateur :
 6. le formulaire est pre-rempli localement ;
 7. l'utilisateur controle et sauvegarde manuellement.
 
-Le frontend ne contacte jamais Open Library, Google Books ou un autre provider externe
-directement. Il consomme uniquement les routes `/api/acquisition/*`.
+Pour les lookups et imports, le frontend consomme uniquement les routes
+`/api/acquisition/*`, sans appeler directement les APIs des providers.
 
 Regles de pre-remplissage :
 
@@ -519,8 +539,8 @@ Regles de pre-remplissage :
 - aucun item n'est cree ou modifie tant que l'utilisateur ne soumet pas le
   formulaire ;
 - les URLs de couverture peuvent etre affichees en previsualisation distante ;
-- l'import d'une couverture proposee n'est disponible qu'apres creation de
-  l'item, depuis la fiche item.
+- le picker livre permet de choisir une image proposee, un fichier local ou
+  aucune image avant creation ; la soumission cree l'item puis importe le choix.
 
 Les erreurs de lookup (`invalid_isbn`, `provider_unavailable`,
 `provider_timeout`, erreur generique) sont affichees sans bloquer la saisie
@@ -558,7 +578,7 @@ Regles de pre-remplissage :
 ## Hors Perimetre Actuel
 
 Cette phase capture les identifiants, ajoute le lookup backend ISBN livres via
-Open Library et Google Books, expose la recherche films via TMDb et expose la
+Open Library, BnF et Google Books, expose la recherche films via TMDb et expose la
 recherche jeux via IGDB avec pre-remplissage local cote frontend.
 
 Non livre dans ce lot :
@@ -582,3 +602,128 @@ Les phases suivantes pourront s'appuyer sur ces champs :
 - providers media ou retro complementaires comme ScreenScraper
 - scan camera mobile en contexte HTTPS
 - dedoublonnage assiste par collection ou multi-collections
+
+## English — ISBN fallback and provider failures
+
+Book ISBN lookup calls Open Library first, then public BnF SRU, then Google
+Books when needed and configured. `GOOGLE_BOOKS_API_KEY` is required to activate Google Books; without
+it, the provider is absent from the active registry and is never called
+anonymously. An explicit request for unconfigured Google Books returns HTTP 503
+/ `provider_unavailable`. The key stays in backend requests only.
+
+A successful suggestion wins immediately, including after a previous provider
+failure. HTTP 200 with `results: []` means all attempted providers completed
+cleanly without suggestions. If any attempted provider fails and no suggestion
+is found, the last technical error is returned, including when Open Library's
+empty response came from cache. Google Books HTTP 429 returns HTTP 503 /
+`provider_unavailable`, not an empty lookup.
+
+The existing UI error mechanism displays an unavailable, timeout or generic
+lookup error and keeps manual entry usable. It does not display “Aucun résultat
+trouvé” for failed requests. Explicit provider selection disables fallback.
+The scanner, response format and provider-scoped cache strategy are unchanged.
+
+## BnF : suggestions livres publiques
+
+Sans cle Google Books, Open Library et BnF restent disponibles. BnF utilise une
+seule requete SRU publique combinant ISBN et EAN, sans authentification. La notice
+doit correspondre a l'identifiant demande, notamment via la mention EAN de la
+notice `9782952221702`. La suggestion s'affiche comme les autres ; « Source : BnF »
+identifie son origine et « Utiliser » remplit les champs disponibles sans
+sauvegarde automatique. Une annee seule reste dans `metadata.publication_year`
+et ne remplit pas artificiellement le champ date. Le scanner reste inchange.
+
+Google Books exige toujours `GOOGLE_BOOKS_API_KEY`. Seul `projection=lite` est
+supprime pour robustesse ; aucune variante de recherche ISBN n'est ajoutee.
+BnF ne propose aucune couverture dans ce lot ; le service beta de couvertures
+est reserve a un futur Media Provider selon ADR-0009.
+
+## English — public BnF book suggestions
+
+Book lookup order is Open Library -> BnF -> configured Google Books. BnF uses
+one public SRU request combining ISBN and EAN, without authentication. Matching
+edition identifiers are required. BnF suggestions use the existing normalized
+contract, display their source and fill available fields through “Utiliser”,
+without saving automatically. A year alone is preserved as `publication_year`
+and does not invent a full date. Scanner behavior is unchanged.
+Google Books still requires `GOOGLE_BOOKS_API_KEY`; `projection=lite` is removed
+without alternative ISBN queries. BnF covers remain outside this metadata lot.
+
+## Resilience des lookups livres
+
+Le timeout specifique BnF est de 8 s, car sa latence varie selon le reseau.
+Le cache provider conserve les suggestions 7 jours et les reponses vides 1 h ;
+les erreurs techniques et timeouts ne sont jamais caches. Apres expiration
+d'un cache vide Open Library, le provider est rappele : s'il retourne une
+suggestion, elle est affichee immediatement sans fallback BnF.
+
+Le cas terrain ISBN `9782952221702` (ancien cache vide, BnF lent sur Synology,
+UI `provider_timeout`, puis purge et une suggestion Open Library avec UI OK)
+est detaille dans [la documentation providers](acquisition-providers.md#resilience-apres-validation-terrain).
+
+## Choix de media avant creation — livres
+
+`Metadata Provider → AcquisitionMediaPicker → MediaService` : les providers
+fournissent des candidats, le picker porte le choix utilisateur et MediaService
+stocke et transforme les fichiers. `AcquisitionMediaPicker.vue` est generique :
+`candidates`, `v-model` et `disabled`, sans ISBN ni collection dans son API.
+L'adaptateur frontend normalise les images existantes Open Library, Google Books,
+TMDb et IGDB sans changer leur contrat backend `{ kind, source, url }`.
+Le `kind` existant est conserve (TMDb utilise actuellement `cover` pour son poster) ;
+un candidat explicite `poster` est aussi accepte. BnF reste sans candidat image.
+
+Dans le resultat livre, la premiere URL HTTPS valide est preselectionnee.
+« Changer l’image » affiche tous les candidats disponibles, leur provider et
+les informations de source, attribution et licence disponibles. Il permet aussi
+un fichier JPEG/PNG/WebP local ou « Aucune image ». « Utiliser » applique la
+suggestion et son choix au formulaire ; ce choix reste modifiable ensuite.
+Aucune recherche supplementaire ni import n'a lieu lors du lookup ou du choix.
+La previsualisation distante peut charger l'image dans le navigateur ; seul le
+backend telecharge le fichier pour l'import.
+
+Le choix reste en memoire frontend : `{ mode: 'remote', candidate }`,
+`{ mode: 'local', file }` ou `{ mode: 'none' }`. Le candidat conserve `kind`,
+`url`, `originalUrl`, `thumbnailUrl`, `provider`, `sourceUrl`, `width`, `height`,
+`attribution` et `license` ; les valeurs absentes restent `null`, sans invention.
+Aucune URL distante n'est ajoutee aux metadata de l'item ou a la table `media`.
+Le fichier reste local, sans upload anticipé, et sa preview utilise une URL blob
+liberee au changement de choix ou au demontage du composant.
+
+Au clic « Créer l’item » : `POST /api/items`, reception de `itemId`, puis
+`POST /api/acquisition/images/import` pour le choix distant ou `POST /api/media`
+pour le fichier local, avec `isPrimary: true`. « Aucune image » ignore cette etape.
+L'item est conserve meme si l'import echoue : la fiche affiche
+« L’élément a été créé, mais l’image n’a pas pu être importée. » et la galerie
+permet d'ajouter ou remplacer une image. Aucun rollback ni second pipeline.
+La provenance disponible est temporaire : le modele media actuel ne possede pas
+ses champs de stockage, et aucune migration DB n'est ajoutee.
+
+Le scenario ISBN `9782952221702`, *La Horde du contrevent*, est teste avec une
+suggestion Open Library et sa couverture, un choix sans image, un upload local,
+l'import apres creation et le media principal sur la fiche. Les tests utilisent
+des reponses provider controlees, sans consultation d'API externe.
+Les films et jeux gardent leur confirmation d'import depuis la fiche dans cette
+iteration ; le picker est compatible avec leurs candidats sans modifier leur UX.
+
+## English — media selection before book creation
+
+Metadata providers optionally supply candidates; the generic
+`AcquisitionMediaPicker` handles user choice; `MediaService` stores/transforms
+media. A frontend adapter preserves the existing provider response contract and
+accepts Open Library/Google Books covers, TMDb posters and IGDB covers without
+inventing provenance, dimensions or licenses. BnF covers are excluded.
+
+The first valid HTTPS candidate is preselected. Users can change it, pick a local
+JPEG/PNG/WebP file, or choose no image. Applying a suggestion retains the choice
+in frontend memory, editable before submission. Previews may load remote images,
+but only the secure backend endpoint downloads them for storage. No extra lookup,
+media persistence or upload occurs before creation.
+
+Submission creates the item first, then imports the selected remote candidate via
+`/api/acquisition/images/import`, or uploads the local file via `/api/media`, as
+primary media. Import failure preserves the item and displays a warning on its
+details page, where the gallery remains available. Available provenance stays
+temporary because the media model has no provenance fields; no DB migration.
+Movies/games retain their current gallery confirmation in this iteration.
+External media search, new media providers, manual remote URLs, BnF Covers,
+editing/crop and advanced galleries belong to `feature/acquisition-media-search`.

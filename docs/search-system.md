@@ -1,6 +1,6 @@
 # Recherche
 
-État courant : v0.10-lot5.16.1.
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
 ## Disponible
 

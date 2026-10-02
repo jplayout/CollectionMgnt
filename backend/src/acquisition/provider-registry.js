@@ -11,6 +11,8 @@ import {
     GoogleBooksProvider
 } from './providers/google-books-provider.js';
 
+import { BnfProvider } from './providers/bnf-provider.js';
+
 import {
     TmdbProvider
 } from './providers/tmdb-provider.js';
@@ -35,6 +37,10 @@ export class AcquisitionProviderRegistry {
             providers ??
             [
                 new OpenLibraryProvider({
+                    fetchImpl,
+                    timeoutMs
+                }),
+                new BnfProvider({
                     fetchImpl,
                     timeoutMs
                 }),

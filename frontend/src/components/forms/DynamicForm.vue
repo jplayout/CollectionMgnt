@@ -58,9 +58,11 @@
                     <AcquisitionLookupField
                         v-if="isAcquisitionLookupField(field)"
                         :error="frontendErrors[field.name]"
+                        :disabled="submitting"
                         :field="field"
                         :model-value="metadata[field.name]"
                         @apply-suggestion="applyAcquisitionSuggestion"
+                        @media-selected="emit('acquisition-image-selected', $event)"
                         @update:model-value="updateMetadataValue(field, $event)"
                     />
 
@@ -86,9 +88,11 @@
                 <AcquisitionLookupField
                     v-else-if="isAcquisitionLookupField(field)"
                     :error="frontendErrors[field.name]"
+                    :disabled="submitting"
                     :field="field"
                     :model-value="metadata[field.name]"
                     @apply-suggestion="applyAcquisitionSuggestion"
+                    @media-selected="emit('acquisition-image-selected', $event)"
                     @update:model-value="updateMetadataValue(field, $event)"
                 />
 
@@ -746,28 +750,7 @@ function applyAcquisitionSuggestion(suggestion) {
         suggestion?.metadata?.publication_date
     );
 
-    const coverImage =
-        getCoverImage(
-            suggestion
-        );
-
-    if (
-        coverImage
-    ) {
-
-        emit(
-            'acquisition-image-selected',
-            {
-                imageUrl:
-                    coverImage.url,
-                provider:
-                    suggestion.provider ?? null,
-                source:
-                    coverImage.source ?? suggestion.provider ?? null
-            }
-        );
-
-    }
+    emit('acquisition-image-selected', suggestion.mediaSelection ?? { mode: 'none' });
 
 }
 

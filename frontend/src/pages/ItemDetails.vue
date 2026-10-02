@@ -122,6 +122,10 @@
             </div>
         </section>
 
+        <p v-if="acquisitionMediaWarning" class="acquisition-media-warning" role="status">
+            {{ acquisitionMediaWarning }}
+        </p>
+
         <MediaGallery
             v-if="item"
             :acquisition-image="pendingAcquisitionImage"
@@ -178,6 +182,10 @@ import {
     getStringQueryParam,
     isValidReturnTo
 } from '../utils/route-query.js';
+
+import { takeAcquisitionMediaWarning } from '../services/acquisition-media.js';
+
+const acquisitionMediaWarning = ref('');
 
 const route =
     useRoute();
@@ -499,6 +507,8 @@ watch(
 
 async function loadItem() {
 
+    acquisitionMediaWarning.value = takeAcquisitionMediaWarning(itemId.value);
+
     loading.value =
         true;
 
@@ -762,6 +772,7 @@ function formatDate(
 </script>
 
 <style scoped>
+.acquisition-media-warning { margin: 16px auto; max-width: 1080px; padding: 16px; background: #fff8e6; color: #784b00; border-radius: 8px; }
 .item-header,
 .details-panel {
     margin: 0 auto 24px;

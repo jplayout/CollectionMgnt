@@ -71,9 +71,6 @@ export class AcquisitionService {
         let lastTechnicalError =
             null;
 
-        let hasEmptyResponse =
-            false;
-
         for (
             const provider
             of resolution.providers
@@ -97,9 +94,6 @@ export class AcquisitionService {
 
                 }
 
-                hasEmptyResponse =
-                    true;
-
             } catch (error) {
 
                 if (
@@ -117,14 +111,6 @@ export class AcquisitionService {
                     error;
 
             }
-
-        }
-
-        if (
-            hasEmptyResponse
-        ) {
-
-            return emptyResponse;
 
         }
 
@@ -178,9 +164,6 @@ export class AcquisitionService {
         let lastTechnicalError =
             null;
 
-        let hasEmptyResponse =
-            false;
-
         for (
             const provider
             of resolution.providers
@@ -203,9 +186,6 @@ export class AcquisitionService {
 
                 }
 
-                hasEmptyResponse =
-                    true;
-
             } catch (error) {
 
                 if (
@@ -223,14 +203,6 @@ export class AcquisitionService {
                     error;
 
             }
-
-        }
-
-        if (
-            hasEmptyResponse
-        ) {
-
-            return emptyResponse;
 
         }
 
@@ -284,9 +256,6 @@ export class AcquisitionService {
         let lastTechnicalError =
             null;
 
-        let hasEmptyResponse =
-            false;
-
         for (
             const provider
             of resolution.providers
@@ -309,9 +278,6 @@ export class AcquisitionService {
 
                 }
 
-                hasEmptyResponse =
-                    true;
-
             } catch (error) {
 
                 if (
@@ -329,14 +295,6 @@ export class AcquisitionService {
                     error;
 
             }
-
-        }
-
-        if (
-            hasEmptyResponse
-        ) {
-
-            return emptyResponse;
 
         }
 
@@ -791,7 +749,8 @@ function isTechnicalProviderError(error) {
     return error instanceof AcquisitionError &&
         [
             'provider_error',
-            'provider_timeout'
+            'provider_timeout',
+            'provider_unavailable'
         ].includes(
             error.code
         );

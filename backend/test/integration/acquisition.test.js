@@ -6,9 +6,13 @@ import {
 } from 'node:test';
 
 import { createTestApp } from '../helpers/test-app.js';
+import { xmlResponse } from '../helpers/bnf-fixtures.js';
 
 const originalFetch =
     globalThis.fetch;
+
+const originalGoogleBooksApiKey =
+    process.env.GOOGLE_BOOKS_API_KEY;
 
 const originalTmdbApiReadAccessToken =
     process.env.TMDB_API_READ_ACCESS_TOKEN;
@@ -25,6 +29,9 @@ let fetchHandler;
 
 before(async () => {
 
+    process.env.GOOGLE_BOOKS_API_KEY =
+        'test-google-books-api-key';
+
     process.env.TMDB_API_READ_ACCESS_TOKEN =
         'test-tmdb-token';
 
@@ -38,10 +45,14 @@ before(async () => {
         async (
             url,
             options
-        ) => fetchHandler(
-            url,
-            options
-        );
+        ) => {
+            // These OL/GB regressions use an empty BnF fixture. Full three-provider
+            // resolution is covered separately by bnf-acquisition.test.js.
+            if (new URL(url).hostname === 'catalogue.bnf.fr') {
+                return xmlResponse();
+            }
+            return fetchHandler(url, options);
+        };
 
     context =
         await createTestApp();
@@ -95,6 +106,19 @@ after(async () => {
 
     }
 
+    if (
+        originalGoogleBooksApiKey === undefined
+    ) {
+
+        delete process.env.GOOGLE_BOOKS_API_KEY;
+
+    } else {
+
+        process.env.GOOGLE_BOOKS_API_KEY =
+            originalGoogleBooksApiKey;
+
+    }
+
     await context.close();
 
 });
@@ -141,6 +165,14 @@ test(
                             false
                     },
                     {
+                        capabilities: ['isbnLookup'],
+                        enabled: true,
+                        id: 'bnf',
+                        name: 'BnF',
+                        plugin: 'books',
+                        requiresConfiguration: false
+                    },
+                    {
                         capabilities: [
                             'isbnLookup'
                         ],
@@ -153,7 +185,7 @@ test(
                         plugin:
                             'books',
                         requiresConfiguration:
-                            false
+                            true
                     },
                     {
                         capabilities: [
@@ -278,6 +310,162 @@ test(
 
     }
 );
+
+for (const status of [500, 429]) {
+
+    test(`ISBN lookup propagates Google Books HTTP ${status} after empty Open Library, including cache hit`, async () => {
+
+        const isbn = '9782952221702';
+        context.db.prepare('DELETE FROM acquisition_cache WHERE identifier = ?').run(isbn);
+        const calls = [];
+        fetchHandler = async url => {
+            const hostname = new URL(url).hostname;
+            calls.push(hostname);
+            if (hostname === 'openlibrary.org') {
+                return createJsonResponse({});
+            }
+            return {
+                ok: false,
+                status,
+                async json() {
+                    throw new Error('Raw error payload must not be exposed');
+                }
+            };
+        };
+        const code = status === 429 ? 'provider_unavailable' : 'provider_error';
+        const message = status === 429 ? 'Provider unavailable' : 'Provider lookup failed';
+
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+            const response = await lookupIsbn(isbn);
+            assert.equal(response.statusCode, 503);
+            assert.deepEqual(response.json(), {code, error: code, message});
+        }
+        assert.deepEqual(calls, ['openlibrary.org', 'www.googleapis.com', 'www.googleapis.com']);
+        const rows = context.db.prepare('SELECT provider_id, status FROM acquisition_cache WHERE identifier = ? ORDER BY provider_id').all(isbn);
+        assert.deepEqual(rows, [
+            {provider_id: 'bnf', status: 'empty'},
+            {provider_id: 'openlibrary', status: 'empty'}
+        ]);
+
+    });
+
+}
+
+test('ISBN lookup without Google Books configuration uses Open Library and empty BnF and rejects explicit Google Books', async () => {
+
+    const configuredKey = process.env.GOOGLE_BOOKS_API_KEY;
+    let unconfiguredContext;
+    const calls = [];
+
+    try {
+        delete process.env.GOOGLE_BOOKS_API_KEY;
+        unconfiguredContext = await createTestApp();
+        const unconfiguredToken = await unconfiguredContext.login();
+        const headers = {authorization: `Bearer ${unconfiguredToken}`};
+        fetchHandler = async url => {
+            calls.push(new URL(url).hostname);
+            return createJsonResponse({});
+        };
+
+        const providers = await unconfiguredContext.app.inject({
+            method: 'GET', url: '/api/acquisition/providers', headers
+        });
+        assert.equal(providers.json().providers.some(provider => provider.id === 'googlebooks'), false);
+
+        const response = await unconfiguredContext.app.inject({
+            method: 'POST', url: '/api/acquisition/books/isbn/lookup', headers,
+            payload: {isbn: '9782952221702'}
+        });
+        assert.equal(response.statusCode, 200);
+        assert.deepEqual(response.json().results, []);
+
+        const explicit = await unconfiguredContext.app.inject({
+            method: 'POST', url: '/api/acquisition/books/isbn/lookup', headers,
+            payload: {isbn: '9782952221702', provider: 'googlebooks'}
+        });
+        assert.equal(explicit.statusCode, 503);
+        assert.equal(explicit.json().code, 'provider_unavailable');
+        assert.deepEqual(calls, ['openlibrary.org']);
+
+    } finally {
+        if (configuredKey === undefined) {
+            delete process.env.GOOGLE_BOOKS_API_KEY;
+        } else {
+            process.env.GOOGLE_BOOKS_API_KEY = configuredKey;
+        }
+        await unconfiguredContext?.close();
+    }
+
+});
+
+test('ISBN lookup returns explicit empty Open Library without calling Google Books', async () => {
+
+    const isbn = '9782813206596';
+    context.db.prepare('DELETE FROM acquisition_cache WHERE identifier = ?').run(isbn);
+    const calls = [];
+    fetchHandler = async url => {
+        calls.push(new URL(url).hostname);
+        return createJsonResponse({});
+    };
+
+    const response = await lookupIsbn(isbn, 'openlibrary');
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.json().results, []);
+    assert.deepEqual(calls, ['openlibrary.org']);
+
+});
+
+test('ISBN lookup propagates explicit Google Books error without leaking its key or falling back', async () => {
+
+    const isbn = '9782813206596';
+    const calls = [];
+    fetchHandler = async url => {
+        const requestUrl = new URL(url);
+        assert.equal(requestUrl.searchParams.get('key'), 'test-google-books-api-key');
+        calls.push(requestUrl.hostname);
+        throw new Error(`Controlled failure containing ${requestUrl.searchParams.get('key')}`);
+    };
+
+    const response = await lookupIsbn(isbn, 'googlebooks');
+    assert.equal(response.statusCode, 503);
+    assert.deepEqual(response.json(), {
+        code: 'provider_error', error: 'provider_error', message: 'Provider lookup failed'
+    });
+    assert.equal(response.body.includes('test-google-books-api-key'), false);
+    assert.deepEqual(calls, ['www.googleapis.com']);
+
+});
+
+test('ISBN lookup accepts 979 and maps Google Books fallback with the unchanged identifier', async () => {
+
+    const isbn = '9791036362842';
+    const calls = [];
+    fetchHandler = async url => {
+        const requestUrl = new URL(url);
+        calls.push(requestUrl.hostname);
+        if (requestUrl.hostname === 'openlibrary.org') {
+            assert.equal(requestUrl.searchParams.get('bibkeys'), `ISBN:${isbn}`);
+            return createJsonResponse({});
+        }
+        assert.equal(requestUrl.searchParams.get('q'), `isbn:${isbn}`);
+        return createJsonResponse({
+            totalItems: 1,
+            items: [{volumeInfo: {
+                title: 'Murtagh',
+                publisher: 'Bayard Jeunesse',
+                industryIdentifiers: [{type: 'ISBN_13', identifier: isbn}]
+            }}]
+        });
+    };
+
+    const response = await lookupIsbn(isbn);
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.json().query.value, isbn);
+    assert.equal(response.json().results[0].metadata.isbn, isbn);
+    assert.equal(response.json().results[0].title, 'Murtagh');
+    assert.deepEqual(calls, ['openlibrary.org', 'www.googleapis.com']);
+
+});
 
 test(
     'POST /api/acquisition/books/isbn/lookup does not call Google Books when Open Library returns a result',

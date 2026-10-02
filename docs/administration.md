@@ -1,6 +1,6 @@
 # Administration
 
-État courant : v0.12-lot10.0.1.
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
 ## Objectif
 
@@ -138,6 +138,7 @@ Elle ne modifie jamais la DB, ne supprime aucun item ou ligne `media`, ne suppri
 La section Système affiche un résumé applicatif :
 
 - version application
+- build du frontend (SHA court ou `development`)
 - nombre de plugins
 - nombre de plugins actifs
 - nombre d'items
@@ -147,13 +148,16 @@ La route backend utilisée est :
 
 - `GET /api/admin/system-summary`
 
-Cette route est protégée par JWT et role `admin`, read-only, et repose uniquement sur des `SELECT COUNT(*)`.
+Cette route est protégée par JWT et role `admin`, read-only. Les compteurs
+reposent sur des `SELECT COUNT(*)`. La version backend vient de `VERSION` et
+la révision des métadonnées de build, préparées au démarrage.
 
 Exemple :
 
 ```json
 {
-  "version": "v0.12-lot10.0.1",
+  "version": "<contenu de VERSION>",
+  "revision": "<SHA injecté ou development>",
   "counts": {
     "plugins": 0,
     "enabledPlugins": 0,
@@ -191,3 +195,10 @@ La page `/admin` est structurée pour accueillir plus tard :
 - paramètres système
 
 Lorsque ces sections deviendront trop denses, `/admin` pourra devenir une page d'entrée vers des sous-pages comme `/admin/data`, `/admin/media` et `/admin/system`.
+
+## Version et build
+
+Les paramètres affichent la version produit du frontend et le SHA court de
+son build séparément. L’API expose également la version et la révision backend.
+La source canonique est [VERSION](../VERSION) ; voir la
+[gouvernance FR/EN](version-governance.md).

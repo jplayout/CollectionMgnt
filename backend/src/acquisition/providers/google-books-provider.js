@@ -1,6 +1,7 @@
 import {
     createProviderError,
-    createProviderTimeoutError
+    createProviderTimeoutError,
+    createProviderUnavailableError
 } from '../errors.js';
 
 const GOOGLE_BOOKS_VOLUMES_API_URL =
@@ -39,7 +40,9 @@ export class GoogleBooksProvider {
     } = {}) {
 
         this.apiKey =
-            apiKey;
+            typeof apiKey === 'string'
+                ? apiKey.trim()
+                : '';
 
         this.fetchImpl =
             fetchImpl;
@@ -56,7 +59,8 @@ export class GoogleBooksProvider {
                 'isbnLookup'
             ],
             enabled:
-                typeof this.fetchImpl === 'function',
+                typeof this.fetchImpl === 'function' &&
+                Boolean(this.apiKey),
             id:
                 PROVIDER_ID,
             name:
@@ -64,12 +68,20 @@ export class GoogleBooksProvider {
             plugin:
                 'books',
             requiresConfiguration:
-                false
+                true
         };
 
     }
 
     async lookupIsbn(isbn) {
+
+        if (
+            !this.apiKey
+        ) {
+
+            throw createProviderUnavailableError();
+
+        }
 
         const controller =
             new AbortController();
@@ -98,6 +110,14 @@ export class GoogleBooksProvider {
             if (
                 !response.ok
             ) {
+
+                if (
+                    response.status === 429
+                ) {
+
+                    throw createProviderUnavailableError();
+
+                }
 
                 throw createProviderError();
 
@@ -155,8 +175,6 @@ function buildLookupUrl({
                 MAX_RESULTS,
             printType:
                 'books',
-            projection:
-                'lite',
             q:
                 `isbn:${isbn}`
         });

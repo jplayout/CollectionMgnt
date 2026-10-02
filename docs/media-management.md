@@ -125,12 +125,11 @@ Routes disponibles :
 ## Import Depuis L'acquisition
 
 Les suggestions provider peuvent contenir une URL de couverture distante. Le
-frontend peut l'afficher en previsualisation distante, mais l'image n'est jamais
-telechargee automatiquement.
-
-Apres creation de l'item, l'utilisateur peut confirmer l'import depuis la fiche
-item. Le backend telecharge alors l'image de maniere bornee et securisee, puis
-appelle `MediaService.createOriginalMedia()`.
+frontend peut l'afficher en previsualisation distante. Pour les livres, le picker
+permet de choisir le media avant creation ; la soumission cree l'item puis importe
+le choix. Les films et jeux conservent la confirmation depuis la fiche item.
+Le backend telecharge l'image de maniere bornee et securisee, puis appelle
+`MediaService.createOriginalMedia()`.
 
 Le pipeline media reste donc identique a l'upload manuel :
 
@@ -221,3 +220,49 @@ Il ne fournit pas de restauration dans le Lot 9.0.4.
 ## Prochaine étape
 
 Restauration ZIP guidée ou amélioration des rapports d'administration.
+
+## AcquisitionMediaPicker — choix temporaire
+
+Le flux est `Metadata Provider → AcquisitionMediaPicker → MediaService`.
+Les candidats normalises peuvent etre une cover ou un poster ; les informations
+absentes (`thumbnailUrl`, dimensions, attribution, licence) restent `null`.
+Le choix distant conserve sa provenance uniquement dans l'etat frontend.
+La table `media` et `MediaService` n'ont pas de champs de provenance externe :
+aucune migration n'est ajoutee et ces informations ne sont pas persistees apres
+import. L'endpoint existant recoit l'URL, le provider/source, `itemId` et
+`isPrimary` ; il ne stocke pas provider/source.
+
+Dans le formulaire livre, l'utilisateur choisit un candidat, un fichier local ou
+aucune image. Le fichier reste en memoire et sa preview blob est liberee au
+changement ou au demontage. Aucun media distant n'est persiste avant soumission.
+La creation precede obligatoirement l'import et le media importe est principal :
+
+1. `POST /api/items` retourne `itemId`.
+2. Choix distant : `POST /api/acquisition/images/import`.
+3. Choix local : `POST /api/media` multipart avec `item_id` et `is_primary=true`.
+4. Aucun choix : aucune requete media.
+
+Les deux chemins reutilisent les validations MIME/taille/dimensions,
+original/WebP/thumbnail et l'association item du meme MediaService. Les imports
+distants gardent HTTPS, protections SSRF, redirects controles et limites de
+telechargement. Le navigateur ne telecharge pas le fichier pour l'import.
+Un echec media ne supprime jamais l'item : un avertissement sur la fiche invite
+a utiliser la galerie. Aucune recherche externe ni nouveau pipeline media.
+
+## English — temporary acquisition media selection
+
+Metadata providers supply optional candidates, `AcquisitionMediaPicker` handles
+user choice, and `MediaService` stores/transforms media. Book users can select a
+remote candidate, a local file, or no image before creation. Remote provenance
+and local files remain in frontend memory; no provider URL becomes a stored
+CollectionMgnt media. Blob previews are revoked when replaced or unmounted.
+
+The item is created first. Its ID is then passed to the secure acquisition image
+import endpoint or existing multipart media upload, with primary media enabled.
+Both paths reuse MediaService and its MIME/size/dimension checks, original,
+WebP and thumbnail generation. Remote imports retain HTTPS, SSRF checks,
+controlled redirects and download limits. Failures keep the item and display a
+warning with access to the gallery. Media provenance has no existing DB fields;
+this iteration adds no schema and does not persist external credits/licenses.
+Movie/game gallery confirmation stays unchanged. External media search belongs
+to the future `feature/acquisition-media-search` work.

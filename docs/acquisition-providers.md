@@ -1,8 +1,9 @@
 # Acquisition Providers
 
 Etat courant : architecture acquisition backend stabilisee avec Open Library
-comme provider principal et Google Books comme provider secondaire pour les
-lookups ISBN livres. Le socle interne `movies/search` est disponible pour les
+comme provider principal, BnF comme provider public secondaire et Google Books
+comme fallback complementaire pour les lookups ISBN livres lorsque `GOOGLE_BOOKS_API_KEY` est configuree. Le socle interne
+`movies/search` est disponible pour les
 providers films, avec TMDb comme premier provider Movies configure par
 `TMDB_API_READ_ACCESS_TOKEN`. `games/search` est expose pour les jeux video,
 avec IGDB comme premier metadata provider quand `IGDB_CLIENT_ID` et
@@ -15,7 +16,7 @@ ajouter un provider d'acquisition. Il complete `docs/architecture.md` et
 ## Vue D'ensemble
 
 Toute acquisition passe par le backend. Le frontend ne contacte jamais Open
-Library, Google Books, TMDb, IGDB, RAWG ou un autre provider externe.
+Library, BnF, Google Books, TMDb, IGDB, RAWG ou un autre provider externe.
 
 Flux actuel :
 
@@ -265,7 +266,8 @@ essaie les providers actifs compatibles dans l'ordre stable du registre.
 Pour les livres, l'ordre courant est :
 
 1. `openlibrary`
-2. `googlebooks`
+2. `bnf`, SRU public sans authentification
+3. `googlebooks`, uniquement si `GOOGLE_BOOKS_API_KEY` est configuree
 
 Pour les films, TMDb est le premier provider `movies/search` quand
 `TMDB_API_READ_ACCESS_TOKEN` est configure.
@@ -281,13 +283,14 @@ Regles actuelles :
 - un provider explicite inconnu retourne `provider_not_found` ;
 - un provider explicite desactive retourne `provider_unavailable` ;
 - en mode implicite, un resultat vide permet d'essayer le provider suivant ;
-- en mode implicite, une erreur technique ou un timeout permet d'essayer le
-  provider suivant ;
+- en mode implicite, `provider_error`, `provider_timeout` et
+  `provider_unavailable` permettent d'essayer le provider suivant ;
 - le premier provider qui retourne des suggestions gagne ;
-- si tous les providers retournent vide, l'API retourne `200` avec
-  `results: []` ;
-- si tous les providers echouent techniquement, une erreur stable existante est
-  retournee ;
+- si tous les providers actifs tentes retournent proprement vide, l'API retourne
+  `200` avec `results: []` ;
+- si aucun resultat n'est trouve et qu'au moins un provider tente echoue
+  techniquement, la derniere erreur technique est propagee : la recherche est
+  incomplete, meme si un autre provider ou son cache a retourne vide ;
 - aucune fusion automatique n'est effectuee ;
 - la liste des providers essayes n'est pas exposee au frontend.
 
@@ -340,7 +343,8 @@ Codes publics stables :
 
 - `invalid_isbn` : identifiant ISBN invalide avant appel provider ;
 - `provider_not_found` : provider explicite inconnu ;
-- `provider_unavailable` : provider absent, desactive ou non configuré ;
+- `provider_unavailable` : provider absent, desactive, non configure ou
+  temporairement indisponible, notamment HTTP 429 Google Books ;
 - `provider_timeout` : timeout lors de l'appel provider ;
 - `provider_error` : erreur provider non exploitable.
 
@@ -351,8 +355,9 @@ Les erreurs internes ne doivent jamais etre exposees telles quelles :
 - pas de message technique issu directement d'un service externe ;
 - pas de secret ou URL signee dans une erreur.
 
-Une absence de resultat n'est pas une erreur : le lookup retourne `200` avec
-`results: []`.
+Une absence de resultat n'est pas une erreur si tous les providers tentes ont
+termine proprement : le lookup retourne `200` avec `results: []`. Un resultat
+vide ne masque jamais une panne d'un autre provider tente.
 
 ## Cache
 
@@ -402,15 +407,15 @@ Le cache ne stocke jamais :
 TTL actuel :
 
 - resultat avec suggestions : 7 jours ;
-- resultat vide : 24 heures ;
+- resultat vide : 1 heure ;
 - erreur ou timeout : pas de cache.
 
 Une reponse trop volumineuse ne doit pas bloquer l'utilisateur : elle peut etre
 retournee normalement sans etre ecrite dans le cache.
 
 Le cache reste par provider. Une entree vide Open Library ne bloque donc pas la
-tentative Google Books en mode implicite, et une entree Google Books ne remplace
-pas une entree Open Library.
+tentative BnF puis Google Books en mode implicite. Les entrees `bnf` restent
+distinctes ; aucun resultat d'un provider ne remplace celui d'un autre.
 
 ## Tests
 
@@ -453,15 +458,19 @@ Points d'attention :
 - ne pas ajouter de logique provider dans les routes ;
 - ne pas faire acceder le provider a SQLite ;
 - ne pas exposer de reponse brute externe ;
-- ne pas rendre obligatoire une cle API si le provider est optionnel ;
+- garder optionnel le provider, mais exiger sa configuration avant activation ;
 - garder le frontend provider-agnostic.
 
 ## Providers Actuels Et Evolutions
 
 Etat courant et evolutions prevues :
 
-- Google Books : provider livre secondaire livre apres Open Library, avec cle
-  API optionnelle via `GOOGLE_BOOKS_API_KEY` ;
+- BnF : provider public `books/isbnLookup` apres Open Library, sans cle API ;
+- Google Books : fallback livre complementaire apres BnF, avec cle API
+  requise via `GOOGLE_BOOKS_API_KEY`. Sans cle non vide, `describe()` annonce
+  `enabled: false` et `requiresConfiguration: true`, le registre le masque de
+  la liste active et un appel explicite retourne `provider_unavailable` sans
+  appel reseau. La cle reste exclusivement dans les requetes backend ;
 - TMDb : premier provider film pour `movies/search`, avec configuration
   obligatoire via `TMDB_API_READ_ACCESS_TOKEN`, sans lookup code-barres, sans
   endpoint details et sans IMDb ID dans ce lot ;
@@ -483,3 +492,89 @@ Etat courant et evolutions prevues :
 
 Ces evolutions ne doivent pas changer le principe central : providers backend
 uniquement, resultat normalise, erreurs stables, tests sans reseau externe.
+
+## English — provider configuration and incomplete searches
+
+Open Library remains the first ISBN provider, followed by public BnF SRU.
+Google Books is the final fallback only
+when a non-empty `GOOGLE_BOOKS_API_KEY` is configured in the backend. Without
+it, Google Books reports `enabled: false` and `requiresConfiguration: true`,
+is omitted from active registry resolution and the public provider list, and
+rejects explicit lookups with `provider_unavailable` without a network request.
+Neither descriptions, public errors, frontend bundles nor logs contain the key.
+
+Implicit acquisition returns the first successful suggestion immediately.
+It returns HTTP 200 with `results: []` only if every attempted provider completed
+cleanly with no results. If no suggestion is found and any attempted provider
+fails with `provider_error`, `provider_timeout` or `provider_unavailable`, the
+last technical error is propagated. This also applies to movie and game searches.
+A cached empty response follows the same rule as a live empty response.
+Explicit provider selection continues to disable fallback.
+
+Google Books HTTP 429 maps to HTTP 503 / `provider_unavailable` without exposing
+its raw quota payload. Cache keys remain scoped to providers; empty responses
+retain their one-hour TTL, successful responses seven days, and errors are never
+cached. Permanent tests use local fixtures and never call external APIs.
+
+## BnF : recherche ISBN/EAN et mapping
+
+Le provider `bnf` utilise le [SRU Catalogue general public](https://api.bnf.fr/fr/api-sru-catalogue-general), sans authentification :
+
+- endpoint : `https://catalogue.bnf.fr/api/SRU` ;
+- `version=1.2`, `operation=searchRetrieve`, `recordSchema=dublincore`, `maximumRecords=5` ;
+- une seule requete CQL : `(bib.isbn adj "<ISBN>") or (bib.ean adj "<ISBN>")` ;
+- timeout specifique BnF : 8 secondes.
+
+Une notice est acceptee seulement si ses identifiants Dublin Core ou la mention
+EAN de `dc:description` correspondent exactement a l'identifiant normalise
+demande. Le cas `9782952221702` utilise l'EAN, alors que la notice indique
+l'ISBN-10 `2952221707`. Les titres, creators, editeur, langue, identifiants et
+ARK disponibles sont conserves. `metadata.publication_year` conserve une annee ;
+`metadata.publication_date` est fourni uniquement pour une date complete. Aucun
+mois ni jour n'est invente. `sourceUrl` pointe vers la notice ARK sur
+`catalogue.bnf.fr`, `provider` vaut `bnf` et `images` reste vide.
+
+Le XML est valide puis parse avec `fast-xml-parser` **5.11.2**, licence **MIT**,
+audit sans vulnerabilite avant ajout. Les prefixes namespaces SRU/DC peuvent
+varier ; les declarations DTD/entites sont rejetees. Un XML invalide, diagnostic
+SRU ou HTTP non-2xx produit une erreur technique, pas une reponse vide.
+
+Google Books conserve `q=isbn:<ISBN>`, `maxResults=5`, `printType=books` et la cle
+backend obligatoire. `projection=lite` est supprime pour robustesse. Aucune
+variante raw, quoted, ISBN-10 ni recherche texte n'est ajoutee.
+
+Les couvertures BnF sont hors perimetre : leur integration eventuelle appartient
+a un lot Media Provider conforme a [ADR-0009](adr/ADR-0009-metadata-and-media-provider-specialization.md).
+
+## English — BnF SRU ISBN/EAN metadata
+
+Active book lookup order is **Open Library -> BnF -> Google Books**; without
+`GOOGLE_BOOKS_API_KEY`, it is **Open Library -> BnF**. Public BnF SRU uses one
+encoded combined ISBN/EAN CQL query, Dublin Core XML, five records and an eight-second
+timeout. Exact edition-identifier matching is mandatory, including commercial
+EAN mentions in Dublin Core descriptions. Available titles, creators, publishers,
+languages, identifiers and ARKs are mapped; partial dates retain their year
+without invented month/day values. No BnF cover service is integrated.
+
+XML parsing uses pinned MIT-licensed `fast-xml-parser` 5.11.2, audited before
+addition, with validation, namespace-prefix handling and DTD rejection.
+Google Books still requires its backend API key and keeps the ISBN query,
+`maxResults=5` and `printType=books`; `projection=lite` is removed for robustness,
+without alternate queries. Orchestration semantics and provider-scoped cache
+remain unchanged. Successful responses retain a seven-day TTL, empty responses
+one hour, and technical errors are never cached.
+
+## Resilience apres validation terrain
+
+Pour l'ISBN `9782952221702`, un ancien cache Open Library vide (TTL de 24 h)
+masquait une reponse devenue disponible. Le fallback BnF etait rapide sur
+Bazzite (environ 252 ms), mais expirait a 5 s sur un NAS Synology ; l'UI
+signalait `provider_timeout`. Une resolution IPv4 prioritaire lors du diagnostic
+permettait un succes BnF en environ 4412 ms. Apres purge du cache, Open Library
+retournait une suggestion et l'UI fonctionnait correctement.
+
+BnF peut donc etre significativement plus lent selon le reseau : son timeout
+specifique passe a 8 s. Le cache vide expire apres 1 h pour rappeler le provider
+et retourner immediatement ses suggestions sans fallback inutile. Les succes
+restent caches 7 jours et les erreurs techniques ne sont jamais cachees.
+Aucun retry automatique ni resolution IPv4 forcee n'est ajoute.

@@ -1,6 +1,6 @@
 # Export System
 
-État courant : v0.12-lot10.0.1.
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
 ## Objectif
 

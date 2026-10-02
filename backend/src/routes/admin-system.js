@@ -1,17 +1,17 @@
-const APPLICATION_VERSION =
-    'v0.12-lot10.0.1';
+import { getBuildInfo } from '../config/build-info.js';
 
 export default async function (
     fastify
 ) {
+
+    const buildInfo = getBuildInfo();
 
     fastify.get(
         '/api/admin/system-summary',
         async () => {
 
             return {
-                version:
-                    APPLICATION_VERSION,
+                ...buildInfo,
                 counts: {
                     plugins:
                         countRows(
