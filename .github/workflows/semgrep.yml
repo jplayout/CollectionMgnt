@@ -15,12 +15,11 @@ jobs:
     name: Semgrep
     runs-on: ubuntu-latest
     container:
-      image: semgrep/semgrep:latest
+      image: semgrep/semgrep:1.179.0@sha256:cab19964e6c93019934252a9cd591d9b27df1e5b5d1734b26f4069ae51c295f8
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
       - name: Scan JavaScript, Vue and Node sources
-        continue-on-error: true
-        run: semgrep scan --config p/default --metrics=off --include='*.js' --include='*.mjs' --include='*.cjs' --include='*.vue' .
+        run: semgrep scan --error --config p/default --metrics=off --include='*.js' --include='*.mjs' --include='*.cjs' --include='*.vue' .

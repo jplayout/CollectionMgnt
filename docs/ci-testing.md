@@ -42,7 +42,7 @@ push `main`, pull request et declenchement manuel.
 
 Le workflow Semgrep `.github/workflows/semgrep.yml` execute un scan SAST
 complementaire a CodeQL sur push `main`, pull request et declenchement manuel.
-Il utilise `semgrep scan` avec les regles par defaut Semgrep, cible les sources
+Il utilise `semgrep scan --error` avec les regles `p/default`, cible les sources
 JavaScript/Vue/Node et est bloquant. Le workflow ne requiert pas
 `SEMGREP_APP_TOKEN` ; une connexion future a Semgrep App pourra etre ajoutee via
 ce secret.
@@ -56,8 +56,13 @@ vulnerabilites `HIGH` et `CRITICAL` :
 - build des images backend et frontend ;
 - scan des images conteneur construites localement.
 
-Les scans Trivy publient un rapport lisible dans les logs GitHub Actions. Les
-vulnerabilites `LOW` et `MEDIUM` restent visibles sans bloquer la CI.
+Les quatre scans Trivy utilisent `severity: HIGH,CRITICAL` et `exit-code: '1'`.
+Les rapports table affichent ces severites ; les vulnerabilites `LOW` et `MEDIUM`
+ne sont pas affichees par ces steps et ne font pas echouer le workflow. Pour
+leur suivi, executer un scan complet avec `--exit-code 0` sans filtre de severite.
+Les builds images sont egalement bloquants : un build echoue ne constitue pas
+un scan effectue. Aucun `ignore-unfixed` ni exception `.trivyignore` n'est ajoute.
+Toute exception future doit etre minimale, justifiee et revue selon SECURITY.md.
 
 La securite fait partie des quality gates : les vulnerabilites `CRITICAL` et
 `HIGH` bloquent le merge, les `MEDIUM` exigent une revue explicite et les `LOW`
@@ -118,18 +123,18 @@ npm run e2e
 Trivy local, si le binaire est installe :
 
 ```bash
-trivy fs --scanners vuln --vuln-type library backend
-trivy fs --scanners vuln --vuln-type library frontend
+trivy fs --scanners vuln --vuln-type library --severity HIGH,CRITICAL --exit-code 1 backend
+trivy fs --scanners vuln --vuln-type library --severity HIGH,CRITICAL --exit-code 1 frontend
 node scripts/container.mjs build backend -t collectionmgnt-backend:trivy
 node scripts/container.mjs build frontend -t collectionmgnt-frontend:trivy
-trivy image --scanners vuln --vuln-type os,library collectionmgnt-backend:trivy
-trivy image --scanners vuln --vuln-type os,library collectionmgnt-frontend:trivy
+trivy image --scanners vuln --vuln-type os,library --severity HIGH,CRITICAL --exit-code 1 collectionmgnt-backend:trivy
+trivy image --scanners vuln --vuln-type os,library --severity HIGH,CRITICAL --exit-code 1 collectionmgnt-frontend:trivy
 ```
 
 Semgrep local, si le binaire est installe :
 
 ```bash
-semgrep scan --config p/default --metrics=off --include='*.js' --include='*.mjs' --include='*.cjs' --include='*.vue' .
+semgrep scan --error --config p/default --metrics=off --include='*.js' --include='*.mjs' --include='*.cjs' --include='*.vue' .
 ```
 
 Qualite Git :
@@ -309,3 +314,38 @@ Les builds CI et Trivy passent par `scripts/container.mjs` avec
 `CONTAINER_ENGINE=docker` sur GitHub. Localement, le même lanceur utilise Podman.
 Les images partagent la version canonique et le SHA, ainsi que les labels OCI.
 Voir la [gouvernance FR/EN](version-governance.md).
+
+## Security gate implementation / Implementation des gates securite
+
+Semgrep est fixe a `1.179.0` (release stable du 1er octobre 2026), avec le digest
+OCI `sha256:cab19964e6c93019934252a9cd591d9b27df1e5b5d1734b26f4069ae51c295f8`.
+Le digest et la version doivent etre mis a jour ensemble apres validation.
+`--error` transforme un finding en sortie 1 ; un scan propre sort avec 0.
+Le ruleset distant `p/default` reste evolutif. Aucun token AppSec n'est requis.
+
+Semgrep is pinned to version `1.179.0` and the OCI digest above. Update both
+together after validation. `semgrep scan --error` exits 1 on findings and 0 on a
+clean scan. The remote `p/default` ruleset can still change independently.
+
+Trivy conserve `aquasecurity/trivy-action@v0.36.0`, dont la version CLI par defaut
+est `0.70.0`. Les quatre scans bloquent sur `HIGH,CRITICAL`, meme sans correctif
+publie. Les scans images conservent les packages OS et library. Localement,
+utiliser Podman via le launcher existant ; GitHub conserve Docker.
+
+Trivy retains action `v0.36.0` (default CLI `0.70.0`). All four scans fail on
+HIGH/CRITICAL, including unfixed vulnerabilities. Image scans include OS and
+library packages. Image build failures also fail the job. LOW/MEDIUM require a
+separate unfiltered report for tracking and do not fail this gate.
+
+La baseline du 2 octobre 2026 sur `11995c6`, apres remediation Semgrep et
+hardening des images, est propre : aucun finding Semgrep et aucune occurrence
+HIGH/CRITICAL dans les deux scans filesystem et les deux scans images.
+Les suppressions Semgrep ciblees et justifiees de la remediation restent
+respectees. Aucune baseline HIGH/CRITICAL connue n'est toleree ; aucun ignore
+Trivy ni contournement du gate n'est ajoute.
+
+The 2 October 2026 baseline on `11995c6`, after Semgrep remediation and image
+hardening, is clean: zero Semgrep findings and zero HIGH/CRITICAL occurrences
+in both filesystem scans and both image scans. The remediation's justified,
+rule-specific Semgrep suppressions remain respected. No known HIGH/CRITICAL
+baseline is tolerated, and no Trivy ignore or gate bypass is added.
