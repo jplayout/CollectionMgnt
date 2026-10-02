@@ -1522,3 +1522,32 @@ BnF covers remain a future Media Provider concern under ADR-0009.
 - SHA de build séparé, injecté à la publication, calculé en développement.
 - Labels OCI version, revision et source ; gate d’unicité Project Conventions.
 - Aucun bump imposé à chaque PR. Voir la [gouvernance FR/EN](version-governance.md).
+
+## Acquisition media picker — livre et API generique
+
+Livre : premiere image HTTPS valide preselectionnee, « Changer l’image » avec
+candidats provider existants, fichier local ou aucune image. Le composant
+`AcquisitionMediaPicker` est generique et compatible avec posters TMDb et covers
+IGDB ; leur integration visuelle reste future, avec UX actuelle conservee.
+La creation de l'item precede l'import via MediaService et l'image devient
+principale. Les erreurs image conservent l'item et affichent un avertissement.
+La provenance reste temporaire faute de champs media existants ; pas de schema DB.
+
+Le futur lot `feature/acquisition-media-search` pourra couvrir la recherche de
+medias multi-provider, nouveaux Media Providers (dont BnF Covers ou ScreenScraper)
+et, selon cadrage, recherche web, edition/crop ou galerie avancee.
+Aucun de ces sujets, ni saisie manuelle d'URL distante, n'est implemente ici.
+
+## English — acquisition media picker and follow-up
+
+Book users can change a preselected provider image, choose a local file or no
+image. The generic picker also supports TMDb posters and IGDB covers; movie/game
+visual integration remains future and their current UX is preserved. Item
+creation precedes import through MediaService as primary media; import failure
+keeps the item and displays a warning. Available provenance stays temporary;
+no DB schema change. Existing provider contracts and secure import/upload paths
+are reused without extra lookups or external search.
+
+`feature/acquisition-media-search` is the follow-up for external media search,
+additional media providers, multi-provider candidates and separately scoped
+editing/crop or advanced gallery work. No such features ship in this iteration.

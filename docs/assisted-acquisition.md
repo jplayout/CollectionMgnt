@@ -3,8 +3,8 @@
 Etat courant : fondations identifiants, lookup backend ISBN livres, recherche
 texte films via TMDb, recherche texte jeux via IGDB, pre-remplissage frontend
 local, orchestration backend, resolution multi-provider, cache SQLite
-acquisition et import explicite de couverture provider vers le systeme media
-existant.
+acquisition, choix de media avant creation pour les livres et import via le
+systeme media existant.
 
 Les identifiants sont des champs metadata declares par plugin et stockes dans
 `items.metadata`. Le lookup ISBN livres est disponible via le backend
@@ -110,8 +110,9 @@ Les filtres `isbn` et `barcode` valident et normalisent la valeur de query avant
 
 ## Architecture Backend Providers
 
-Toute communication avec un fournisseur externe passe par le backend. Le
-frontend ne doit pas appeler les providers directement.
+Les lookups et imports de fichiers depuis un fournisseur externe passent par le backend.
+Les previsualisations peuvent charger une image distante via `<img>`. Le
+frontend ne doit pas appeler les APIs des providers directement.
 
 Principes :
 
@@ -525,8 +526,8 @@ Flux utilisateur :
 6. le formulaire est pre-rempli localement ;
 7. l'utilisateur controle et sauvegarde manuellement.
 
-Le frontend ne contacte jamais Open Library, Google Books ou un autre provider externe
-directement. Il consomme uniquement les routes `/api/acquisition/*`.
+Pour les lookups et imports, le frontend consomme uniquement les routes
+`/api/acquisition/*`, sans appeler directement les APIs des providers.
 
 Regles de pre-remplissage :
 
@@ -538,8 +539,8 @@ Regles de pre-remplissage :
 - aucun item n'est cree ou modifie tant que l'utilisateur ne soumet pas le
   formulaire ;
 - les URLs de couverture peuvent etre affichees en previsualisation distante ;
-- l'import d'une couverture proposee n'est disponible qu'apres creation de
-  l'item, depuis la fiche item.
+- le picker livre permet de choisir une image proposee, un fichier local ou
+  aucune image avant creation ; la soumission cree l'item puis importe le choix.
 
 Les erreurs de lookup (`invalid_isbn`, `provider_unavailable`,
 `provider_timeout`, erreur generique) sont affichees sans bloquer la saisie
@@ -659,3 +660,70 @@ suggestion, elle est affichee immediatement sans fallback BnF.
 Le cas terrain ISBN `9782952221702` (ancien cache vide, BnF lent sur Synology,
 UI `provider_timeout`, puis purge et une suggestion Open Library avec UI OK)
 est detaille dans [la documentation providers](acquisition-providers.md#resilience-apres-validation-terrain).
+
+## Choix de media avant creation — livres
+
+`Metadata Provider → AcquisitionMediaPicker → MediaService` : les providers
+fournissent des candidats, le picker porte le choix utilisateur et MediaService
+stocke et transforme les fichiers. `AcquisitionMediaPicker.vue` est generique :
+`candidates`, `v-model` et `disabled`, sans ISBN ni collection dans son API.
+L'adaptateur frontend normalise les images existantes Open Library, Google Books,
+TMDb et IGDB sans changer leur contrat backend `{ kind, source, url }`.
+Le `kind` existant est conserve (TMDb utilise actuellement `cover` pour son poster) ;
+un candidat explicite `poster` est aussi accepte. BnF reste sans candidat image.
+
+Dans le resultat livre, la premiere URL HTTPS valide est preselectionnee.
+« Changer l’image » affiche tous les candidats disponibles, leur provider et
+les informations de source, attribution et licence disponibles. Il permet aussi
+un fichier JPEG/PNG/WebP local ou « Aucune image ». « Utiliser » applique la
+suggestion et son choix au formulaire ; ce choix reste modifiable ensuite.
+Aucune recherche supplementaire ni import n'a lieu lors du lookup ou du choix.
+La previsualisation distante peut charger l'image dans le navigateur ; seul le
+backend telecharge le fichier pour l'import.
+
+Le choix reste en memoire frontend : `{ mode: 'remote', candidate }`,
+`{ mode: 'local', file }` ou `{ mode: 'none' }`. Le candidat conserve `kind`,
+`url`, `originalUrl`, `thumbnailUrl`, `provider`, `sourceUrl`, `width`, `height`,
+`attribution` et `license` ; les valeurs absentes restent `null`, sans invention.
+Aucune URL distante n'est ajoutee aux metadata de l'item ou a la table `media`.
+Le fichier reste local, sans upload anticipé, et sa preview utilise une URL blob
+liberee au changement de choix ou au demontage du composant.
+
+Au clic « Créer l’item » : `POST /api/items`, reception de `itemId`, puis
+`POST /api/acquisition/images/import` pour le choix distant ou `POST /api/media`
+pour le fichier local, avec `isPrimary: true`. « Aucune image » ignore cette etape.
+L'item est conserve meme si l'import echoue : la fiche affiche
+« L’élément a été créé, mais l’image n’a pas pu être importée. » et la galerie
+permet d'ajouter ou remplacer une image. Aucun rollback ni second pipeline.
+La provenance disponible est temporaire : le modele media actuel ne possede pas
+ses champs de stockage, et aucune migration DB n'est ajoutee.
+
+Le scenario ISBN `9782952221702`, *La Horde du contrevent*, est teste avec une
+suggestion Open Library et sa couverture, un choix sans image, un upload local,
+l'import apres creation et le media principal sur la fiche. Les tests utilisent
+des reponses provider controlees, sans consultation d'API externe.
+Les films et jeux gardent leur confirmation d'import depuis la fiche dans cette
+iteration ; le picker est compatible avec leurs candidats sans modifier leur UX.
+
+## English — media selection before book creation
+
+Metadata providers optionally supply candidates; the generic
+`AcquisitionMediaPicker` handles user choice; `MediaService` stores/transforms
+media. A frontend adapter preserves the existing provider response contract and
+accepts Open Library/Google Books covers, TMDb posters and IGDB covers without
+inventing provenance, dimensions or licenses. BnF covers are excluded.
+
+The first valid HTTPS candidate is preselected. Users can change it, pick a local
+JPEG/PNG/WebP file, or choose no image. Applying a suggestion retains the choice
+in frontend memory, editable before submission. Previews may load remote images,
+but only the secure backend endpoint downloads them for storage. No extra lookup,
+media persistence or upload occurs before creation.
+
+Submission creates the item first, then imports the selected remote candidate via
+`/api/acquisition/images/import`, or uploads the local file via `/api/media`, as
+primary media. Import failure preserves the item and displays a warning on its
+details page, where the gallery remains available. Available provenance stays
+temporary because the media model has no provenance fields; no DB migration.
+Movies/games retain their current gallery confirmation in this iteration.
+External media search, new media providers, manual remote URLs, BnF Covers,
+editing/crop and advanced galleries belong to `feature/acquisition-media-search`.
