@@ -172,7 +172,7 @@ justified, rule-specific suppression; Trivy fails on HIGH/CRITICAL, including
 unfixed vulnerabilities. LOW/MEDIUM do not fail the Trivy gate. No known
 HIGH/CRITICAL baseline is tolerated.
 
-Avant le futur lot `ci/dependabot-auto-merge`, configurer manuellement les checks
+Avant activation de `ci/dependabot-auto-merge`, configurer manuellement les checks
 suivants comme Required sur `main`, avec leurs noms GitHub exacts :
 
 - `Backend`
@@ -185,18 +185,18 @@ suivants comme Required sur `main`, avec leurs noms GitHub exacts :
 - `Semgrep`
 - `Trivy`
 
-Lecture API du 2 octobre 2026 : seuls `Backend`, `Frontend`, `Playwright E2E`,
-`Docker` et `Quality` sont Required, avec branche a jour exigee. Aucun ruleset
-additionnel n'est configure. Ce lot ne modifie aucun parametre GitHub et
-n'ajoute aucun auto-merge. Semgrep et Trivy utilisent `pull_request` sans
-exception Dependabot ; leur echec empechera le merge une fois ces checks Required.
+Lecture API du 2 octobre 2026 actualisee : les neuf checks listes ci-dessus
+sont Required, avec branche a jour exigee. Aucun ruleset
+additionnel n'est configure. Le lot des security gates n'a modifie aucun parametre GitHub et
+n'a ajoute aucun auto-merge. Semgrep et Trivy utilisent `pull_request` sans
+exception Dependabot ; leur echec empeche le merge car ces checks sont Required.
 
 Before `ci/dependabot-auto-merge`, manually require all checks listed above.
-The read-only API inspection on 2 October 2026 found only the five CI checks
+The updated read-only API inspection on 2 October 2026 found all nine checks
 required, with strict up-to-date enforcement, and no additional rulesets.
 Semgrep and Trivy run on all pull requests, including Dependabot, without a
-failure bypass. Failed security checks prevent merging when configured as Required.
-No GitHub settings or auto-merge behavior are changed by this batch.
+failure bypass. Failed security checks prevent merging because they are configured as Required.
+The security gate batch changed no GitHub settings or auto-merge behavior.
 
 `aquasecurity/trivy-action@v0.36.0` reste une reference par tag, sans pin SHA.
 Aucune politique actuelle du depot n'impose ce pin pour les Actions tierces.
@@ -206,3 +206,47 @@ ulterieur ; la version de cette action reste identique ici.
 The Trivy action remains tag-pinned at `v0.36.0`, without a commit SHA. Current
 repository policy does not mandate SHA pins for third-party Actions. Track this
 hardening in a future supply-chain batch without changing the action version here.
+
+## Dependabot auto-merge / Fusion automatique Dependabot
+
+Le workflow `Dependabot Auto Merge` utilise `pull_request` (`opened`,
+`synchronize`, `reopened`), uniquement pour `dependabot[bot]` dans
+`jplayout/CollectionMgnt`. Il ne fait aucun checkout. Seul `GITHUB_TOKEN` est
+utilise, avec `contents: write` et `pull-requests: write`. L'action officielle
+`dependabot/fetch-metadata` est fixee par SHA ; ses verifications auteur/commits
+restent actives.
+
+Les types metadata `version-update:semver-patch` et `version-update:semver-minor`
+sont auto-approuves, puis `gh pr merge --auto --merge` active l'auto-merge GitHub.
+Les majors, types inconnus ou absents restent manuels, sans approval ni activation
+et avec un message explicite. Les security updates suivent la meme politique.
+Pour les groupes, le type fourni par l'action est le niveau SemVer le plus eleve :
+patch + minor est automatisable ; patch + major reste manuel.
+
+Le workflow n'attend pas les checks. GitHub realise la fusion seulement quand
+la review requise, les neuf Required checks listes ci-dessus et toutes les autres
+protections sont satisfaits. Aucun `--admin`, bypass ou desactivation de protection.
+Les reexecutions verifient l'approval du bot sur le SHA courant et l'auto-merge
+existant ; une nouvelle revision requiert une nouvelle approval. Les erreurs CLI
+ne sont pas ignorees. Un head devenu obsolete est laisse au run `synchronize`.
+
+Prerequis avant activation : auto-merge et merge commits autorises, approvals
+GitHub Actions autorisees, une review obligatoire et les neuf checks Required.
+Audit lecture seule actualise du 2 octobre 2026 : auto-merge, merge commits et
+approvals Actions autorises, une review requise et les neuf checks Required.
+Les prerequis sont satisfaits.
+Aucun repository setting n'est modifie par ce lot.
+
+The workflow only handles Dependabot PRs in this repository, using `GITHUB_TOKEN`
+and SHA-pinned official metadata without checkout. Patch/minor updates are
+approved and GitHub auto-merge is enabled; major or unknown/missing types remain
+manual. Grouped updates use the highest SemVer level from metadata, and security
+updates follow the same policy. Reruns detect the bot's current-head approval and
+existing auto-merge; CLI errors are not swallowed.
+
+GitHub waits for the required review, all nine Required checks listed above and
+all other protections before merging. The workflow does not wait for checks or
+bypass protections. Before activation, enable the repository prerequisites and
+require all nine checks. The updated read-only audit found auto-merge and merge commits enabled, Actions
+approvals allowed, one required review and all nine Required checks. The
+prerequisites are satisfied. No repository settings are changed.

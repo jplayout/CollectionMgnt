@@ -349,3 +349,14 @@ hardening, is clean: zero Semgrep findings and zero HIGH/CRITICAL occurrences
 in both filesystem scans and both image scans. The remediation's justified,
 rule-specific Semgrep suppressions remain respected. No known HIGH/CRITICAL
 baseline is tolerated, and no Trivy ignore or gate bypass is added.
+
+## Dependabot automation validation / Validation automatisation Dependabot
+
+`Dependabot Auto Merge` ne remplace aucun gate CI. Il approuve uniquement les
+patch/minor Dependabot et active l'auto-merge GitHub ; majors et metadata inconnue
+restent manuelles. Les neuf Required checks et la review restent obligatoires.
+Voir les prerequis et l'audit dans [GitHub governance](github-governance.md).
+
+Dependabot automation does not replace CI gates. Patch/minor updates can receive
+approval and auto-merge; majors and unknown metadata remain manual. GitHub must
+enforce all nine Required checks and the required review before merging.
