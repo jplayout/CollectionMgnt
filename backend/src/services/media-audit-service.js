@@ -1,3 +1,4 @@
+import { hasNoSymlinkComponents } from '../security/media-path.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -206,6 +207,17 @@ async function auditDatabaseRows({
 
         }
 
+        if (!Number.isSafeInteger(media.item_id) || media.item_id <= 0 ||
+            !Number.isSafeInteger(media.id) || media.id <= 0 ||
+            !ORIGINAL_FILENAME_PATTERN.test(media.filename)) {
+            dbIssues.push(createIssue({
+                code: 'MEDIA_PATH_UNSAFE', severity: 'error',
+                item_id: media.item_id, media_id: media.id,
+                message: `Unsafe media path for media ${media.id}.`
+            }));
+            continue;
+        }
+
         await checkExpectedFile({
             code:
                 'MEDIA_ORIGINAL_MISSING',
@@ -281,7 +293,7 @@ async function checkExpectedFile({
     if (
         !isPathInsideDataDir(
             absolutePath
-        )
+        ) || !hasNoSymlinkComponents(absolutePath)
     ) {
 
         dbIssues.push(
@@ -380,6 +392,11 @@ async function auditFilesystem({
                 0
         };
 
+    }
+
+    if (!hasNoSymlinkComponents(itemUploadsPath)) {
+        warnings.push(createWarning('UPLOADS_ITEMS_UNSAFE', 'Symbolic links are not scanned.', getRelativePath(itemUploadsPath)));
+        return { filesScanned: 0, itemFolders: 0 };
     }
 
     const entries =
@@ -557,7 +574,11 @@ async function scanItemDirectory({
 
         const mediaDirectory =
             path.join(
+                // itemDirectory is under uploads/items and comes from numeric non-symlink directory entries.
+                // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
                 itemDirectory,
+                // entry.name is one of originals/images/thumbs and isDirectory excludes symlinks.
+                // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
                 entry.name
             );
 
@@ -588,7 +609,11 @@ async function scanItemDirectory({
 
             const filePath =
                 path.join(
+                    // mediaDirectory is an allowlisted non-symlink directory below uploads/items.
+                    // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
                     mediaDirectory,
+                    // mediaEntry.name is a filesystem basename and isFile excludes symlinks.
+                    // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
                     mediaEntry.name
                 );
 
@@ -736,8 +761,14 @@ function getRelativeMediaPath(
     return path.join(
         'uploads',
         'items',
+        // itemId is validated as a positive integer for DB rows or comes from numeric Dirents.
+        // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
         String(itemId),
+        // directoryName is always a fixed originals/images/thumbs value.
+        // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
         directoryName,
+        // fileName is DB filename-validated or a readdir basename; expected files also reject symlinks.
+        // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
         fileName
     );
 
@@ -747,6 +778,8 @@ function resolveRelativeToDataDir(relativePath) {
 
     return path.resolve(
         DATA_DIR,
+        // callers check DATA_DIR containment and all existing symlink components before access.
+        // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
         relativePath
     );
 
@@ -770,10 +803,7 @@ function isPathInsideDataDir(absolutePath) {
             DATA_DIR
         );
 
-    const resolvedPath =
-        path.resolve(
-            absolutePath
-        );
+    const resolvedPath = absolutePath;
 
     return resolvedPath === resolvedDataDir ||
         resolvedPath.startsWith(
@@ -791,10 +821,7 @@ function isPathInsideItemsUploadsDir(absolutePath) {
             )
         );
 
-    const resolvedPath =
-        path.resolve(
-            absolutePath
-        );
+    const resolvedPath = absolutePath;
 
     return resolvedPath === resolvedItemsUploadsDir ||
         resolvedPath.startsWith(

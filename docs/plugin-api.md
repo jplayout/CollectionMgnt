@@ -277,3 +277,25 @@ Les fondations d'acquisition assistée couvrent uniquement les identifiants `isb
 et `barcode`. Le scan mobile/tablette, la recherche automatique externe, le
 pré-remplissage des champs et la récupération éventuelle de métadonnées ou images
 restent des fonctionnalités futures distinctes.
+
+## Securite des definitions et patterns / Definition and pattern safety
+
+Les fichiers `manifest.json` et `fields.json` doivent etre des fichiers reguliers
+locaux ; les liens symboliques sont refuses. Les repertoires plugins proviennent
+de la configuration de l'operateur, pas d'un chemin fourni par un utilisateur.
+
+Un `field.pattern` utilise RE2JS `2.8.6`, avec traduction des escapes JavaScript
+et matching sans backtracking catastrophique. La limite est 1024 caracteres
+pour le pattern et 16384 caracteres pour une valeur soumise a un pattern.
+Les backreferences et lookaheads non supportes sont refuses avec l'erreur
+`has an invalid pattern`, sans fallback vers `RegExp`. Les plugins livres
+n'utilisent actuellement aucun `field.pattern` ; les extensions doivent verifier
+leur compatibilite avec la syntaxe RE2JS avant migration.
+
+Plugin definition files must be regular local files; symlink definitions are
+rejected. Plugin roots are operator configuration. Field patterns use pinned
+RE2JS `2.8.6` with JavaScript escape translation, without catastrophic
+backtracking. Patterns are limited to 1024 characters and matched values to
+16384 characters. Unsupported backreferences/lookaheads fail as invalid patterns
+without a native RegExp fallback. Shipped plugins currently define no patterns;
+custom extensions must verify RE2JS syntax compatibility.
