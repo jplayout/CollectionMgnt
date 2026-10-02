@@ -1,3 +1,4 @@
+import { searchGoogleBooksMedia } from './media-search.js';
 import {
     createProviderError,
     createProviderTimeoutError,
@@ -52,11 +53,16 @@ export class GoogleBooksProvider {
 
     }
 
+    mediaSearch(query, options) {
+        return searchGoogleBooksMedia(this, query, options);
+    }
+
     describe() {
 
         return {
             capabilities: [
-                'isbnLookup'
+                'isbnLookup',
+                'mediaSearch'
             ],
             enabled:
                 typeof this.fetchImpl === 'function' &&

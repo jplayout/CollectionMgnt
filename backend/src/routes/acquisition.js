@@ -1,3 +1,4 @@
+import { MediaSearchService } from '../acquisition/media-search-service.js';
 import {
     AcquisitionCache
 } from '../acquisition/acquisition-cache.js';
@@ -58,6 +59,18 @@ export default async function (
             db:
                 fastify.db
         });
+
+    const mediaSearchService = fastify.mediaSearchService ?? new MediaSearchService({ providerRegistry: registry });
+    fastify.post('/api/acquisition/media/search', { bodyLimit: 4096, preHandler: fastify.authenticate }, async (request, reply) => {
+        try {
+            return await mediaSearchService.search(request.body);
+        } catch (error) {
+            if (error instanceof AcquisitionError) {
+                return reply.code(error.statusCode).send({ code: error.code, error: error.code, message: error.message, ...(error.warnings ? { warnings: error.warnings } : {}) });
+            }
+            return sendAcquisitionError(reply, error);
+        }
+    });
 
     fastify.get(
         '/api/acquisition/providers',

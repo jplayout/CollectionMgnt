@@ -19,7 +19,8 @@ test(
             provider.describe(),
             {
                 capabilities: [
-                    'movies/search'
+                    'movies/search',
+                    'mediaSearch'
                 ],
                 enabled:
                     true,

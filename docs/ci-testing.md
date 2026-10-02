@@ -76,7 +76,11 @@ semaine :
 - les GitHub Actions.
 
 Les mises a jour mineures et patch sont regroupees pour limiter le bruit des
-pull requests.
+pull requests. Les branches `dependabot/` sont une exception autorisee au gate
+de nom de branche ; les branches humaines gardent leurs prefixes habituels.
+Les titres Dependabot, y compris groupes, commencent par `chore:` et passent
+le meme gate Conventional Commit que les PR humaines, sans bypass.
+Voir les [conventions de gouvernance GitHub](github-governance.md).
 
 ## Versions Recommandees
 

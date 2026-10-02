@@ -1,3 +1,4 @@
+import { searchTmdbMedia } from './media-search.js';
 import {
     createProviderError,
     createProviderTimeoutError,
@@ -38,11 +39,16 @@ export class TmdbProvider {
 
     }
 
+    mediaSearch(query, options) {
+        return searchTmdbMedia(this, query, options);
+    }
+
     describe() {
 
         return {
             capabilities: [
-                'movies/search'
+                'movies/search',
+                'mediaSearch'
             ],
             enabled:
                 typeof this.fetchImpl === 'function' &&

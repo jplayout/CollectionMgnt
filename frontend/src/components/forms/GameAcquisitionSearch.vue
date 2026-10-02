@@ -25,7 +25,7 @@
 
             <button
                 class="lookup-button"
-                :disabled="lookupLoading || !canLookup"
+                :disabled="disabled || lookupLoading || !canLookup"
                 type="button"
                 @click="lookup"
             >
@@ -47,16 +47,9 @@
         >
             <article
                 v-for="suggestion in suggestions"
-                :key="getSuggestionKey(suggestion)"
+                :key="suggestion.mediaKey"
                 class="suggestion"
             >
-                <img
-                    v-if="getCoverUrl(suggestion)"
-                    alt=""
-                    class="suggestion-cover"
-                    :src="getCoverUrl(suggestion)"
-                >
-
                 <div class="suggestion-content">
                     <h3>{{ suggestion.title || 'Suggestion sans titre' }}</h3>
 
@@ -96,17 +89,27 @@
 
                 <button
                     class="use-button"
+                    :disabled="disabled"
                     type="button"
                     @click="useSuggestion(suggestion)"
                 >
                     Utiliser
                 </button>
+                <AcquisitionMediaPicker
+                    :candidates="suggestion.mediaCandidates"
+                    :search-query="suggestion.mediaSearchQuery"
+                    :model-value="mediaSelections[suggestion.mediaKey]"
+                    :disabled="disabled"
+                    @update:model-value="selectMedia(suggestion, $event)"
+                />
             </article>
         </div>
     </section>
 </template>
 
 <script setup>
+import AcquisitionMediaPicker from '../acquisition/AcquisitionMediaPicker.vue';
+import { normalizeAcquisitionMediaCandidates, buildAcquisitionMediaQuery } from '../../services/acquisition-media.js';
 import {
     computed,
     onMounted,
@@ -125,6 +128,7 @@ import {
 
 const props =
     defineProps({
+        disabled: { type: Boolean, default: false },
         platform: {
             default:
                 '',
@@ -151,6 +155,7 @@ const props =
 
 const emit =
     defineEmits([
+        'media-selected',
         'apply-suggestion'
     ]);
 
@@ -162,6 +167,10 @@ const lookupMessage =
 
 const lookupHasError =
     ref(false);
+
+const mediaSelections = ref({});
+const appliedSuggestionKey = ref(null);
+let lookupGeneration = 0;
 
 const suggestions =
     ref([]);
@@ -255,12 +264,14 @@ async function loadProviderCapabilities() {
 async function lookup() {
 
     if (
-        !canLookup.value
+        props.disabled || lookupLoading.value || !canLookup.value
     ) {
 
         return;
 
     }
+
+    const generation = ++lookupGeneration;
 
     lookupLoading.value =
         true;
@@ -273,6 +284,9 @@ async function lookup() {
 
     suggestions.value =
         [];
+    mediaSelections.value = {};
+    appliedSuggestionKey.value = null;
+    emit('media-selected', { mode: 'none' });
 
     try {
 
@@ -290,8 +304,14 @@ async function lookup() {
                     )
             });
 
+        if (generation !== lookupGeneration) return;
+
         suggestions.value =
-            response?.results ?? [];
+            (response?.results ?? []).map((suggestion, index) => ({
+                ...suggestion, mediaKey: `${generation}:${index}`,
+                mediaCandidates: normalizeAcquisitionMediaCandidates(suggestion),
+                mediaSearchQuery: buildAcquisitionMediaQuery('games', suggestion)
+            }));
 
         if (
             suggestions.value.length === 0
@@ -304,6 +324,8 @@ async function lookup() {
 
     } catch (error) {
 
+        if (generation !== lookupGeneration) return;
+
         lookupHasError.value =
             true;
 
@@ -314,18 +336,26 @@ async function lookup() {
 
     } finally {
 
-        lookupLoading.value =
-            false;
+        if (generation === lookupGeneration) lookupLoading.value = false;
 
     }
 
 }
 
+function selectMedia(suggestion, selection) {
+    mediaSelections.value[suggestion.mediaKey] = selection;
+    if (appliedSuggestionKey.value === suggestion.mediaKey) emit('media-selected', selection);
+}
+
 function useSuggestion(suggestion) {
+    if (appliedSuggestionKey.value !== null && appliedSuggestionKey.value !== suggestion.mediaKey) {
+        mediaSelections.value[appliedSuggestionKey.value] = { mode: 'none' };
+    }
+    appliedSuggestionKey.value = suggestion.mediaKey;
 
     emit(
         'apply-suggestion',
-        suggestion
+        { ...suggestion, mediaSelection: mediaSelections.value[suggestion.mediaKey] ?? { mode: 'none' } }
     );
 
     lookupMessage.value =
@@ -539,7 +569,7 @@ function normalizeOptionalText(value) {
     border-radius: 8px;
     display: grid;
     gap: 10px;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     padding: 10px;
 }
 

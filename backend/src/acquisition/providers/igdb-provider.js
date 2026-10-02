@@ -1,3 +1,4 @@
+import { searchIgdbMedia } from './media-search.js';
 import {
     createProviderError,
     createProviderTimeoutError,
@@ -65,11 +66,16 @@ export class IgdbProvider {
 
     }
 
+    mediaSearch(query, options) {
+        return searchIgdbMedia(this, query, options);
+    }
+
     describe() {
 
         return {
             capabilities: [
-                'games/search'
+                'games/search',
+                'mediaSearch'
             ],
             enabled:
                 typeof this.fetchImpl === 'function' &&

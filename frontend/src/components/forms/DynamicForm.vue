@@ -36,6 +36,8 @@
             <MovieAcquisitionSearch
                 v-if="isMovieAcquisitionSearchEnabled"
                 :query="title"
+                :disabled="submitting"
+                @media-selected="emit('acquisition-image-selected', $event)"
                 @apply-suggestion="applyMovieAcquisitionSuggestion"
             />
 
@@ -44,6 +46,8 @@
                 :platform="metadata.platform"
                 :query="title"
                 :year="getReleaseYear(metadata.release_date)"
+                :disabled="submitting"
+                @media-selected="emit('acquisition-image-selected', $event)"
                 @apply-suggestion="applyGameAcquisitionSuggestion"
             />
 
@@ -796,28 +800,7 @@ function applyMovieAcquisitionSuggestion(suggestion) {
         suggestion?.metadata?.originalLanguage
     );
 
-    const coverImage =
-        getCoverImage(
-            suggestion
-        );
-
-    if (
-        coverImage
-    ) {
-
-        emit(
-            'acquisition-image-selected',
-            {
-                imageUrl:
-                    coverImage.url,
-                provider:
-                    suggestion.provider ?? null,
-                source:
-                    coverImage.source ?? suggestion.provider ?? null
-            }
-        );
-
-    }
+    emit('acquisition-image-selected', suggestion.mediaSelection ?? { mode: 'none' });
 
 }
 
@@ -877,36 +860,7 @@ function applyGameAcquisitionSuggestion(suggestion) {
         suggestion?.metadata?.igdbId
     );
 
-    const coverImage =
-        getCoverImage(
-            suggestion
-        );
-
-    if (
-        coverImage
-    ) {
-
-        emit(
-            'acquisition-image-selected',
-            {
-                imageUrl:
-                    coverImage.url,
-                provider:
-                    suggestion.provider ?? null,
-                source:
-                    coverImage.source ?? suggestion.provider ?? null
-            }
-        );
-
-    }
-
-}
-
-function getCoverImage(suggestion) {
-
-    return suggestion?.images?.find(
-        image => image.kind === 'cover' && image.url
-    ) ?? null;
+    emit('acquisition-image-selected', suggestion.mediaSelection ?? { mode: 'none' });
 
 }
 

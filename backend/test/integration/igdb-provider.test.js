@@ -24,7 +24,8 @@ test(
             provider.describe(),
             {
                 capabilities: [
-                    'games/search'
+                    'games/search',
+                    'mediaSearch'
                 ],
                 enabled:
                     true,

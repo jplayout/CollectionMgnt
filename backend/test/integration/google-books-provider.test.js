@@ -38,7 +38,7 @@ test('GoogleBooksProvider describes configured capability without exposing the k
     });
 
     assert.deepEqual(provider.describe(), {
-        capabilities: ['isbnLookup'],
+        capabilities: ['isbnLookup', 'mediaSearch'],
         enabled: true,
         id: 'googlebooks',
         name: 'Google Books',

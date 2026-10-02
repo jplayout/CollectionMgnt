@@ -28,7 +28,10 @@ export function normalizeAcquisitionMediaCandidates(suggestion) {
             width: Number.isFinite(image.width) && image.width > 0 ? image.width : null,
             height: Number.isFinite(image.height) && image.height > 0 ? image.height : null,
             attribution: image.attribution ?? null,
-            license: image.license ?? null
+            license: image.license ?? null,
+            language: image.language ?? null,
+            providerImageId: image.providerImageId ?? null,
+            providerLocalizationId: image.providerLocalizationId ?? null
         }];
     });
 }
@@ -61,4 +64,40 @@ export function takeAcquisitionMediaWarning(itemId) {
     const warning = warnings.get(key) ?? '';
     warnings.delete(key);
     return warning;
+}
+
+// Only a small allowlist is sent to discovery; never forward the entire item.
+export function buildAcquisitionMediaQuery(plugin, suggestion, language = null) {
+    const metadata = suggestion?.metadata ?? {};
+    const identifiers = {};
+    const kind = plugin === 'movies' ? 'poster' : 'cover';
+    if (plugin === 'books') {
+        if (metadata.isbn) identifiers.isbn = metadata.isbn;
+        for (const image of suggestion?.images ?? []) {
+            if ((image?.source ?? image?.provider) !== 'openlibrary') continue;
+            try {
+                const url = new URL(image.url);
+                const match = url.hostname === 'covers.openlibrary.org' && url.pathname.match(/^\/b\/id\/(\d+)-[SML]\.jpg$/);
+                if (match) { identifiers.openLibraryCoverId = Number(match[1]); break; }
+            } catch { /* Missing/unknown initial cover URL is supported. */ }
+        }
+        try {
+            const source = new URL(suggestion.sourceUrl);
+            const match = source.hostname === 'openlibrary.org' && source.pathname.match(/^\/(?:books|works)\/(OL\d+[MW])$/);
+            if (match) identifiers.openLibraryId = match[1];
+        } catch { /* Source URL is optional and is never fetched. */ }
+        if (/^OL\d+[MW]$/.test(metadata.openLibraryId ?? '')) identifiers.openLibraryId = metadata.openLibraryId;
+        if (Number.isSafeInteger(metadata.openLibraryCoverId)) identifiers.openLibraryCoverId = metadata.openLibraryCoverId;
+    } else if (plugin === 'movies' && metadata.tmdbId) identifiers.tmdbId = Number(metadata.tmdbId);
+    else if (plugin === 'games' && metadata.igdbId) identifiers.igdbId = Number(metadata.igdbId);
+    if (!Object.keys(identifiers).length) return null;
+    const preferredLanguage = language ?? (typeof navigator === 'undefined' ? null : navigator.language);
+    return {
+        plugin, kind, identifiers, title: suggestion.title || null,
+        metadata: {
+            ...(plugin === 'books' && metadata.author ? { author: metadata.author } : {}),
+            ...(preferredLanguage && /^[a-z]{2,3}(?:-[A-Za-z]{2,4})?$/.test(preferredLanguage) ? { language: preferredLanguage } : {}),
+            ...(metadata.originalLanguage ? { originalLanguage: metadata.originalLanguage } : {})
+        }
+    };
 }
