@@ -74,6 +74,8 @@ import {
     setPendingAcquisitionImage
 } from '../services/pending-acquisition-image.js';
 
+import { importSelectedAcquisitionMedia, recordAcquisitionMediaWarning } from '../services/acquisition-media.js';
+
 const route =
     useRoute();
 
@@ -198,11 +200,15 @@ async function submitItem(
     payload
 ) {
 
+    if (submitting.value) return;
+
     submitting.value =
         true;
 
     submitError.value =
         null;
+
+    const mediaSelection = selectedAcquisitionImage.value;
 
     try {
 
@@ -211,15 +217,15 @@ async function submitItem(
                 payload
             );
 
-        if (
-            selectedAcquisitionImage.value
-        ) {
-
-            setPendingAcquisitionImage(
-                createdItem.id,
-                selectedAcquisitionImage.value
-            );
-
+        if (mediaSelection?.mode) {
+            try {
+                await importSelectedAcquisitionMedia(createdItem.id, mediaSelection);
+            } catch {
+                recordAcquisitionMediaWarning(createdItem.id);
+            }
+        } else if (mediaSelection) {
+            // Movie/game flows retain the existing gallery confirmation in this iteration.
+            setPendingAcquisitionImage(createdItem.id, mediaSelection);
         }
 
         await router.push({

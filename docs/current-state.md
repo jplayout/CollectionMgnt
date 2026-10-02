@@ -1346,3 +1346,35 @@ fallback BnF lent sur Synology, avec `provider_timeout` dans l'UI. Apres purge,
 Open Library retournait une suggestion et l'UI fonctionnait correctement.
 Les mesures et le diagnostic reseau sont documentes dans
 [les providers acquisition](acquisition-providers.md#resilience-apres-validation-terrain).
+
+## AcquisitionMediaPicker — premiere integration livres
+
+- Composant generique `AcquisitionMediaPicker.vue` : candidats normalises,
+  selection distante, fichier local ou aucune image ; premiere URL HTTPS valide
+  preselectionnee, choix modifiable avant creation.
+- Adaptateur frontend des images Open Library, Google Books, TMDb et IGDB :
+  contrat backend conserve, provenance disponible conservee temporairement,
+  aucune information absente inventee. Aucun candidat couverture BnF ajoute.
+- Livre : creation de l'item puis import distant securise ou upload local via
+  MediaService, avec media principal. Echec media non bloquant, avertissement sur
+  la fiche et galerie disponible pour ajouter/remplacer l'image.
+- Aucun media persiste avant creation, aucune URL distante ajoutee aux metadata,
+  aucun lookup additionnel, aucune nouvelle recherche externe ni migration DB.
+- Modele media sans champs de provenance ; attribution/licence restent
+  temporaires. Films et jeux gardent leur UX de confirmation depuis la fiche.
+- Tests Playwright avec l'ISBN `9782952221702` (Open Library controle), choix
+  par defaut/modifie/aucun/local, ordre creation-import, erreurs non bloquantes,
+  media principal et candidats generiques TMDb poster / IGDB cover.
+
+## English — acquisition media picker
+
+The generic picker is integrated into book suggestions. Existing metadata
+provider images are normalized without changing the backend contract or inventing
+missing credits/licenses. The first valid HTTPS candidate is preselected; users
+can change it, choose a local file, or no image. Creation happens before secure
+remote import or local upload via MediaService, with primary media enabled.
+Import failure preserves the item and shows a warning beside its available
+gallery. Selection/provenance remain temporary; no media provenance DB fields or
+migration are introduced. Movies/games retain gallery confirmation, while their
+poster/cover candidates are supported by the component API. No external media
+search or extra lookup is introduced.

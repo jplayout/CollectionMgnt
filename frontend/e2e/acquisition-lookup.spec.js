@@ -1720,3 +1720,424 @@ for (const {code, status, message} of [
     );
 
 }
+
+
+test.describe('Acquisition media picker', () => {
+    const support = require('./acquisition-media-picker-tests.js')({ expect, getAdminToken: () => adminToken });
+    const { openSuggestion, create, deleteItem, isbn, title, urls } = support;
+    let token;
+    let png;
+    test.beforeAll(async () => {
+        await support.setup();
+        token = support.getToken();
+        png = support.getPng();
+    });
+
+    test('Open Library cover is preselected; item is created before secure import and its main image is available', async ({ page, request }) => {
+        const traffic = await openSuggestion(page);
+        await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', urls[0]);
+        await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        expect(traffic.media).toHaveLength(0);
+        let importedItemId;
+        await page.route('**/api/acquisition/images/import', async route => {
+            const body = route.request().postDataJSON();
+            importedItemId = body.itemId;
+            expect(body).toEqual({ itemId: importedItemId, imageUrl: urls[0], provider: 'openlibrary', source: 'openlibrary', isPrimary: true });
+            expect(traffic.creations).toHaveLength(1);
+            const item = await request.get(`/api/items/${importedItemId}`, { headers: { Authorization: `Bearer ${token}` } });
+            expect(item.ok()).toBeTruthy();
+            // Stub the external download; use the real upload/MediaService to populate the gallery.
+            const upload = await request.post('/api/media', {
+                headers: { Authorization: `Bearer ${token}` },
+                multipart: { item_id: String(importedItemId), is_primary: 'true', file: { name: 'cover.png', mimeType: 'image/png', buffer: png } }
+            });
+            expect(upload.ok()).toBeTruthy();
+            await route.fulfill({ status: 201, json: await upload.json() });
+        });
+        let id;
+        try {
+            id = await create(page);
+            expect(importedItemId).toBe(id);
+            await expect(page.locator('.media-thumbnail').getByText('Principale', { exact: true })).toBeVisible();
+            await expect(page.locator('.media-thumbnail img')).toHaveAttribute('src', /^blob:/);
+            const media = await request.get(`/api/items/${id}/media`, { headers: { Authorization: `Bearer ${token}` } });
+            const rows = await media.json();
+            expect(rows).toHaveLength(1);
+            expect(rows[0].is_primary).toBe(1);
+            expect(JSON.stringify(rows)).not.toContain('https://');
+            expect(JSON.stringify(traffic.creations[0])).not.toContain('https://');
+            expect(traffic.lookups).toBe(1);
+            expect(traffic.media).toHaveLength(1);
+        } finally {
+            await deleteItem(request, id ?? importedItemId);
+        }
+    });
+
+    test('Changing the selected cover after applying the suggestion imports the new candidate', async ({ page, request }) => {
+        const traffic = await openSuggestion(page, { brokenPreviewUrl: urls[0] });
+        await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        await expect.poll(() => page.getByAltText('Image sélectionnée').evaluate(image => image.complete && image.naturalWidth === 0)).toBe(true);
+        await page.getByRole('button', { name: 'Changer l’image' }).focus();
+        await page.keyboard.press('Enter');
+        await expect(page.getByRole('radio', { name: /openlibrary · cover · 1/ })).toBeChecked();
+        await page.getByRole('radio', { name: /openlibrary · cover · 2/ }).focus();
+        await page.keyboard.press('Space');
+        await expect(page.getByRole('radio', { name: /openlibrary · cover · 2/ })).toBeChecked();
+        await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', urls[1]);
+        expect(traffic.media).toHaveLength(0);
+        await page.route('**/api/acquisition/images/import', route => {
+            expect(route.request().postDataJSON().imageUrl).toBe(urls[1]);
+            return route.fulfill({ status: 201, json: { id: 1 } });
+        });
+        let id;
+        try {
+            id = await create(page);
+            expect(traffic.lookups).toBe(1);
+            expect(traffic.media).toHaveLength(1);
+        } finally { await deleteItem(request, id); }
+    });
+
+    test('Aucune image overrides the default and creates the item without any media request', async ({ page, request }) => {
+        const traffic = await openSuggestion(page);
+        await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        await page.getByRole('button', { name: 'Changer l’image' }).click();
+        await page.getByRole('radio', { name: 'Aucune image', exact: true }).check();
+        await expect(page.getByAltText('Image sélectionnée')).toHaveCount(0);
+        let id;
+        try {
+            id = await create(page);
+            await expect(page.getByText('Aucune image pour cet item.')).toBeVisible();
+            expect(traffic.media).toHaveLength(0);
+            expect(traffic.lookups).toBe(1);
+        } finally { await deleteItem(request, id); }
+    });
+
+    test('Local file stays in memory until creation, then uses the real upload pipeline as primary media', async ({ page, request }) => {
+        const traffic = await openSuggestion(page);
+        await page.getByRole('button', { name: 'Changer l’image' }).click();
+        await page.getByLabel('Importer un fichier').setInputFiles({ name: 'local-cover.png', mimeType: 'image/png', buffer: png });
+        await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', /^blob:/);
+        expect(traffic.media).toHaveLength(0);
+        let id;
+        try {
+            id = await create(page);
+            await expect(page.locator('.media-thumbnail').getByText('Principale', { exact: true })).toBeVisible();
+            expect(traffic.media).toHaveLength(1);
+            expect(new URL(traffic.media[0].url()).pathname).toBe('/api/media');
+            expect(traffic.media[0].postData()).toContain(`\r\n${id}\r\n`);
+            expect(traffic.media[0].postData()).toContain('filename="local-cover.png"');
+            expect(traffic.media[0].postData()).toContain('Content-Type: image/png');
+            expect(traffic.lookups).toBe(1);
+        } finally { await deleteItem(request, id); }
+    });
+
+    for (const mode of ['remote', 'local']) {
+        test(`${mode} import failure preserves the created item and offers a clear warning and gallery upload`, async ({ page, request }) => {
+            const traffic = await openSuggestion(page);
+            if (mode === 'local') {
+                await page.getByRole('button', { name: 'Changer l’image' }).click();
+                await page.getByLabel('Importer un fichier').setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: png });
+            }
+            await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+            const endpoint = mode === 'remote' ? '**/api/acquisition/images/import' : '**/api/media';
+            await page.route(endpoint, route => route.fulfill({ status: 503, json: { error: 'image_download_failed' } }));
+            let id;
+            try {
+                id = await create(page);
+                await expect(page.getByRole('status')).toContainText('L’élément a été créé, mais l’image n’a pas pu être importée.');
+                await expect(page.getByRole('button', { name: 'Ajouter image', exact: true })).toBeVisible();
+                const item = await request.get(`/api/items/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+                expect(item.ok()).toBeTruthy();
+                expect((await item.json()).title).toBe(title);
+                expect(traffic.creations).toHaveLength(1);
+                expect(traffic.media).toHaveLength(1);
+                expect(traffic.lookups).toBe(1);
+                await page.evaluate(async () => {
+                    const { default: router } = await import('/src/router/index.js');
+                    await router.push('/collections/books/items');
+                });
+                await page.evaluate(async itemId => {
+                    const { default: router } = await import('/src/router/index.js');
+                    await router.push(`/items/${itemId}`);
+                }, id);
+                await expect(page.getByRole('heading', { name: title })).toBeVisible();
+                await expect(page.getByRole('status')).toHaveCount(0);
+                await page.reload();
+                await expect(page.getByRole('heading', { name: title })).toBeVisible();
+                await expect(page.getByRole('status')).toHaveCount(0);
+                expect(traffic.creations).toHaveLength(1);
+                expect(traffic.media).toHaveLength(1);
+            } finally { await deleteItem(request, id); }
+        });
+    }
+
+    test('Unsafe or missing image URLs are skipped and the first HTTPS candidate is preselected', async ({ page }) => {
+        const traffic = await openSuggestion(page, { images: [
+            { kind: 'cover', url: 'http://example.test/cover.jpg' },
+            { kind: 'cover', url: 'javascript:alert(1)' },
+            null,
+            { kind: 'cover', url: urls[1], source: 'openlibrary' },
+            { kind: 'cover', url: ` ${urls[1]} `, source: 'openlibrary' }
+        ] });
+        await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', urls[1]);
+        await page.getByRole('button', { name: 'Changer l’image' }).click();
+        await expect(page.getByRole('radio', { name: /openlibrary · cover ·/ })).toHaveCount(1);
+        expect(traffic.media).toHaveLength(0);
+    });
+
+    test('Switching to a suggestion without images clears the previous cover selection', async ({ page, request }) => {
+        const traffic = await openSuggestion(page, { results: [
+            { title, provider: 'openlibrary', metadata: { isbn }, images: [{ kind: 'cover', source: 'openlibrary', url: urls[0] }] },
+            { title: 'Autre édition', provider: 'bnf', metadata: { isbn }, images: [] }
+        ] });
+        await page.locator('.suggestion').nth(0).getByRole('button', { name: 'Utiliser', exact: true }).click();
+        await page.locator('.suggestion').nth(1).getByRole('button', { name: 'Utiliser', exact: true }).click();
+        let id;
+        try {
+            id = await create(page);
+            expect(traffic.media).toHaveLength(0);
+        } finally { await deleteItem(request, id); }
+    });
+
+    test('Generic picker accepts a TMDb poster and an IGDB cover while normalization preserves available provenance only', async ({ page }) => {
+        await page.goto('/collections/books/items/new');
+        const normalized = await page.evaluate(async () => {
+            const { normalizeAcquisitionMediaCandidates } = await import('/src/services/acquisition-media.js');
+            const providers = ['openlibrary', 'googlebooks', 'tmdb', 'igdb'];
+            return providers.map(provider => normalizeAcquisitionMediaCandidates({
+                provider, sourceUrl: `https://example.test/${provider}`,
+                images: [{ kind: provider === 'tmdb' ? 'poster' : 'cover', source: provider, url: `https://example.test/${provider}.jpg`,
+                    ...(provider === 'tmdb' ? { thumbnailUrl: 'https://example.test/thumb.jpg', width: 500, height: 750, attribution: 'Supplied credit', license: 'Supplied license' } : {}) }]
+            })[0]);
+        });
+        expect(normalized.map(c => c.provider)).toEqual(['openlibrary', 'googlebooks', 'tmdb', 'igdb']);
+        expect(normalized[0]).toMatchObject({ width: null, height: null, attribution: null, license: null, thumbnailUrl: null });
+        expect(normalized[2]).toMatchObject({ kind: 'poster', width: 500, height: 750, attribution: 'Supplied credit', license: 'Supplied license' });
+        await page.route('https://example.test/**', route => route.fulfill({ contentType: 'image/png', body: png }));
+        await page.evaluate(async candidates => {
+            const { createApp, h, ref } = await import('/node_modules/.vite/deps/vue.js');
+            const { default: Picker } = await import('/src/components/acquisition/AcquisitionMediaPicker.vue');
+            const element = document.createElement('div');
+            element.id = 'generic-media-test';
+            document.body.append(element);
+            const selection = ref();
+            const available = ref(candidates);
+            window.replaceMediaCandidates = value => { available.value = value; };
+            const app = createApp({ setup: () => () => h(Picker, { candidates: available.value, modelValue: selection.value, 'onUpdate:modelValue': value => selection.value = value }) });
+            app.mount(element);
+            window.mediaTestSelection = () => selection.value;
+        }, [normalized[2], normalized[3]]);
+        const picker = page.locator('#generic-media-test');
+        await expect(picker.getByAltText('Image sélectionnée')).toHaveAttribute('src', 'https://example.test/thumb.jpg');
+        await picker.getByRole('button', { name: 'Changer l’image' }).click();
+        await expect(picker.getByRole('radio', { name: /tmdb · poster · 1/ })).toBeChecked();
+        await picker.getByRole('radio', { name: /igdb · cover · 2/ }).check();
+        expect(await page.evaluate(() => window.mediaTestSelection().candidate)).toEqual(normalized[3]);
+        await page.evaluate(candidate => window.replaceMediaCandidates([candidate]), normalized[2]);
+        await expect(picker.getByRole('radio', { name: /tmdb · poster · 1/ })).toBeChecked();
+        expect(await page.evaluate(() => window.mediaTestSelection().candidate)).toEqual(normalized[2]);
+        await picker.getByRole('radio', { name: 'Aucune image', exact: true }).check();
+        expect(await page.evaluate(() => window.mediaTestSelection())).toEqual({ mode: 'none' });
+    });
+
+    test('Failed item creation never starts an image import', async ({ page }) => {
+        const traffic = await openSuggestion(page);
+        await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        await page.route('**/api/items', route => route.fulfill({ status: 503, json: { error: 'Creation indisponible' } }));
+        await page.getByRole('button', { name: 'Créer l’item', exact: true }).click();
+        await expect(page.getByRole('button', { name: 'Créer l’item', exact: true })).toBeEnabled();
+        await expect(page).toHaveURL(/\/collections\/books\/items\/new$/);
+        expect(traffic.creations).toHaveLength(1);
+        expect(traffic.media).toHaveLength(0);
+    });
+
+    test('Editing ISBN clears the old media selection without starting another lookup', async ({ page, request }) => {
+        const traffic = await openSuggestion(page);
+        await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        await page.getByRole('textbox', { name: 'ISBN' }).fill('9780140328721');
+        await expect(page.getByRole('button', { name: 'Changer l’image' })).toHaveCount(0);
+        let id;
+        try {
+            id = await create(page);
+            expect(traffic.media).toHaveLength(0);
+            expect(traffic.lookups).toBe(1);
+        } finally { await deleteItem(request, id); }
+    });
+
+    test('Unsupported local files leave the remote selection intact; valid blob previews are revoked when cleared', async ({ page }) => {
+        const traffic = await openSuggestion(page);
+        await page.getByRole('button', { name: 'Changer l’image' }).click();
+        const input = page.getByLabel('Importer un fichier');
+        await input.setInputFiles({ name: 'bad.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg/>') });
+        await expect(page.getByRole('alert')).toContainText('JPEG, PNG ou WebP');
+        await expect(page.getByAltText('Image sélectionnée')).toHaveAttribute('src', urls[0]);
+        await page.evaluate(() => {
+            const revoke = URL.revokeObjectURL.bind(URL);
+            window.revokedMediaUrls = [];
+            URL.revokeObjectURL = url => { window.revokedMediaUrls.push(url); revoke(url); };
+        });
+        await input.setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: png });
+        const preview = page.getByAltText('Image sélectionnée');
+        await expect(preview).toHaveAttribute('src', /^blob:/);
+        const blobUrl = await preview.getAttribute('src');
+        await input.setInputFiles({ name: 'replacement.png', mimeType: 'image/png', buffer: png });
+        await expect(preview).not.toHaveAttribute('src', blobUrl);
+        expect(await page.evaluate(() => window.revokedMediaUrls)).toContain(blobUrl);
+        const replacementUrl = await preview.getAttribute('src');
+        await page.getByRole('radio', { name: 'Aucune image', exact: true }).check();
+        expect(await page.evaluate(() => window.revokedMediaUrls)).toContain(replacementUrl);
+        await input.setInputFiles({ name: 'before-unmount.png', mimeType: 'image/png', buffer: png });
+        await expect(preview).toHaveAttribute('src', /^blob:/);
+        const unmountUrl = await preview.getAttribute('src');
+        await page.evaluate(async () => {
+            const { default: router } = await import('/src/router/index.js');
+            await router.push('/collections/books/items');
+        });
+        await expect(page.getByRole('button', { name: 'Changer l’image' })).toHaveCount(0);
+        expect(await page.evaluate(() => window.revokedMediaUrls)).toContain(unmountUrl);
+        expect(traffic.media).toHaveLength(0);
+    });
+
+    test('Late ISBN lookup response cannot restore a stale suggestion or its media', async ({ page, request }) => {
+        const traffic = await openSuggestion(page);
+        await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        let finish;
+        const pending = new Promise(resolve => { finish = resolve; });
+        await page.route('**/api/acquisition/books/isbn/lookup', async route => {
+            await pending;
+            await route.fulfill({ json: { results: [{ title: 'Résultat périmé', provider: 'openlibrary', metadata: { isbn }, images: [{ url: urls[0], kind: 'cover' }] }] } });
+        });
+        const started = page.waitForRequest('**/api/acquisition/books/isbn/lookup');
+        await page.getByRole('button', { name: 'Rechercher', exact: true }).click();
+        await started;
+        await page.getByRole('textbox', { name: 'ISBN' }).fill('9780140328721');
+        const completed = page.waitForResponse('**/api/acquisition/books/isbn/lookup');
+        finish();
+        await completed;
+        await expect(page.getByRole('button', { name: 'Rechercher', exact: true })).toBeEnabled();
+        await expect(page.locator('.suggestion')).toHaveCount(0);
+        let id;
+        try {
+            id = await create(page);
+            expect(traffic.media).toHaveLength(0);
+        } finally { await deleteItem(request, id); }
+    });
+
+    test('Searching again with an empty response clears the previously applied media', async ({ page, request }) => {
+        const traffic = await openSuggestion(page);
+        await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        await page.route('**/api/acquisition/books/isbn/lookup', route => route.fulfill({ json: { results: [] } }));
+        await page.getByRole('button', { name: 'Rechercher', exact: true }).click();
+        await expect(page.getByText('Aucun résultat trouvé. Vous pouvez continuer la saisie manuellement.')).toBeVisible();
+        let id;
+        try {
+            id = await create(page);
+            expect(traffic.media).toHaveLength(0);
+        } finally { await deleteItem(request, id); }
+    });
+
+    test('Identical suggestion metadata does not share selection and switching suggestions discards the old local file', async ({ page, request }) => {
+        const traffic = await openSuggestion(page, { results: urls.map(url => ({
+            title, provider: 'openlibrary', metadata: { isbn }, images: [{ kind: 'cover', source: 'openlibrary', url }]
+        })) });
+        const first = page.locator('.suggestion').nth(0);
+        const second = page.locator('.suggestion').nth(1);
+        await first.getByRole('button', { name: 'Changer l’image' }).click();
+        await first.getByLabel('Importer un fichier').setInputFiles({ name: 'first.png', mimeType: 'image/png', buffer: png });
+        await first.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        await expect(second.getByAltText('Image sélectionnée')).toHaveAttribute('src', urls[1]);
+        await second.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        await expect(first.getByAltText('Image sélectionnée')).toHaveCount(0);
+        expect(await first.getByLabel('Importer un fichier').evaluate(input => input.files.length)).toBe(0);
+        await first.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        let id;
+        try {
+            id = await create(page);
+            expect(traffic.media).toHaveLength(0);
+        } finally { await deleteItem(request, id); }
+    });
+
+    test('Simultaneous submissions create/import once, disable media controls, and leave no selection for the next creation', async ({ page, request }) => {
+        const traffic = await openSuggestion(page);
+        await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        await page.getByRole('button', { name: 'Changer l’image' }).click();
+        let releaseCreation;
+        let releaseImport;
+        const creationGate = new Promise(resolve => { releaseCreation = resolve; });
+        const importGate = new Promise(resolve => { releaseImport = resolve; });
+        await page.route('**/api/items', async route => {
+            if (route.request().method() === 'POST') await creationGate;
+            await route.continue();
+        });
+        let importedItemId;
+        await page.route('**/api/acquisition/images/import', async route => {
+            importedItemId = route.request().postDataJSON().itemId;
+            await importGate;
+            await route.fulfill({ status: 201, json: { id: 1 } });
+        });
+        const started = page.waitForRequest(request => new URL(request.url()).pathname === '/api/items' && request.method() === 'POST');
+        await page.locator('form.dynamic-form').evaluate(form => {
+            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        });
+        await started;
+        await expect(page.getByRole('button', { name: 'Changer l’image' })).toBeDisabled();
+        await expect(page.getByLabel('Importer un fichier')).toBeDisabled();
+        await expect(page.getByRole('radio', { name: 'Aucune image', exact: true })).toBeDisabled();
+        expect(traffic.creations).toHaveLength(1);
+        expect(traffic.media).toHaveLength(0);
+        const importStarted = page.waitForRequest('**/api/acquisition/images/import');
+        releaseCreation();
+        await importStarted;
+        await expect(page.getByRole('button', { name: 'Changer l’image' })).toBeDisabled();
+        let firstId;
+        let secondId;
+        try {
+            releaseImport();
+            await expect(page).toHaveURL(/\/items\/\d+$/);
+            firstId = Number(page.url().match(/\/items\/(\d+)$/)[1]);
+            expect(importedItemId).toBe(firstId);
+            expect(traffic.media).toHaveLength(1);
+            await page.evaluate(async () => {
+                const { default: router } = await import('/src/router/index.js');
+                await router.push('/collections/books/items/new');
+            });
+            await expect(page.getByLabel('Titre')).toHaveValue('');
+            await expect(page.getByAltText('Image sélectionnée')).toHaveCount(0);
+            await page.getByLabel('Titre').fill('Création suivante sans image');
+            secondId = await create(page);
+            expect(secondId).not.toBe(firstId);
+            await expect(page.getByText('Aucune image pour cet item.')).toBeVisible();
+            expect(traffic.creations).toHaveLength(2);
+            expect(traffic.media).toHaveLength(1);
+            await page.reload();
+            await expect(page.getByRole('heading', { name: 'Création suivante sans image' })).toBeVisible();
+            expect(traffic.creations).toHaveLength(2);
+            expect(traffic.media).toHaveLength(1);
+        } finally {
+            releaseCreation();
+            releaseImport();
+            await deleteItem(request, firstId ?? importedItemId);
+            await deleteItem(request, secondId);
+        }
+    });
+
+    test('A corrupt local PNG is rejected by the existing backend pipeline without losing the created item', async ({ page, request }) => {
+        const traffic = await openSuggestion(page);
+        await page.getByRole('button', { name: 'Changer l’image' }).click();
+        await page.getByLabel('Importer un fichier').setInputFiles({ name: 'corrupt.png', mimeType: 'image/png', buffer: Buffer.from('not a PNG') });
+        await page.getByRole('button', { name: 'Utiliser', exact: true }).click();
+        let id;
+        try {
+            id = await create(page);
+            await expect(page.getByRole('status')).toContainText('L’élément a été créé, mais l’image n’a pas pu être importée.');
+            await expect(page.getByText('Aucune image pour cet item.')).toBeVisible();
+            expect(traffic.media).toHaveLength(1);
+            expect(traffic.creations).toHaveLength(1);
+            const item = await request.get(`/api/items/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+            expect(item.ok()).toBeTruthy();
+        } finally { await deleteItem(request, id); }
+    });
+
+});
