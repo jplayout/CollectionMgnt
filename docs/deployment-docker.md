@@ -209,3 +209,51 @@ suggestion is found, the request returns an error instead of an empty result.
 Never commit a real key or supply it through frontend `VITE_*` variables or
 Docker build arguments. Keys remain runtime backend configuration. Do not share
 Compose configuration output containing secrets.
+
+## Bases runtime durcies / Hardened runtime bases
+
+Le backend utilise deux stages officiels `node:22.23.3-alpine3.24` : installation
+`npm ci --omit=dev` avec Python/make/g++ dans le stage dependencies, puis copie
+des seuls modules et fichiers applicatifs dans le runtime. npm, npx et Yarn sont
+retires du runtime ; aucun outil de compilation n'est copie. Les deux stages
+utilisent musl sur la meme version Alpine. better-sqlite3 et Sharp sont verifies
+par creation/lecture SQLite et redimensionnement d'image dans les images finales.
+
+Le frontend garde un build Node `22.23.3-trixie` et utilise
+`nginx:1.30.5-alpine3.24` pour servir le bundle. Seuls `libexpat` et `pcre2` sont
+mis a jour depuis les repositories de cette branche Alpine pour les correctifs
+posterieurs a la base. La configuration Nginx, le port 80, le proxy API et le
+fallback SPA restent identiques. VERSION, APP_REVISION et labels OCI sont
+propages par le launcher existant.
+
+Le runtime backend conserve son utilisateur et les permissions des volumes
+existants pour les bind mounts Synology. Un passage non-root necessiterait une
+migration explicite des permissions ; il n'est pas inclus ici. Les constructions,
+le demarrage/proxy et les modules natifs sont verifies en amd64 et en arm64
+(sous emulation locale). Docker/Synology utilisent les memes Dockerfiles et le
+Compose existant ; les essais locaux utilisent Podman.
+
+Les tags FROM precis remplacent les anciennes references flottantes Node 22 et
+Nginx 1.27. Le depot ne pin pas actuellement ses bases par digest ; ce lot ne
+change pas cette politique. Les tags restent mutables et les patches Alpine
+peuvent evoluer : conserver les rapports de build/scan et revalider les images
+apres toute actualisation. Un pin des digests multi-arch peut etre traite avec
+une strategie de maintenance des mises a jour dans un lot supply-chain distinct.
+
+The backend uses two official Node `22.23.3-alpine3.24` stages. Python/make/g++
+and `npm ci --omit=dev` stay in the dependency stage; only application modules
+and files are copied to the runtime. npm/npx/Yarn are removed. Both stages use
+the same musl/Alpine version, with SQLite and Sharp verified in the final images.
+
+The frontend build uses Node `22.23.3-trixie`, with Nginx
+`1.30.5-alpine3.24` serving the bundle. Targeted libexpat/pcre2 updates address
+fixes newer than the base. Nginx configuration, ports, proxy, SPA fallback,
+version metadata and volume permissions remain unchanged. amd64 and emulated
+arm64 builds/runtime tests are performed with Podman. The Dockerfiles and
+Compose remain compatible with Docker/Synology; physical NAS hardware is not
+part of the local validation.
+
+Base tags are explicit but not digest-pinned, consistent with current repository
+practice. Alpine patch resolution can change over time: record scans and
+revalidate updates. A maintained multi-arch digest policy is a future
+supply-chain task rather than an automatic expansion of this change.
