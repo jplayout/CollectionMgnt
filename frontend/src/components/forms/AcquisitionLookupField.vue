@@ -10,7 +10,7 @@
 
             <button
                 class="lookup-button"
-                :disabled="lookupLoading || !canLookup"
+                :disabled="disabled || lookupLoading || !canLookup"
                 type="button"
                 @click="lookup"
             >
@@ -35,13 +35,6 @@
                 :key="getSuggestionKey(suggestion)"
                 class="suggestion"
             >
-                <img
-                    v-if="getCoverUrl(suggestion)"
-                    alt=""
-                    class="suggestion-cover"
-                    :src="getCoverUrl(suggestion)"
-                >
-
                 <div class="suggestion-content">
                     <h3>{{ suggestion.title || 'Suggestion sans titre' }}</h3>
 
@@ -58,15 +51,26 @@
                     >
                         {{ suggestion.description }}
                     </p>
+
+                    <p v-if="suggestion.provider" class="suggestion-summary">
+                        Source : {{ getProviderName(suggestion.provider) }}
+                    </p>
                 </div>
 
                 <button
                     class="use-button"
+                    :disabled="disabled"
                     type="button"
                     @click="useSuggestion(suggestion)"
                 >
                     Utiliser
                 </button>
+                <AcquisitionMediaPicker
+                    :candidates="suggestion.mediaCandidates"
+                    :disabled="disabled"
+                    :model-value="mediaSelections[getSuggestionKey(suggestion)]"
+                    @update:model-value="selectMedia(suggestion, $event)"
+                />
             </article>
         </div>
     </div>
@@ -76,8 +80,12 @@
 import {
     computed,
     onMounted,
+    onBeforeUnmount,
     ref
 } from 'vue';
+
+import AcquisitionMediaPicker from '../acquisition/AcquisitionMediaPicker.vue';
+import { normalizeAcquisitionMediaCandidates } from '../../services/acquisition-media.js';
 
 import DynamicField
 from './DynamicField.vue';
@@ -93,6 +101,7 @@ import {
 
 const props =
     defineProps({
+        disabled: { type: Boolean, default: false },
         field: {
             required:
                 true,
@@ -119,6 +128,7 @@ const props =
 const emit =
     defineEmits([
         'apply-suggestion',
+        'media-selected',
         'update:modelValue'
     ]);
 
@@ -134,8 +144,15 @@ const lookupHasError =
 const suggestions =
     ref([]);
 
+const mediaSelections = ref({});
+const appliedSuggestionKey = ref(null);
+let lookupGeneration = 0;
+onBeforeUnmount(() => { lookupGeneration += 1; });
+
 const lookupEnabled =
     ref(true);
+
+const providers = ref([]);
 
 const canLookup =
     computed(
@@ -153,6 +170,8 @@ async function loadProviderCapabilities() {
 
         const response =
             await getAcquisitionProviders();
+
+        providers.value = response?.providers ?? [];
 
         lookupEnabled.value =
             Boolean(
@@ -176,6 +195,9 @@ async function loadProviderCapabilities() {
 
 function updateValue(value) {
 
+    lookupGeneration += 1;
+    lookupLoading.value = false;
+
     lookupMessage.value =
         '';
 
@@ -184,6 +206,10 @@ function updateValue(value) {
 
     suggestions.value =
         [];
+
+    mediaSelections.value = {};
+    appliedSuggestionKey.value = null;
+    emit('media-selected', { mode: 'none' });
 
     emit(
         'update:modelValue',
@@ -195,12 +221,14 @@ function updateValue(value) {
 async function lookup() {
 
     if (
-        !canLookup.value
+        props.disabled || lookupLoading.value || !canLookup.value
     ) {
 
         return;
 
     }
+
+    const generation = ++lookupGeneration;
 
     lookupLoading.value =
         true;
@@ -214,6 +242,10 @@ async function lookup() {
     suggestions.value =
         [];
 
+    mediaSelections.value = {};
+    appliedSuggestionKey.value = null;
+    emit('media-selected', { mode: 'none' });
+
     try {
 
         const response =
@@ -222,8 +254,14 @@ async function lookup() {
                     String(props.modelValue).trim()
             });
 
+        if (generation !== lookupGeneration) return;
+
         suggestions.value =
-            response?.results ?? [];
+            (response?.results ?? []).map((suggestion, index) => ({
+                ...suggestion,
+                mediaKey: `${generation}:${index}`,
+                mediaCandidates: normalizeAcquisitionMediaCandidates(suggestion)
+            }));
 
         if (
             suggestions.value.length === 0
@@ -236,6 +274,8 @@ async function lookup() {
 
     } catch (error) {
 
+        if (generation !== lookupGeneration) return;
+
         lookupHasError.value =
             true;
 
@@ -246,18 +286,29 @@ async function lookup() {
 
     } finally {
 
-        lookupLoading.value =
-            false;
+        if (generation === lookupGeneration) lookupLoading.value = false;
 
     }
 
 }
 
+function selectMedia(suggestion, selection) {
+    const key = getSuggestionKey(suggestion);
+    mediaSelections.value[key] = selection;
+    if (appliedSuggestionKey.value === key) emit('media-selected', selection);
+}
+
 function useSuggestion(suggestion) {
+
+    const key = getSuggestionKey(suggestion);
+    if (appliedSuggestionKey.value !== null && appliedSuggestionKey.value !== key) {
+        mediaSelections.value[appliedSuggestionKey.value] = { mode: 'none' };
+    }
+    appliedSuggestionKey.value = key;
 
     emit(
         'apply-suggestion',
-        suggestion
+        { ...suggestion, mediaSelection: mediaSelections.value[appliedSuggestionKey.value] ?? { mode: 'none' } }
     );
 
     lookupMessage.value =
@@ -311,6 +362,8 @@ function getLookupErrorMessage(error) {
 
 function getSuggestionKey(suggestion) {
 
+    if (suggestion.mediaKey !== undefined) return suggestion.mediaKey;
+
     return [
         suggestion.provider,
         suggestion.sourceUrl,
@@ -319,14 +372,6 @@ function getSuggestionKey(suggestion) {
     ]
         .filter(Boolean)
         .join('-');
-
-}
-
-function getCoverUrl(suggestion) {
-
-    return suggestion.images?.find(
-        image => image.kind === 'cover' && image.url
-    )?.url;
 
 }
 
@@ -340,6 +385,10 @@ function getSuggestionSummary(suggestion) {
         .filter(Boolean)
         .join(' · ');
 
+}
+
+function getProviderName(providerId) {
+    return providers.value.find(provider => provider.id === providerId)?.name ?? providerId;
 }
 </script>
 
@@ -399,15 +448,8 @@ function getSuggestionSummary(suggestion) {
     border-radius: 8px;
     display: grid;
     gap: 10px;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     padding: 10px;
-}
-
-.suggestion-cover {
-    border-radius: 4px;
-    height: 72px;
-    object-fit: cover;
-    width: 48px;
 }
 
 .suggestion-content {

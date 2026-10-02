@@ -14,8 +14,7 @@ import {
     ExportService
 } from './export-service.js';
 
-const APPLICATION_VERSION =
-    'v0.12-lot10.0.1';
+import { readProductVersion } from '../config/build-info.js';
 
 const BACKUP_FORMAT =
     'collectionmgnt.full-backup';
@@ -451,7 +450,7 @@ function createManifest({
         created_at:
             createdAt,
         application_version:
-            APPLICATION_VERSION,
+            readProductVersion(),
         includes_database:
             true,
         includes_media_files:

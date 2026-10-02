@@ -98,6 +98,7 @@ Renseigner les variables attendues dans Container Manager, ou dans le mécanisme
 JWT_SECRET=replace-with-a-random-secret-of-at-least-32-characters
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=replace-with-a-strong-password
+GOOGLE_BOOKS_API_KEY=
 FRONTEND_PORT=8080
 COLLECTIONMGNT_DATA_DIR=/volume1/docker/collectionmgnt/data
 ```
@@ -285,3 +286,21 @@ Correction :
 - L'accès mobile hors LAN dépend de la configuration réseau, du domaine, du certificat et du routage DSM.
 - La stratégie de rollback détaillée est couverte dans [Update & Rollback](update-rollback.md).
 - Ce guide ne modifie pas les images Docker, l'API, le backend, le frontend ou la base SQLite.
+
+## Google Books : configuration du fallback ISBN
+
+Renseigner `GOOGLE_BOOKS_API_KEY` dans l'environnement du projet Container Manager
+pour activer Google Books après Open Library. `deploy/compose.synology.yml`
+transmet la clé uniquement au backend, avec une valeur vide par défaut. Recréer
+le backend après modification. Sans clé, Google Books est désactivé ; une clé
+sans quota peut produire `provider_unavailable`, sans faux résultat vide.
+Ne pas versionner la clé et ne pas la transmettre au frontend.
+
+## English — Google Books ISBN fallback
+
+Set `GOOGLE_BOOKS_API_KEY` in the Container Manager project environment to enable
+Google Books after Open Library. The Synology Compose passes the key only to the
+backend with an empty default. Recreate the backend after changing it. Without
+a key, Google Books is disabled; exhausted quota produces `provider_unavailable`
+instead of a misleading empty lookup. Never commit the key or pass it to the
+frontend.

@@ -1,6 +1,6 @@
 # CI Et Tests
 
-Etat courant : v0.12-lot14.4.
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
 Ce document decrit les validations automatisees disponibles pour les
 contributeurs. Le projet privilegie une base simple et rapide plutot qu'une
@@ -116,8 +116,8 @@ Trivy local, si le binaire est installe :
 ```bash
 trivy fs --scanners vuln --vuln-type library backend
 trivy fs --scanners vuln --vuln-type library frontend
-docker build -t collectionmgnt-backend:trivy ./backend
-docker build -t collectionmgnt-frontend:trivy ./frontend
+node scripts/container.mjs build backend -t collectionmgnt-backend:trivy
+node scripts/container.mjs build frontend -t collectionmgnt-frontend:trivy
 trivy image --scanners vuln --vuln-type os,library collectionmgnt-backend:trivy
 trivy image --scanners vuln --vuln-type os,library collectionmgnt-frontend:trivy
 ```
@@ -292,3 +292,16 @@ node --version
 
 Le projet et la CI ciblent Node 22. Une version plus recente de Node peut ne pas
 etre compatible avec le binaire natif installe de `better-sqlite3`.
+
+## Version governance
+
+Project Conventions runs `node scripts/check-version-governance.mjs` without
+installing dependencies. The gate checks canonical [VERSION](../VERSION),
+SemVer validity, obsolete product versions, frontend version literals and npm
+manifest duplication. Backend tests cover reading, injection, development
+fallback and API metadata; Playwright checks Settings and build formatting.
+
+Les builds CI et Trivy passent par `scripts/container.mjs` avec
+`CONTAINER_ENGINE=docker` sur GitHub. Localement, le même lanceur utilise Podman.
+Les images partagent la version canonique et le SHA, ainsi que les labels OCI.
+Voir la [gouvernance FR/EN](version-governance.md).

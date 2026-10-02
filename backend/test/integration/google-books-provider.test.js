@@ -5,8 +5,107 @@ import {
 
 import { GoogleBooksProvider } from '../../src/acquisition/providers/google-books-provider.js';
 
+for (const apiKey of ['', '   ', null, 42]) {
+
+    test(`GoogleBooksProvider rejects missing configuration ${JSON.stringify(apiKey)} without fetching`, async () => {
+
+        let fetchCalls = 0;
+        const provider = new GoogleBooksProvider({
+            apiKey,
+            fetchImpl: async () => {
+                fetchCalls += 1;
+                throw new Error('Unconfigured provider must not fetch');
+            }
+        });
+
+        assert.equal(provider.describe().enabled, false);
+        assert.equal(provider.describe().requiresConfiguration, true);
+        await assert.rejects(() => provider.lookupIsbn('9782952221702'), {
+            code: 'provider_unavailable',
+            statusCode: 503
+        });
+        assert.equal(fetchCalls, 0);
+
+    });
+
+}
+
+test('GoogleBooksProvider describes configured capability without exposing the key', () => {
+
+    const provider = new GoogleBooksProvider({
+        apiKey: '  test-api-key  ',
+        fetchImpl: async () => createJsonResponse({})
+    });
+
+    assert.deepEqual(provider.describe(), {
+        capabilities: ['isbnLookup'],
+        enabled: true,
+        id: 'googlebooks',
+        name: 'Google Books',
+        plugin: 'books',
+        requiresConfiguration: true
+    });
+    assert.equal(provider.apiKey, 'test-api-key');
+    assert.equal(new GoogleBooksProvider({
+        apiKey: 'test-api-key',
+        fetchImpl: null
+    }).describe().enabled, false);
+
+});
+
+test('GoogleBooksProvider maps ISBN 979 without altering its prefix', async () => {
+
+    const isbn = '9791036362842';
+    const provider = new GoogleBooksProvider({
+        apiKey: 'test-api-key',
+        fetchImpl: async url => {
+            assert.equal(new URL(url).searchParams.get('q'), `isbn:${isbn}`);
+            return createJsonResponse({
+                totalItems: 1,
+                items: [{
+                    volumeInfo: {
+                        title: 'Murtagh',
+                        publisher: 'Bayard Jeunesse',
+                        industryIdentifiers: [{
+                            type: 'ISBN_13',
+                            identifier: isbn
+                        }]
+                    }
+                }]
+            });
+        }
+    });
+
+    const results = await provider.lookupIsbn(isbn);
+    assert.equal(results.length, 1);
+    assert.equal(results[0].title, 'Murtagh');
+    assert.equal(results[0].metadata.isbn, isbn);
+
+});
+
+test('GoogleBooksProvider maps quota HTTP 429 to provider_unavailable without exposing the payload', async () => {
+
+    const provider = new GoogleBooksProvider({
+        apiKey: 'test-api-key',
+        fetchImpl: async () => ({
+            ok: false,
+            status: 429,
+            async json() {
+                throw new Error('Raw quota payload must not be read');
+            }
+        })
+    });
+
+    await assert.rejects(() => provider.lookupIsbn('9782952221702'), {
+        code: 'provider_unavailable',
+        statusCode: 503,
+        message: 'Provider unavailable'
+    });
+
+});
+
 test(
-    'GoogleBooksProvider builds the lookup URL without an API key',
+    'GoogleBooksProvider builds the lookup URL with the required API key',
     async () => {
 
         const calls =
@@ -15,7 +114,7 @@ test(
         const provider =
             new GoogleBooksProvider({
                 apiKey:
-                    '',
+                    'test-api-key',
                 fetchImpl:
                     async url => {
 
@@ -62,10 +161,10 @@ test(
         );
 
         assert.equal(
-            url.searchParams.get(
+            url.searchParams.has(
                 'projection'
             ),
-            'lite'
+            false
         );
 
         assert.equal(
@@ -76,17 +175,17 @@ test(
         );
 
         assert.equal(
-            url.searchParams.has(
+            url.searchParams.get(
                 'key'
             ),
-            false
+            'test-api-key'
         );
 
     }
 );
 
 test(
-    'GoogleBooksProvider includes the optional API key when configured',
+    'GoogleBooksProvider includes the API key when configured',
     async () => {
 
         let requestedUrl =
@@ -134,6 +233,8 @@ test(
 
         const provider =
             new GoogleBooksProvider({
+                apiKey:
+                    'test-api-key',
                 fetchImpl:
                     async () => createJsonResponse({
                         items: [
@@ -233,6 +334,8 @@ test(
 
         const provider =
             new GoogleBooksProvider({
+                apiKey:
+                    'test-api-key',
                 fetchImpl:
                     async () => createJsonResponse({
                         items: [
@@ -267,6 +370,8 @@ test(
 
         const provider =
             new GoogleBooksProvider({
+                apiKey:
+                    'test-api-key',
                 fetchImpl:
                     async () => createJsonResponse({
                         items: [
@@ -319,6 +424,8 @@ test(
 
         const provider =
             new GoogleBooksProvider({
+                apiKey:
+                    'test-api-key',
                 fetchImpl:
                     async () => createJsonResponse({
                         items: [
@@ -365,6 +472,8 @@ test(
 
         const provider =
             new GoogleBooksProvider({
+                apiKey:
+                    'test-api-key',
                 fetchImpl:
                     async () => createJsonResponse({
                         items: [
@@ -408,6 +517,8 @@ test(
 
         const provider =
             new GoogleBooksProvider({
+                apiKey:
+                    'test-api-key',
                 fetchImpl:
                     async () => createJsonResponse({
                         items: [
@@ -448,6 +559,8 @@ test(
 
         const provider =
             new GoogleBooksProvider({
+                apiKey:
+                    'test-api-key',
                 fetchImpl:
                     async () => createJsonResponse({
                         items: [
@@ -499,6 +612,8 @@ test(
 
         const provider =
             new GoogleBooksProvider({
+                apiKey:
+                    'test-api-key',
                 fetchImpl:
                     async () => createJsonResponse({
                         totalItems:
@@ -522,6 +637,8 @@ test(
 
         const provider =
             new GoogleBooksProvider({
+                apiKey:
+                    'test-api-key',
                 fetchImpl:
                     async () => {
 
@@ -554,6 +671,8 @@ test(
 
         const provider =
             new GoogleBooksProvider({
+                apiKey:
+                    'test-api-key',
                 fetchImpl:
                     async () => {
 
@@ -583,7 +702,6 @@ for (
     const status
     of [
         403,
-        429,
         500
     ]
 ) {
@@ -594,6 +712,8 @@ for (
 
             const provider =
                 new GoogleBooksProvider({
+                    apiKey:
+                        'test-api-key',
                     fetchImpl:
                         async () => createJsonResponse(
                             {},
@@ -628,6 +748,8 @@ test(
 
         const provider =
             new GoogleBooksProvider({
+                apiKey:
+                    'test-api-key',
                 fetchImpl:
                     async () => ({
                         ok:

@@ -8,7 +8,7 @@ const SUCCESS_TTL_MS =
     7 * 24 * 60 * 60 * 1000;
 
 const EMPTY_TTL_MS =
-    24 * 60 * 60 * 1000;
+    60 * 60 * 1000;
 
 export class AcquisitionCache {
 

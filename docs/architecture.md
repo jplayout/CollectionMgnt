@@ -1,6 +1,6 @@
 # Architecture
 
-Etat courant : v0.12-lot11.3.
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
 Ce document est le point d'entree technique pour comprendre CollectionMgnt en
 moins de 30 minutes. Les documents specialises restent la source de detail pour

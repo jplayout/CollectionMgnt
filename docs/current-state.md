@@ -1,6 +1,14 @@
 # CollectionMgnt
 
-Version : v0.12-lot14.4
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
+
+## Gouvernance de version
+
+La version produit est lue depuis [VERSION](../VERSION) par l’API, les
+sauvegardes et Vite. Les paramètres séparent Version et Build (SHA court ou
+`development`). Les builds locaux et GHCR injectent les métadonnées et labels
+OCI ; Project Conventions contrôle l’unicité sans bump obligatoire par PR.
+Voir la [gouvernance FR/EN](version-governance.md).
 
 ## État du projet
 
@@ -57,7 +65,7 @@ Epic 11 Acquisition assistee :
 
 ### Actuelles
 
-- `books/isbnLookup` : lookup ISBN livre via Open Library et Google Books.
+- `books/isbnLookup` : lookup ISBN livre via Open Library, BnF et Google Books.
 - `movies/search` : recherche texte films via TMDb, avec query, langue, region
   et annee optionnelles.
 - `games/search` : recherche texte jeux via IGDB, avec query obligatoire,
@@ -103,7 +111,7 @@ Principes :
   - `consoles`
   - `others`
 - Fondations d'acquisition assistée livrées : champs identifiants `books.isbn`, `games.barcode`, `movies.barcode` et `others.barcode`
-- Lookup ISBN livre livré via backend providers Open Library et Google Books
+- Lookup ISBN livre livré via backend providers Open Library, BnF et Google Books
 - Orchestration acquisition livrée via `AcquisitionService`
 - Capability interne `movies/search` livrée pour préparer les providers films
   par recherche texte
@@ -171,7 +179,7 @@ Principes :
   via une route acquisition protegee JWT
 - Providers livrés :
   - `openlibrary`, sans clé API obligatoire
-  - `googlebooks`, sans clé API obligatoire, avec `GOOGLE_BOOKS_API_KEY` optionnelle
+  - `googlebooks`, actif uniquement avec `GOOGLE_BOOKS_API_KEY` configurée
   - `tmdb`, provider Movies configuré par `TMDB_API_READ_ACCESS_TOKEN`
   - `igdb`, Metadata Provider Games configuré par `IGDB_CLIENT_ID` et
     `IGDB_CLIENT_SECRET`
@@ -188,11 +196,12 @@ Principes :
   - clé `movies/search` incluant query, langue, région et année
   - clé `games/search` incluant query, langue, plateforme et année
   - résultats avec suggestions cachés 7 jours
-  - résultats vides cachés 24 heures
+  - résultats vides cachés 1 heure
   - erreurs provider, timeouts et ISBN invalides non cachés
   - aucune réponse brute provider ni image binaire stockée
 - Réponse API inchangée, sans champ `cached`
-- Fallback implicite Open Library -> Google Books actif pour le lookup ISBN livres
+- Fallback implicite Open Library -> BnF -> Google Books pour le lookup ISBN livres,
+  Google Books uniquement avec `GOOGLE_BOOKS_API_KEY` configurée
 - Résolution implicite/explicite prête pour les recherches texte films
 - TMDb retourne des suggestions film normalisées avec URLs poster distantes
   `w500`, sans téléchargement provider, sans endpoint details et sans IMDb ID
@@ -588,7 +597,8 @@ Variables disponibles pour le déploiement Docker local :
 - `PORT`
 - `DATA_DIR`
 - `PLUGINS_DIR`
-- `GOOGLE_BOOKS_API_KEY` optionnelle pour augmenter les quotas Google Books
+- `GOOGLE_BOOKS_API_KEY` requise pour activer Google Books, transmise au backend
+  par les Compose local et Synology, jamais au frontend
 - `TMDB_API_READ_ACCESS_TOKEN` optionnelle, requise pour activer le provider
   TMDb
 - `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET` optionnelles, requises pour activer
@@ -611,7 +621,7 @@ Variables disponibles :
 ### Docker local
 
 - `cp .env.example .env`
-- `docker compose up --build`
+- `node scripts/container.mjs compose up --build`
 - `docker-compose up --build`
 - `podman-compose up --build`
 - Frontend disponible sur `http://localhost:8080` par défaut
@@ -946,7 +956,7 @@ Variables disponibles :
 
 #### Livré
 
-- Exécution locale via `docker compose up --build`
+- Exécution locale via `node scripts/container.mjs compose up --build`
 - Exécution locale validée aussi via `podman-compose up --build`
 - Backend Docker Node 22 avec commande de production `node src/server.js`
 - Port backend configurable via `PORT`, avec défaut 3000
@@ -1270,3 +1280,101 @@ Variables disponibles :
 - Priorité à la simplicité de déploiement
 - Pas de dépendances inutiles
 - Frontend piloté par les schémas plugins
+
+## Acquisition : erreurs et configuration Google Books
+
+Open Library reste prioritaire, suivi du SRU public BnF. Google Books sert de
+fallback complémentaire uniquement avec
+`GOOGLE_BOOKS_API_KEY` configurée. Sans clé, il est désactivé et aucun appel
+anonyme n'est effectué. HTTP 429 Google Books devient `provider_unavailable`.
+
+Le premier résultat exploitable gagne. Sans résultat, toute erreur technique
+sur un provider tenté est propagée ; `200` / `results: []` est réservé aux
+recherches dont tous les providers tentés ont terminé proprement avec une
+réponse vide. Cette règle couvre ISBN, films et jeux, y compris un résultat vide
+lu depuis le cache. L'UI réutilise ses messages d'erreur, le scanner et le cache
+par provider ne changent pas. Les tests permanents restent sans appels externes.
+
+## English — acquisition failures and Google Books configuration
+
+Open Library remains first, followed by public BnF SRU. Google Books is enabled
+as the final fallback only with a
+configured `GOOGLE_BOOKS_API_KEY`, passed to the backend by local and Synology
+Compose files. Without a key it is disabled and makes no anonymous requests.
+Google Books HTTP 429 maps to `provider_unavailable`.
+
+The first useful result wins. If no result is found, any technical failure from
+an attempted provider is propagated. HTTP 200 / `results: []` is reserved for
+clean empty completion of all attempted providers, including cached empties.
+This covers ISBN, movie and game searches. The existing UI error handling is
+reused, scanner and provider-scoped cache behavior are unchanged, and permanent
+tests never call external services.
+
+## Acquisition BnF : couverture ISBN française
+
+- Ordre livres : **Open Library -> BnF -> Google Books** ; sans cle Google Books :
+  **Open Library -> BnF**.
+- BnF SRU public sans authentification, une requete ISBN/EAN combinee, cinq
+  notices maximum ; seules les notices avec identifiant correspondant sont retenues.
+- XML parse avec `fast-xml-parser` 5.11.2 (MIT), version exacte auditee avant ajout.
+- Suggestions BnF avec attribution visible, champs disponibles et ARK ; aucune
+  date complete ni couverture n'est inventee. Le scanner et les TTL restent inchanges.
+- Google Books exige toujours `GOOGLE_BOOKS_API_KEY`, avec `projection=lite`
+  supprime pour robustesse ; aucune variante raw/quoted/ISBN-10 n'est ajoutee.
+- Couvertures BnF beta : futur Media Provider, hors perimetre de ce lot (ADR-0009).
+
+## English — BnF metadata coverage
+
+Books resolve Open Library -> public BnF SRU -> configured Google Books, or
+Open Library -> BnF without a Google key. BnF combines ISBN/EAN in one request,
+validates matching identifiers and maps available metadata/ARKs with source
+attribution. XML parsing uses audited, pinned MIT-licensed `fast-xml-parser`
+5.11.2. Scanner and cache semantics are unchanged. Google Books still requires
+`GOOGLE_BOOKS_API_KEY`; `projection=lite` is removed without alternate queries.
+BnF covers remain a future Media Provider concern under ADR-0009.
+
+## Resilience acquisition livres apres validation terrain
+
+- Timeout BnF specifique : 8 s ; les autres providers conservent leur timeout.
+- Cache provider : succes 7 jours, resultat vide 1 h, erreurs techniques non cachees.
+- Un cache vide Open Library expire provoque un nouvel appel ; un succes arrete
+  immediatement le fallback. La semantique AcquisitionService reste inchangee.
+- Aucun retry automatique, IPv4 force ni changement de schema DB.
+
+Le cas ISBN `9782952221702` a revele un ancien cache Open Library vide et un
+fallback BnF lent sur Synology, avec `provider_timeout` dans l'UI. Apres purge,
+Open Library retournait une suggestion et l'UI fonctionnait correctement.
+Les mesures et le diagnostic reseau sont documentes dans
+[les providers acquisition](acquisition-providers.md#resilience-apres-validation-terrain).
+
+## AcquisitionMediaPicker — premiere integration livres
+
+- Composant generique `AcquisitionMediaPicker.vue` : candidats normalises,
+  selection distante, fichier local ou aucune image ; premiere URL HTTPS valide
+  preselectionnee, choix modifiable avant creation.
+- Adaptateur frontend des images Open Library, Google Books, TMDb et IGDB :
+  contrat backend conserve, provenance disponible conservee temporairement,
+  aucune information absente inventee. Aucun candidat couverture BnF ajoute.
+- Livre : creation de l'item puis import distant securise ou upload local via
+  MediaService, avec media principal. Echec media non bloquant, avertissement sur
+  la fiche et galerie disponible pour ajouter/remplacer l'image.
+- Aucun media persiste avant creation, aucune URL distante ajoutee aux metadata,
+  aucun lookup additionnel, aucune nouvelle recherche externe ni migration DB.
+- Modele media sans champs de provenance ; attribution/licence restent
+  temporaires. Films et jeux gardent leur UX de confirmation depuis la fiche.
+- Tests Playwright avec l'ISBN `9782952221702` (Open Library controle), choix
+  par defaut/modifie/aucun/local, ordre creation-import, erreurs non bloquantes,
+  media principal et candidats generiques TMDb poster / IGDB cover.
+
+## English — acquisition media picker
+
+The generic picker is integrated into book suggestions. Existing metadata
+provider images are normalized without changing the backend contract or inventing
+missing credits/licenses. The first valid HTTPS candidate is preselected; users
+can change it, choose a local file, or no image. Creation happens before secure
+remote import or local upload via MediaService, with primary media enabled.
+Import failure preserves the item and shows a warning beside its available
+gallery. Selection/provenance remain temporary; no media provenance DB fields or
+migration are introduced. Movies/games retain gallery confirmation, while their
+poster/cover candidates are supported by the component API. No external media
+search or extra lookup is introduced.

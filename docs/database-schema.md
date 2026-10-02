@@ -1,6 +1,6 @@
 # Database Schema
 
-Etat courant : v0.12-lot11.3.
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
 La source de verite SQL est `backend/src/database/schema.sql`.
 Ce document explique le modele pour comprendre la base sans ouvrir le fichier

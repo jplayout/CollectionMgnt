@@ -30,7 +30,7 @@ qui doivent être configurés dans l'interface ou via l'API GitHub.
 
 - CI backend/frontend, Playwright, Docker et whitespace.
 - Project Conventions : titre PR, nom de branche, whitespace, Markdown, liens
-  internes et gates Documentation & Architecture.
+  internes, unicité de version et gates Documentation & Architecture.
 - CodeQL pour l'analyse JavaScript.
 - Semgrep pour le scan SAST JavaScript/Vue/Node.
 - Trivy pour les vulnérabilités `HIGH` et `CRITICAL` des dépendances et images.
@@ -117,3 +117,16 @@ regularly because they are not fully represented by repository files.
 - Keep Dependabot Alerts and Code Scanning visible in the Security tab.
 - Use Security Advisories to coordinate vulnerabilities before disclosure.
 - Align Required Status Checks with blocking gates.
+
+## Version produit / Product version
+
+Project Conventions exécute `node scripts/check-version-governance.mjs`.
+[VERSION](../VERSION) est la seule source produit ; aucun bump par PR n’est
+imposé. Les builds CI et Trivy utilisent le lanceur de métadonnées partagé.
+Le workflow GHCR injecte la version canonique et le SHA dans les deux images,
+avec leurs labels OCI ; les déclencheurs et tags restent identiques.
+
+Project Conventions validates the sole [VERSION](../VERSION) source without
+requiring a bump for each PR. CI, Trivy and GHCR inject the same version and Git
+revision into both images. Publication triggers and tags remain unchanged.
+See [version governance](version-governance.md).

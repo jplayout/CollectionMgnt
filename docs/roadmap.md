@@ -8,7 +8,7 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 
 ## État actuel
 
-- Version actuelle : v0.12-lot14.4.
+- Statut : développement. Version produit canonique : [VERSION](../VERSION).
 - Dernier lot livré : Lot 14.4 - Security Governance.
 
 Capacités disponibles :
@@ -22,7 +22,7 @@ Capacités disponibles :
 - Script de pack média de démonstration avec images PNG générées et uploadées via l'API média.
 - CRUD items, validation dynamique, recherche, filtres, pagination, tri et vues cartes/liste.
 - Fondations identifiants `isbn` / `barcode` livrées pour livres, jeux, films et autres.
-- Lookup ISBN livre livré via Open Library et Google Books, backend uniquement.
+- Lookup ISBN livre livré via Open Library, BnF et Google Books, backend uniquement.
 - Pré-remplissage frontend local disponible dans le formulaire livre.
 - Orchestration acquisition livrée via `AcquisitionService`.
 - Résolution multi-provider acquisition livrée côté backend.
@@ -103,7 +103,7 @@ Limites majeures connues :
 
 ### Actuelles
 
-- `books/isbnLookup` : lookup ISBN livre via Open Library et Google Books.
+- `books/isbnLookup` : lookup ISBN livre via Open Library, BnF et Google Books.
 - `movies/search` : recherche texte films via TMDb, avec query, langue, region
   et annee optionnelles.
 - `games/search` : recherche texte jeux via IGDB, avec query obligatoire,
@@ -358,7 +358,7 @@ Phase 3 — Lookup livres :
 
 - Premier cas cible livré : livres.
 - Recherche via Open Library livrée.
-- Google Books livré comme provider secondaire et fallback implicite.
+- BnF livré comme provider public secondaire ; Google Books reste le fallback complémentaire configuré.
 - Pré-remplissage disponible :
   - titre
   - auteur
@@ -433,8 +433,9 @@ Phase 5 — Extension progressive :
 #### Lot 11.4.1 - Google Books Provider - Livré
 
 - Google Books ajouté comme source livre complémentaire.
-- Fallback implicite Open Library -> Google Books actif pour le lookup ISBN livres.
-- `GOOGLE_BOOKS_API_KEY` disponible comme configuration optionnelle.
+- Fallback implicite Open Library -> Google Books pour le lookup ISBN livres,
+  actif uniquement avec `GOOGLE_BOOKS_API_KEY` configurée.
+- `GOOGLE_BOOKS_API_KEY` est désormais requise pour activer Google Books.
 - Contrat API public conservé, sans changement frontend.
 - Aucun import image, aucune fusion automatique et aucun cache global ajoutés.
 
@@ -1005,7 +1006,7 @@ Travaux futurs :
 
 #### Lot 6.0.1 - Livré
 
-- Exécution locale via `docker compose up --build`, `docker-compose up --build` ou `podman-compose up --build`
+- Exécution locale via `node scripts/container.mjs compose up --build`
 - Service backend Node 22 lancé avec `node src/server.js`
 - Port backend interne 3000, configurable côté hôte via `BACKEND_PORT`
 - Chemins backend configurables via `DATA_DIR` et `PLUGINS_DIR`
@@ -1033,8 +1034,8 @@ Travaux futurs :
   - `npm ci` dans `frontend/`
   - `npm exec vite build`
 - Job Docker après succès backend et frontend :
-  - `docker build -t collectionmgnt-backend ./backend`
-  - `docker build -t collectionmgnt-frontend ./frontend`
+  - `node scripts/container.mjs build backend -t collectionmgnt-backend`
+  - `node scripts/container.mjs build frontend -t collectionmgnt-frontend`
 - Aucune publication d'image dans ce lot
 - Pas de release GitHub, pas de GHCR, pas de Docker Hub
 - Aucun test applicatif n'est lancé actuellement, faute de script `test` existant
@@ -1471,3 +1472,82 @@ Travaux futurs :
 
 - Synology NAS
 - Docker Compose
+
+## Correction acquisition : recherche incomplète
+
+- Les erreurs techniques des providers tentés ne sont plus masquées par un
+  résultat vide lorsqu'aucune suggestion n'a été trouvée.
+- Google Books exige `GOOGLE_BOOKS_API_KEY`, transmise uniquement au backend par
+  les Compose local et Synology ; Open Library reste prioritaire.
+- HTTP 429 Google Books devient `provider_unavailable` ; tests de régression
+  sur vide/erreur, cache, configuration et ISBN 979, sans appels externes.
+
+## English — incomplete acquisition searches
+
+- Attempted provider failures are propagated when no suggestion is found;
+  an empty response no longer hides an incomplete search.
+- Google Books requires `GOOGLE_BOOKS_API_KEY`, passed only to the backend by
+  local and Synology Compose files. Open Library remains first.
+- Google Books HTTP 429 becomes `provider_unavailable`; regression tests cover
+  empty/error combinations, cache, configuration and ISBN 979 without external
+  requests.
+
+## Acquisition BnF : couverture ISBN française
+
+- Ordre livres : **Open Library -> BnF -> Google Books** ; sans cle Google Books :
+  **Open Library -> BnF**.
+- BnF SRU public sans authentification, une requete ISBN/EAN combinee, cinq
+  notices maximum ; seules les notices avec identifiant correspondant sont retenues.
+- XML parse avec `fast-xml-parser` 5.11.2 (MIT), version exacte auditee avant ajout.
+- Suggestions BnF avec attribution visible, champs disponibles et ARK ; aucune
+  date complete ni couverture n'est inventee. Le scanner et les TTL restent inchanges.
+- Google Books exige toujours `GOOGLE_BOOKS_API_KEY`, avec `projection=lite`
+  supprime pour robustesse ; aucune variante raw/quoted/ISBN-10 n'est ajoutee.
+- Couvertures BnF beta : futur Media Provider, hors perimetre de ce lot (ADR-0009).
+
+## English — BnF metadata coverage
+
+Books resolve Open Library -> public BnF SRU -> configured Google Books, or
+Open Library -> BnF without a Google key. BnF combines ISBN/EAN in one request,
+validates matching identifiers and maps available metadata/ARKs with source
+attribution. XML parsing uses audited, pinned MIT-licensed `fast-xml-parser`
+5.11.2. Scanner and cache semantics are unchanged. Google Books still requires
+`GOOGLE_BOOKS_API_KEY`; `projection=lite` is removed without alternate queries.
+BnF covers remain a future Media Provider concern under ADR-0009.
+
+## Gouvernance de version produit
+
+- Source canonique [VERSION](../VERSION), indépendante des numéros de lots.
+- API, sauvegardes, Vite et images raccordés à cette source.
+- SHA de build séparé, injecté à la publication, calculé en développement.
+- Labels OCI version, revision et source ; gate d’unicité Project Conventions.
+- Aucun bump imposé à chaque PR. Voir la [gouvernance FR/EN](version-governance.md).
+
+## Acquisition media picker — livre et API generique
+
+Livre : premiere image HTTPS valide preselectionnee, « Changer l’image » avec
+candidats provider existants, fichier local ou aucune image. Le composant
+`AcquisitionMediaPicker` est generique et compatible avec posters TMDb et covers
+IGDB ; leur integration visuelle reste future, avec UX actuelle conservee.
+La creation de l'item precede l'import via MediaService et l'image devient
+principale. Les erreurs image conservent l'item et affichent un avertissement.
+La provenance reste temporaire faute de champs media existants ; pas de schema DB.
+
+Le futur lot `feature/acquisition-media-search` pourra couvrir la recherche de
+medias multi-provider, nouveaux Media Providers (dont BnF Covers ou ScreenScraper)
+et, selon cadrage, recherche web, edition/crop ou galerie avancee.
+Aucun de ces sujets, ni saisie manuelle d'URL distante, n'est implemente ici.
+
+## English — acquisition media picker and follow-up
+
+Book users can change a preselected provider image, choose a local file or no
+image. The generic picker also supports TMDb posters and IGDB covers; movie/game
+visual integration remains future and their current UX is preserved. Item
+creation precedes import through MediaService as primary media; import failure
+keeps the item and displays a warning. Available provenance stays temporary;
+no DB schema change. Existing provider contracts and secure import/upload paths
+are reused without extra lookups or external search.
+
+`feature/acquisition-media-search` is the follow-up for external media search,
+additional media providers, multi-provider candidates and separately scoped
+editing/crop or advanced gallery work. No such features ship in this iteration.

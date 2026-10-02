@@ -1,6 +1,6 @@
 # Sauvegarde Et Restauration
 
-Etat courant : v0.12-lot10.0.1.
+Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
 Ce document decrit l'etat reel du projet : la sauvegarde ZIP existe, mais la
 restauration complete n'est pas encore implementee.
