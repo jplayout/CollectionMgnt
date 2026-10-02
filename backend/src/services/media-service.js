@@ -1,3 +1,4 @@
+import { getSafeMediaPath } from '../security/media-path.js';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
@@ -7,10 +8,6 @@ import sharp from 'sharp';
 import {
     MediaRepository
 } from '../repositories/media-repository.js';
-
-import {
-    getUploadPath
-} from '../config/paths.js';
 
 export const ALLOWED_MEDIA_MIME_TYPES = new Map([
     [
@@ -116,25 +113,29 @@ export class MediaService {
         const filename =
             `${mediaId}.${getExtension(data.mimeType)}`;
 
-        const filePath =
-            getMediaFilePath(
-                item.id,
-                filename
-            );
-
-        const optimizedPath =
-            getOptimizedFilePath(
-                item.id,
-                mediaId
-            );
-
-        const thumbnailPath =
-            getThumbnailFilePath(
-                item.id,
-                mediaId
-            );
+        let filePath;
+        let optimizedPath;
+        let thumbnailPath;
 
         try {
+
+            filePath =
+                getMediaFilePath(
+                    item.id,
+                    filename
+                );
+
+            optimizedPath =
+                getOptimizedFilePath(
+                    item.id,
+                    mediaId
+                );
+
+            thumbnailPath =
+                getThumbnailFilePath(
+                    item.id,
+                    mediaId
+                );
 
             await fsp.mkdir(
                 path.dirname(filePath),
@@ -191,17 +192,9 @@ export class MediaService {
                 mediaId
             );
 
-            await removeFileIfExists(
-                filePath
-            );
-
-            await removeFileIfExists(
-                optimizedPath
-            );
-
-            await removeFileIfExists(
-                thumbnailPath
-            );
+            for (const validatedPath of [filePath, optimizedPath, thumbnailPath]) {
+                if (validatedPath) await removeFileIfExists(validatedPath);
+            }
 
             throw error;
 
@@ -600,61 +593,20 @@ function getExtension(mimeType) {
 
 }
 
-function getMediaFilePath(
-    itemId,
-    filename
-) {
-
-    return path.join(
-        getUploadPath(),
-        'items',
-        String(itemId),
-        'originals',
-        filename
-    );
-
+function getMediaFilePath(itemId, filename) {
+    return getSafeMediaPath(itemId, 'originals', filename);
 }
 
-function getItemMediaDirectory(
-    itemId
-) {
-
-    return path.join(
-        getUploadPath(),
-        'items',
-        String(itemId)
-    );
-
+function getItemMediaDirectory(itemId) {
+    return getSafeMediaPath(itemId);
 }
 
-function getOptimizedFilePath(
-    itemId,
-    mediaId
-) {
-
-    return path.join(
-        getUploadPath(),
-        'items',
-        String(itemId),
-        'images',
-        `${mediaId}.webp`
-    );
-
+function getOptimizedFilePath(itemId, mediaId) {
+    return getSafeMediaPath(itemId, 'images', `${mediaId}.webp`);
 }
 
-function getThumbnailFilePath(
-    itemId,
-    mediaId
-) {
-
-    return path.join(
-        getUploadPath(),
-        'items',
-        String(itemId),
-        'thumbs',
-        `${mediaId}.webp`
-    );
-
+function getThumbnailFilePath(itemId, mediaId) {
+    return getSafeMediaPath(itemId, 'thumbs', `${mediaId}.webp`);
 }
 
 async function removeFileIfExists(filePath) {

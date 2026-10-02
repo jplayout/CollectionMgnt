@@ -1,3 +1,4 @@
+import { hasNoSymlinkComponents } from '../security/media-path.js';
 import {
     ZipArchive
 } from 'archiver';
@@ -284,6 +285,8 @@ async function listFilesForArchive({
 
     const resolvedSourceRoot =
         path.resolve(
+            // sourceRoot is only configured uploads/items or PLUGINS_DIR; root symlinks are refused.
+            // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
             sourceRoot
         );
 
@@ -303,6 +306,13 @@ async function listFilesForArchive({
 
         return [];
 
+    }
+
+    const rootStat = await fs.lstat(resolvedSourceRoot);
+    if (rootStat.isSymbolicLink() ||
+        (archiveRoot === MEDIA_ARCHIVE_PATH && !hasNoSymlinkComponents(resolvedSourceRoot))) {
+        warnings.push(createWarning('BACKUP_SYMLINK_SKIPPED', 'Symbolic link roots are not included in backups.', archiveRoot));
+        return [];
     }
 
     const files = [];
@@ -367,7 +377,11 @@ async function collectFiles({
 
         const absolutePath =
             path.join(
+                // sourceDirectory is the configured backup root or a recursively lstat-checked directory.
+                // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
                 sourceDirectory,
+                // entry.name is a readdir basename; lstat excludes symlinks before archiving.
+                // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
                 entry.name
             );
 

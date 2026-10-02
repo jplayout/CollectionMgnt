@@ -32,6 +32,8 @@ const files =
         directory => listJavaScriptFiles(
             path.join(
                 BACKEND_ROOT,
+                // directory is from the fixed scripts/src/test list.
+                // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
                 directory
             )
         )
@@ -96,7 +98,11 @@ function listJavaScriptFiles(
 
         const entryPath =
             path.join(
+                // directory is rooted at BACKEND_ROOT; recursion uses readdir directory entries.
+                // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
                 directory,
+                // entry.name is a readdir basename; isDirectory excludes symlink directories.
+                // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
                 entry.name
             );
 

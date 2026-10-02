@@ -300,3 +300,25 @@ files use the existing multipart upload, and primary media is set in that call.
 All existing SSRF/DNS/redirect/HTTPS/MIME/size/dimension protections remain.
 Failures preserve the created item and show a warning. Available provenance
 stays temporary because there are no media provenance DB fields.
+
+## Controle des chemins medias / Media path checks
+
+Les chemins medias utilisent des IDs entiers positifs, les repertoires fixes
+`originals`, `images`, `thumbs` et des noms `<id>.jpg|png|webp`. Les noms recus de
+la base sont valides avant lecture ou suppression. L'audit signale les noms
+invalides avec `MEDIA_PATH_UNSAFE` sans acceder a la cible.
+
+Lecture, ecriture, audit, nettoyage et backup refusent les symlinks sous
+`DATA_DIR`, y compris les parents existants. Le nettoyage garde son controle
+`uploads/items` et ses IDs issus du preview serveur. Un symlink n'autorise pas
+la suppression de fichiers exterieurs. `DATA_DIR` reste une configuration de
+l'operateur ; ces controles ne constituent pas une isolation contre un processus
+local qui peut modifier simultanement les repertoires de l'application.
+
+Media paths use positive integer IDs, fixed directories and generated image
+filenames. Database filenames are validated before use. The audit reports
+`MEDIA_PATH_UNSAFE` for malformed names. Media operations, cleanup and backup
+refuse existing symlink components below `DATA_DIR`. Cleanup also keeps its
+`uploads/items` containment and server-generated preview IDs. The configured
+data root is trusted; these checks do not provide isolation from concurrent
+filesystem changes by a local process with write access.

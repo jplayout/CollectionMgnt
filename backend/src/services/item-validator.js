@@ -1,3 +1,5 @@
+import { RE2JS } from 're2js';
+
 export function validateItem(
     plugin,
     payload
@@ -611,14 +613,21 @@ function validatePattern(
 
     }
 
+    if (typeof field.pattern !== 'string' || field.pattern.length > 1024) {
+        errors.push(`${field.name} has an invalid pattern`);
+        return;
+    }
+    if (typeof value !== 'string' || value.length > 16384) {
+        errors.push(`${field.name} exceeds the pattern input limit (16384 characters)`);
+        return;
+    }
+
     let regex;
 
     try {
 
         regex =
-            new RegExp(
-                field.pattern
-            );
+            RE2JS.compile(RE2JS.translateRegExp(field.pattern));
 
     } catch {
 
@@ -631,7 +640,7 @@ function validatePattern(
     }
 
     if (
-        !regex.test(value)
+        !regex.matcher(value).find()
     ) {
 
         errors.push(
