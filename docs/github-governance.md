@@ -186,14 +186,13 @@ suivants comme Required sur `main`, avec leurs noms GitHub exacts :
 - `Trivy`
 
 Lecture API du 2 octobre 2026 actualisee : les neuf checks listes ci-dessus
-sont Required, avec branche a jour exigee. Aucun ruleset
-additionnel n'est configure. Le lot des security gates n'a modifie aucun parametre GitHub et
+sont Required, avec branche a jour exigee. Cette observation historique precede le ruleset `Human Review` decrit ci-dessous. Le lot des security gates n'a modifie aucun parametre GitHub et
 n'a ajoute aucun auto-merge. Semgrep et Trivy utilisent `pull_request` sans
 exception Dependabot ; leur echec empeche le merge car ces checks sont Required.
 
 Before `ci/dependabot-auto-merge`, manually require all checks listed above.
 The updated read-only API inspection on 2 October 2026 found all nine checks
-required, with strict up-to-date enforcement, and no additional rulesets.
+required, with strict up-to-date enforcement, before the `Human Review` ruleset described below was configured.
 Semgrep and Trivy run on all pull requests, including Dependabot, without a
 failure bypass. Failed security checks prevent merging because they are configured as Required.
 The security gate batch changed no GitHub settings or auto-merge behavior.
@@ -209,44 +208,53 @@ hardening in a future supply-chain batch without changing the action version her
 
 ## Dependabot auto-merge / Fusion automatique Dependabot
 
-Le workflow `Dependabot Auto Merge` utilise `pull_request` (`opened`,
-`synchronize`, `reopened`), uniquement pour `dependabot[bot]` dans
-`jplayout/CollectionMgnt`. Il ne fait aucun checkout. Seul `GITHUB_TOKEN` est
-utilise, avec `contents: write` et `pull-requests: write`. L'action officielle
-`dependabot/fetch-metadata` est fixee par SHA ; ses verifications auteur/commits
-restent actives.
+Le workflow `Dependabot Auto Merge` utilise seulement `pull_request` (`opened`,
+`synchronize`, `reopened`) vers `main`. Le job exige que l'acteur et l'auteur
+soient tous deux `dependabot[bot]`, que le depot soit `jplayout/CollectionMgnt`
+et que les depots source et cible de la PR correspondent au depot courant.
+Une PR humaine ou un evenement initie par un humain sur une PR Dependabot
+n'execute pas le job. Aucun checkout ni `pull_request_target` n'est utilise.
 
-Les types metadata `version-update:semver-patch` et `version-update:semver-minor`
-sont auto-approuves, puis `gh pr merge --auto --merge` active l'auto-merge GitHub.
-Les majors, types inconnus ou absents restent manuels, sans approval ni activation
-et avec un message explicite. Les security updates suivent la meme politique.
-Pour les groupes, le type fourni par l'action est le niveau SemVer le plus eleve :
-patch + minor est automatisable ; patch + major reste manuel.
+`GITHUB_TOKEN` reste en lecture seule (`contents: read`, `pull-requests: read`)
+pour `dependabot/fetch-metadata`, dont le SHA et les verifications sont conserves.
+Seuls `version-update:semver-patch` et `version-update:semver-minor` permettent
+la creation d'un token de l'App `CollectionMgnt Dependabot Merger` et la demande
+`gh pr merge --auto --merge`, sans approval artificielle ni option `--admin`.
+Les majors et types inconnus ou absents restent manuels : aucun token App,
+aucune approval et aucune demande d'auto-merge. Les groupes suivent le niveau
+SemVer maximal fourni par metadata ; les security updates suivent cette politique.
 
-Le workflow n'attend pas les checks. GitHub realise la fusion seulement quand
-la review requise, les neuf Required checks listes ci-dessus et toutes les autres
-protections sont satisfaits. Aucun `--admin`, bypass ou desactivation de protection.
-Les reexecutions verifient l'approval du bot sur le SHA courant et l'auto-merge
-existant ; une nouvelle revision requiert une nouvelle approval. Les erreurs CLI
-ne sont pas ignorees. Un head devenu obsolete est laisse au run `synchronize`.
+L'action `actions/create-github-app-token` est fixee au SHA de v3.2.0.
+Elle utilise uniquement les secrets Dependabot `DEPENDABOT_MERGER_CLIENT_ID`
+et `DEPENDABOT_MERGER_PRIVATE_KEY`, sans afficher leurs valeurs ni ecrire la cle
+privee dans un fichier. Sans `owner` ni `repositories`, le token reste limite
+au depot courant, avec `permission-contents: write` et
+`permission-pull-requests: write`. La revocation de fin de job reste active.
+Toutes les operations d'ecriture utilisent ce token App.
 
-Prerequis avant activation : auto-merge et merge commits autorises, approvals
-GitHub Actions autorisees, une review obligatoire et les neuf checks Required.
-Audit lecture seule actualise du 2 octobre 2026 : auto-merge, merge commits et
-approvals Actions autorises, une review requise et les neuf checks Required.
-Les prerequis sont satisfaits.
-Aucun repository setting n'est modifie par ce lot.
+Configuration GitHub fournie pour ce changement : la protection de `main`
+impose les neuf Required checks listes ci-dessus. Le ruleset separe
+`Human Review` exige une approval et une Code Owner review. L'App est installee
+uniquement sur CollectionMgnt et peut bypasser uniquement ce ruleset, en mode
+`For pull requests only`. Elle ne peut pas bypasser les required checks.
+Les PR humaines restent soumises a la review, y compris Code Owner.
+Cette configuration est geree cote GitHub ; ce changement ne la modifie pas
+et ne constitue pas un nouvel audit API des protections.
 
-The workflow only handles Dependabot PRs in this repository, using `GITHUB_TOKEN`
-and SHA-pinned official metadata without checkout. Patch/minor updates are
-approved and GitHub auto-merge is enabled; major or unknown/missing types remain
-manual. Grouped updates use the highest SemVer level from metadata, and security
-updates follow the same policy. Reruns detect the bot's current-head approval and
-existing auto-merge; CLI errors are not swallowed.
+L'auto-merge et les merge commits doivent etre autorises cote GitHub.
+Le workflow n'attend pas les checks : GitHub bloque la fusion tant qu'un check
+requis echoue ou reste en attente. Une reexecution detecte l'auto-merge existant
+sans nouvelle demande. Le head est verifie avant la demande et fixe avec
+`--match-head-commit` ; un head obsolete est laisse au run `synchronize`.
+Les erreurs CLI ne sont pas ignorees. Le titre et le body ne sont pas utilises,
+et les valeurs de contexte passent par des variables d'environnement citees.
 
-GitHub waits for the required review, all nine Required checks listed above and
-all other protections before merging. The workflow does not wait for checks or
-bypass protections. Before activation, enable the repository prerequisites and
-require all nine checks. The updated read-only audit found auto-merge and merge commits enabled, Actions
-approvals allowed, one required review and all nine Required checks. The
-prerequisites are satisfied. No repository settings are changed.
+The workflow requires both actor and PR author to be Dependabot, with source
+and target in this repository and base branch `main`. Read-only `GITHUB_TOKEN`
+fetches verified metadata. Only patch/minor updates create a repository-scoped
+App token with contents and pull requests write permissions to enable auto-merge.
+Major and unknown types remain manual, without a token, approval or merge request.
+The App bypasses only `Human Review` for pull requests; all nine required checks
+remain mandatory. Human PRs still require approval and Code Owner review.
+No checkout, artificial approval, administrative bypass or GitHub setting change
+is introduced. Reruns detect existing auto-merge and guard against stale heads.

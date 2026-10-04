@@ -352,11 +352,37 @@ baseline is tolerated, and no Trivy ignore or gate bypass is added.
 
 ## Dependabot automation validation / Validation automatisation Dependabot
 
-`Dependabot Auto Merge` ne remplace aucun gate CI. Il approuve uniquement les
-patch/minor Dependabot et active l'auto-merge GitHub ; majors et metadata inconnue
-restent manuelles. Les neuf Required checks et la review restent obligatoires.
-Voir les prerequis et l'audit dans [GitHub governance](github-governance.md).
+`Dependabot Auto Merge` ne remplace aucun gate CI et ne cree aucune approval.
+Les patch/minor utilisent le token de `CollectionMgnt Dependabot Merger` pour
+activer l'auto-merge ; majors et metadata inconnue restent manuels sans token.
+Les neuf Required checks restent obligatoires. Seul le ruleset `Human Review`
+peut etre bypasse par l'App, en mode `For pull requests only`.
+Voir la configuration dans [GitHub governance](github-governance.md).
 
-Dependabot automation does not replace CI gates. Patch/minor updates can receive
-approval and auto-merge; majors and unknown metadata remain manual. GitHub must
-enforce all nine Required checks and the required review before merging.
+Scenarios attendus (les protections GitHub ne doivent pas etre contournees
+pour les tester) :
+
+| Scenario | Resultat attendu |
+| --- | --- |
+| Dependabot patch | Token App cree ; auto-merge demande. |
+| Dependabot minor | Token App cree ; auto-merge demande. |
+| Dependabot major | Manuel ; aucun token, approval ou auto-merge. |
+| Type inconnu ou absent | Fail closed ; aucune action privilegiee. |
+| PR humaine | Job ignore ; aucun secret App utilise. |
+| Acteur humain sur PR Dependabot | Job ignore ; aucun secret App utilise. |
+| Required checks rouges ou en attente | Fusion bloquee malgre l'auto-merge. |
+| Patch/minor Dependabot sans Code Owner review | App autorisee a bypasser uniquement `Human Review`. |
+| PR humaine sans Code Owner review | Fusion toujours bloquee. |
+| Auto-merge deja active | Aucune nouvelle demande ; reexecution idempotente. |
+| Head modifie avant la demande | Ancien run ignore ou refus par `--match-head-commit`. |
+| PR provenant d'un autre depot ou visant une autre branche | Job ignore. |
+
+Les gardes et commandes peuvent etre valides localement avec des contextes
+synthetiques et un faux executable `gh`, sans secrets ni appels GitHub d'ecriture.
+Les scenarios de checks et de review necessitent une observation cote GitHub :
+un test local ne prouve pas la configuration effective des protections.
+
+Dependabot automation creates no approvals. Patch/minor updates use a scoped App
+token to request auto-merge; major and unknown types stay manual without a token.
+All required checks remain mandatory. Only the separate `Human Review` ruleset
+can be bypassed by the App for pull requests. Human PR reviews remain mandatory.
