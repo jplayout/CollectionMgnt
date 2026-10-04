@@ -3,7 +3,8 @@
 Etat courant : fondations identifiants, lookup backend ISBN livres, recherche
 texte films via TMDb, recherche texte jeux via IGDB, pre-remplissage frontend
 local, orchestration backend, resolution multi-provider, cache SQLite
-acquisition, choix de media avant creation pour les livres et import via le
+acquisition, picker media commun livres/films/jeux, recherche media explicite
+multi-provider et import via le
 systeme media existant.
 
 Les identifiants sont des champs metadata declares par plugin et stockes dans
@@ -25,13 +26,109 @@ Le scan camera frontend local peut remplir les champs `isbn` et `barcode` des
 formulaires dynamiques. Il ne declenche aucun lookup, aucune sauvegarde
 automatique et aucun dedoublonnage global.
 
+## Scanner, Stockage Et Capacites D'acquisition
+
+[ADR-0004](adr/ADR-0004-camera-separated-from-lookup.md) fige trois concepts :
+
+- **Scanner / field capability** : `field.type` vaut `isbn` ou `barcode` ; la
+  camera lit localement, selectionne selon le mode, puis le formulaire valide,
+  normalise et remplit uniquement le champ initiateur. Aucun lookup automatique.
+- **Identifier storage** : l'identifiant est stocke dans `items.metadata` apres
+  soumission. Posseder un EAN ne signifie pas connaitre l'objet correspondant.
+- **Acquisition capability** : un provider compatible fournit facultativement
+  `isbnLookup`, une recherche texte (`movies/search`, `games/search`) ou
+  `mediaSearch`. `barcodeLookup` ne doit etre declare que si un resolver reel
+  existe ; `type: barcode` ne l'implique jamais.
+
+Exemple conceptuel : collection personnalisee LEGO -> champ `barcode` -> bouton
+Scanner -> EAN/UPC -> validation et stockage -> recherche/filtrage si les
+proprietes `searchable` / `filterable` sont declarees. L'identifiant permet aussi
+une comparaison de doublons, mais aucune deduplication automatique globale par
+barcode n'est livree. Le lookup reste absent sans capability compatible.
+
+Le scanner fonctionne deja pour un schema plugin compatible, y compris des
+noms de champs personnalises. L'editeur graphique de collections utilisateur
+reste futur. L'acquisition actuelle est branchee sur les collections officielles ;
+sa generalisation est distincte de la disponibilite du scanner.
+
+## Audit De Cloture Scanner Acquisition Medias
+
+Audit documentaire du 4 octobre 2026 sur le code courant et les tests existants,
+sans campagne provider externe ni nouvelle recette physique. **Done** signifie
+implementation presente et couverture de tests inspectee ; **À valider** indique
+une recette encore insuffisante, **Manquant** une capability absente du code,
+**Hors scope / futur** un enrichissement distinct du perimetre livre.
+
+| Capacite | Etat | Preuve ou limite |
+| --- | --- | --- |
+| Scanner generique sur champs dynamiques | Done | `DynamicForm.isScannerEnabled` depend de `field.type` ; test avec plugin `custom` et deux champs barcode. |
+| Scan ISBN | Done | Mode EAN-13 Bookland `978` / `979`, checksum et selection parmi candidats ; tests native/ZXing/integration. ISBN-10 reste manuel. |
+| Scan barcode | Done | EAN-13 / UPC-A ; validation/normalisation par le formulaire, aucun lookup automatique. |
+| Recette navigateur/appareil reel | À valider | Rapports Android/macOS/iPadOS historiques ; matrice incomplete, iPhone et retest 15.4 non clos. |
+| Lookup ISBN livres | Done | Open Library -> BnF -> Google Books configure ; route JWT, fallback et tests providers/service. |
+| Recherche metadata films | Done | TMDb `movies/search`, selection et pre-remplissage ; aucun resolver EAN/UPC. |
+| Recherche metadata jeux | Done | IGDB `games/search`, plateforme/annee, selection et pre-remplissage ; aucun resolver EAN/UPC. |
+| Orchestration et cache metadata | Done | `AcquisitionService`, registre, cache SQLite par provider : suggestions 7 j, vide 1 h, erreurs non cachees. |
+| Import media acquisition / picker | Done | Picker commun livre/film/jeu : distant, fichier local, aucune image ; creation puis import/upload via `MediaService`. |
+| Recherche media multi-provider | Done | `MediaSearchService`, Open Library/Google Books/TMDb/IGDB, appel explicite, aggregation bornee et erreurs partielles. |
+| Resolution generique EAN/UPC vers metadata | Manquant | Aucun `movies/barcodeLookup`, `games/barcodeLookup` ni resolver universel ; chantier Product Barcode Resolution. |
+| BnF comme source media | Hors scope / futur | BnF ne declare que `isbnLookup` ; aucune couverture inventee. |
+| ScreenScraper | Hors scope / futur | Aucun provider enregistre ; analyse future des sources media/retro. |
+| Preferences langue/region metadata utilisateur | Hors scope / futur | Options backend/cache presentes ; langue navigateur pour medias, sans preferences utilisateur dediees. Epic 12. |
+| Administration graphique providers | Hors scope / futur | Configuration environnement et inventaire API livres ; aucun ecran de configuration/diagnostic. |
+| Collections personnalisees | Hors scope / futur | Editeur utilisateur non livre ; scan de champs compatibles deja Done, acquisition generique a concevoir separement. |
+
+### Preuves Inspectees Et Limites
+
+- [Champs et branchement scanner](../frontend/src/components/forms/DynamicForm.vue),
+  [formats et modes](../frontend/src/services/barcode-scanner/formats.js),
+  [tests integration scanner](../frontend/e2e/camera-scanner/camera-form-integration.spec.js).
+- [AcquisitionService](../backend/src/acquisition/acquisition-service.js),
+  [ProviderRegistry](../backend/src/acquisition/provider-registry.js),
+  [cache](../backend/src/acquisition/acquisition-cache.js),
+  [tests orchestration](../backend/test/integration/acquisition-service.test.js).
+- [MediaSearchService](../backend/src/acquisition/media-search-service.js),
+  [adaptateurs media providers](../backend/src/acquisition/providers/media-search.js),
+  [tests recherche media](../backend/test/integration/media-search-service.test.js).
+- [Picker](../frontend/src/components/acquisition/AcquisitionMediaPicker.vue),
+  [creation puis import](../frontend/src/pages/ItemCreateView.vue),
+  [import distant](../backend/src/acquisition/acquisition-image-import-service.js),
+  [tests securite import](../backend/test/integration/acquisition-image-import.test.js).
+- [Recette terrain](testing/mobile-camera-validation.md) : les tests automatises
+  ne prouvent pas les permissions camera, l'optique ou la detection sur appareil reel.
+
+Le moteur scanner est agnostique des plugins. En revanche, `DynamicForm`
+branche explicitement le lookup livres et les recherches films/jeux ;
+`buildAcquisitionMediaQuery` et `MediaSearchService` limitent aussi les domaines
+aux plugins officiels. Le registre selectionne des capabilities providers, mais
+les manifests declaratifs ne branchent pas automatiquement une nouvelle UI
+acquisition. C'est une limite a traiter dans Custom Collections, sans refactor
+applicatif dans cet audit. IGDB declare encore `type: metadata` tout en exposant
+`mediaSearch` : les capabilities reelles priment sur ce libelle historique.
+
+La resolution **Product Barcode Resolution** est `EAN/UPC -> objet metier`,
+independante de `camera -> barcode`. Le lot **Barcode Resolver Provider Analysis**
+doit preceder toute implementation et selectionner des sources fiables selon
+couverture, variantes/editions, licences, quotas et gestion d'erreurs. Aucun
+provider ni capability films/jeux barcode n'est invente ici.
+
+Les lots ouverts sont listes dans la [roadmap](roadmap.md#lots-ouverts-apres-audit-scanner-acquisition).
+L'acquisition metadata et le MVP media sont livres ; la cloture technique du
+scanner ne clot pas sa recette physique ni les enrichissements futurs.
+
+English: scanning is a field capability, storage is not resolution, and provider
+acquisition is optional. The implemented scanner and metadata/media MVP are Done;
+real-device acceptance remains pending. Generic product barcode resolution is
+missing and needs provider analysis. Custom collection editing, provider admin,
+metadata preferences, BnF covers and ScreenScraper remain future work.
+
 ## Champs Supportes
 
 ### `isbn`
 
-Champ texte specialise pour les livres.
+Champ texte specialise ISBN, utilisable par tout schema plugin compatible.
 
-- Collection concernee : `books`
+- Usage standard livre : `books` ; le type ne reserve pas le scanner aux livres
 - Champ standard : `books.isbn`
 - Formats acceptes : ISBN-10 et ISBN-13
 - Separateurs ignores a la validation : espaces et tirets
@@ -43,7 +140,7 @@ Champ texte specialise pour les livres.
 
 Champ texte specialise pour les codes-barres produits.
 
-- Collections concernees : `games`, `movies`, `others`
+- Usages standards : `games`, `movies`, `others` ; toute collection compatible peut declarer ce type
 - Champs standards : `games.barcode`, `movies.barcode`, `others.barcode`
 - Formats acceptes : EAN-13 et UPC-A
 - Separateurs ignores a la validation : espaces et tirets
@@ -235,7 +332,7 @@ Exemple :
       "id": "openlibrary",
       "name": "Open Library",
       "plugin": "books",
-      "capabilities": ["isbnLookup"],
+      "capabilities": ["isbnLookup", "mediaSearch"],
       "enabled": true,
       "requiresConfiguration": false
     },
@@ -251,7 +348,7 @@ Exemple :
       "id": "googlebooks",
       "name": "Google Books",
       "plugin": "books",
-      "capabilities": ["isbnLookup"],
+      "capabilities": ["isbnLookup", "mediaSearch"],
       "enabled": true,
       "requiresConfiguration": true
     },
@@ -259,7 +356,7 @@ Exemple :
       "id": "tmdb",
       "name": "The Movie Database (TMDb)",
       "plugin": "movies",
-      "capabilities": ["movies/search"],
+      "capabilities": ["movies/search", "mediaSearch"],
       "enabled": true,
       "requiresConfiguration": true
     },
@@ -267,7 +364,7 @@ Exemple :
       "id": "igdb",
       "name": "IGDB",
       "plugin": "games",
-      "capabilities": ["games/search"],
+      "capabilities": ["games/search", "mediaSearch"],
       "enabled": true,
       "requiresConfiguration": true,
       "type": "metadata"

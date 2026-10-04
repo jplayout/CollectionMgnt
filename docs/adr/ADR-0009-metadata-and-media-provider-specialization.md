@@ -42,6 +42,13 @@ doit pas pretendre resoudre un item si elle ne fait qu'exposer des assets. Les
 resultats peuvent contenir des URLs distantes, mais aucun provider ne stocke de
 fichier dans CollectionMgnt.
 
+Precision de cloture : la capability `mediaSearch` est livree par Open Library,
+Google Books, TMDb et IGDB. BnF reste un provider ISBN metadata uniquement ;
+BnF Covers et ScreenScraper sont des enrichissements futurs. Le libelle
+`type: metadata` encore retourne par IGDB est historique : ses capabilities
+incluent desormais aussi `mediaSearch`. Aucun changement de ce contrat n'est
+fait dans le lot documentaire.
+
 `MediaService` reste le pipeline unique pour toute persistance de media. Les
 uploads manuels, imports depuis provider et futurs imports specialises passent
 par les memes validations, transformations, miniatures et regles d'association
@@ -104,6 +111,12 @@ Providers remain modeled by their real capabilities. A metadata capability must
 not pretend to import a file. A media capability must not pretend to resolve an
 item if it only exposes assets. Results may contain remote URLs, but no
 provider stores files in CollectionMgnt.
+
+Closure clarification: Open Library, Google Books, TMDb and IGDB now supply
+`mediaSearch`; BnF supplies only ISBN metadata. BnF covers and ScreenScraper remain
+future additions. IGDB still reports the historical `type: metadata` label even
+though its capabilities include media discovery; this documentation lot changes
+no provider contract.
 
 `MediaService` remains the single pipeline for all media persistence. Manual
 uploads, provider imports and future specialized imports go through the same
