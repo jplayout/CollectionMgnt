@@ -16,6 +16,20 @@ Epic 15 can be closed only after Chrome Android and Safari iPhone have been
 tested on real devices, with no blocking defect around permissions, camera
 lifecycle or field filling.
 
+## Lecture De Cloture / Closure Interpretation
+
+Audit documentaire du 4 octobre 2026 : les rapports historiques apres 15.2.5 ne
+completent pas les lignes appareil/OS/navigateur/version deployee de la matrice.
+Le retest Bookland 15.4 et la campagne iPhone restent ouverts. L'etat global
+reste **À valider** ; aucun resultat physique nouveau n'est declare dans cet audit.
+Le scanner implemente n'est pas remis en cause par l'absence d'un resolver produit.
+Voir [l'audit scanner/acquisition](../assisted-acquisition.md#audit-de-cloture-scanner-acquisition-medias).
+
+The 4 October 2026 documentation audit adds no physical test result. Historical
+15.2.5 reports do not complete the device/version matrix; Bookland 15.4 retesting
+and iPhone acceptance remain pending. Implemented scanning and product barcode
+resolution are separate concerns.
+
 ## Deployment Baseline / Base De Deploiement
 
 Les essais doivent utiliser / Tests must use:

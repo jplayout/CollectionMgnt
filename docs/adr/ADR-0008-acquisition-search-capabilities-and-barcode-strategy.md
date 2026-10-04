@@ -32,13 +32,21 @@ champ ISBN, EAN ou UPC, puis un provider compatible peut etre interroge si un
 tel provider existe. Un provider de recherche texte peut ensuite enrichir une
 suggestion, mais il ne remplace pas un lookup code-barres.
 
+Precision de cloture : [ADR-0004](ADR-0004-camera-separated-from-lookup.md)
+porte la capacite scanner par type de champ. Le chantier **Product Barcode
+Resolution** concerne `EAN/UPC -> objet metier`, pas `camera -> barcode`.
+Aucun `movies/barcodeLookup` ou `games/barcodeLookup` n'est livre. Le lot
+**Barcode Resolver Provider Analysis** doit evaluer couverture, fiabilite,
+licences, quotas et variantes produit avant tout choix de capability ou
+implementation. Une collection personnalisee peut scanner sans ce resolver.
+
 Consequences
 
 Positive
 
 - Les providers sont modelises selon leurs capacites reelles.
-- TMDb peut etre ajoute sans pretendre resoudre des EAN ou UPC.
-- Le futur scan camera reste separe de la strategie provider.
+- TMDb est livre sans pretendre resoudre des EAN ou UPC.
+- Le scan camera livre reste separe de la strategie provider.
 - Le cache peut inclure query, langue, region et annee sans melanger les
   resultats.
 
@@ -79,13 +87,20 @@ field, then a compatible provider may be queried if such a provider exists. A
 text search provider may later enrich a suggestion, but it does not replace a
 barcode lookup.
 
+Closure clarification: [ADR-0004](ADR-0004-camera-separated-from-lookup.md)
+owns field-based scanning. **Product Barcode Resolution** addresses
+`EAN/UPC -> business object`, independently of `camera -> barcode`.
+No movie/game barcode lookup is delivered. **Barcode Resolver Provider Analysis**
+must assess reliable sources before selecting capabilities or implementing a
+resolver. Custom collections can scan without one.
+
 Consequences
 
 Positive
 
 - Providers are modeled according to their real capabilities.
-- TMDb can be added without pretending to resolve EAN or UPC values.
-- Future camera scanning remains separate from provider resolution strategy.
+- Delivered TMDb support does not pretend to resolve EAN or UPC values.
+- Delivered camera scanning remains separate from provider resolution strategy.
 - The cache can include query, language, region and year without mixing results.
 
 Negative

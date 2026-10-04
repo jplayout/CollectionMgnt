@@ -9,7 +9,8 @@ L'objectif est de permettre à un utilisateur de créer et gérer n'importe quel
 ## État actuel
 
 - Statut : développement. Version produit canonique : [VERSION](../VERSION).
-- Dernier lot livré : Lot 14.4 - Security Governance.
+- Pour le perimetre scanner/acquisition, voir la matrice de cloture ci-dessous ;
+  les lots numerotes plus bas conservent leur historique.
 
 Capacités disponibles :
 
@@ -37,8 +38,8 @@ Capacités disponibles :
 - Capability `games/search` livree via IGDB pour la recherche jeux, avec route
   backend protegee, UI de selection et import manuel de cover apres creation.
 - Epic 11 Acquisition assistee termine pour les acquisitions Books, Movies et
-  Games. Les travaux camera, administration provider et providers medias sont
-  des epics separes.
+  Games ; scanner par type de champ et picker/recherche media multi-provider
+  livres. Recette physique, administration et nouvelles sources restent separees.
 - Préférences d'affichage par collection/plugin.
 - Médias avec upload, conversion WebP, miniatures, image principale, audit et cleanup guidé.
 - Exports JSON natifs, export CSV collection et import JSON natif non destructif.
@@ -78,12 +79,13 @@ Limites majeures connues :
 
 ### Priorité moyenne
 
-- Epic Mobile Acquisition : scanner camera frontend, integration formulaire et
-  validation terrain Android/Safari macOS/iPadOS livres. Le nettoyage 15.3
-  retire le diagnostic temporaire et reorganise les tests Playwright ; aucun
-  runner unitaire supplementaire n'est ajoute dans ce lot.
+- Real-device Scanner Acceptance : scanner et integration livres ; completer
+  la matrice terrain, les essais iPhone et le retest Bookland 15.4.
+- Barcode Resolver Provider Analysis : etudier EAN/UPC vers objet metier avant
+  de choisir un provider ; aucun resolver films/jeux/generique livre.
 - Epic Provider Administration : configuration et diagnostic des providers.
-- Epic Media Providers : sources medias specialisees et selection d'assets.
+- Additional Media Providers : enrichissements BnF Covers/ScreenScraper ;
+  picker et recherche des sources officielles existantes deja livres.
 - Recherche enrichie par auteur, éditeur, série, tags et tolérance aux fautes.
 - Navigation de grandes collections par groupes configurables.
 - Consultation mobile rapide avant achat et premiers usages hors connexion.
@@ -99,6 +101,35 @@ Limites majeures connues :
 - Recherche globale multi-collections et recherche approximative.
 - Choix avancé du mode de recherche : LIKE, stricte ou FTS.
 
+## Lots Ouverts Apres Audit Scanner Acquisition
+
+La [matrice de cloture](assisted-acquisition.md#audit-de-cloture-scanner-acquisition-medias)
+fait foi pour ce perimetre : scanner generique/ISBN/barcode, lookup ISBN
+Open Library/BnF/Google Books, recherche TMDb/IGDB, cache metadata, import et
+recherche media sont **Done** dans le code. Les lots historiques decrivent ce
+qui etait absent au moment de leur livraison, pas les limites actuelles.
+
+| Lot | Etat de cloture | Prochaine action |
+| --- | --- | --- |
+| Barcode Resolver Provider Analysis | Manquant : resolver ; analyse future | Etudier Product Barcode Resolution, EAN/UPC vers films/jeux/objets generiques, couverture, editions, licences et quotas avant toute implementation. |
+| Real-device Scanner Acceptance | À valider | Completer appareil/OS/navigateur/version deployee, essais iPhone, retest Bookland 15.4 sur Android/Safari/iPadOS ; ne pas deduire la recette des tests automatises. |
+| Metadata Language / Region | Hors scope / futur | Epic 12 : preferences metadata utilisateur et formats regionaux ; options techniques deja presentes, distinctes de la langue UI. |
+| Provider Administration | Hors scope / futur | Ecran de configuration/statut/diagnostic ; environnement et inventaire API restent le mode livre. |
+| Additional Media Providers | Hors scope / futur | BnF Covers, ScreenScraper et assets riches ; enrichissements apres analyse, pas prerequis du MVP. |
+| Custom Collections | Hors scope / futur | Editeur/schema utilisateur et acquisition extensible ; reutiliser le scanner par type de champ sans branchement par collection. |
+
+Le scanner est une capacite de champ, pas `books`/`movies`/`games`. Exemple futur :
+LEGO -> champ `barcode` -> scan EAN/UPC -> stockage -> recherche/filtrage selon
+schema, comparaison possible de doublons -> lookup seulement si capability
+compatible. Ni deduplication automatique globale ni editeur graphique ne sont
+livres. Les branchements UI acquisition et la validation media actuels restent
+specialises ; leur generalisation n'est pas une correction du scanner.
+
+English: metadata acquisition, field-based scanning and the media MVP are
+implemented. Physical scanner acceptance remains pending. Generic EAN/UPC product
+resolution needs provider analysis. Metadata preferences, provider admin,
+additional media sources and custom collection editing remain separate future lots.
+
 ## Capabilities
 
 ### Actuelles
@@ -110,17 +141,19 @@ Limites majeures connues :
   plateforme et annee optionnelles.
 - `provider/imageImport` : import explicite d'une URL image distante apres
   creation d'item, via `MediaService`.
+- Scanner par type de champ `isbn` / `barcode` : lecture locale camera livree,
+  sans capability provider requise et sans lookup automatique.
+- `mediaSearch` : recherche explicite via Open Library/Google Books/TMDb/IGDB,
+  agregation multi-provider et picker commun livres/films/jeux livres.
 
 ### Futures
 
-- `mobile/barcodeScan` : lecture locale camera d'ISBN, EAN ou UPC, sans lookup
-  provider direct depuis le frontend.
 - `*/barcodeLookup` : resolution backend d'un identifiant produit quand un
   provider officiel fiable existe pour le domaine concerne.
 - `providers/admin` : configuration, statut, diagnostic et test des providers
   depuis l'administration.
-- `media/search` ou capabilities medias specialisees : recherche et selection
-  d'assets provider avant import explicite via `MediaService`.
+- Capabilities medias supplementaires : BnF Covers, ScreenScraper ou assets
+  riches, apres analyse des sources ; le MVP `mediaSearch` est deja livre.
 
 Principes :
 
@@ -191,7 +224,7 @@ Objectif :
 Contexte :
 
 - Les usages mobiles deviennent une cible importante du produit.
-- Les futures fonctionnalités d’acquisition assistée reposeront potentiellement sur l’utilisation de l’appareil photo.
+- Le scanner camera livre utilise l’appareil photo en contexte securise ; sa recette physique reste a completer.
 - Les accès distants deviennent plus fréquents à mesure que le produit mûrit.
 
 Travaux futurs envisagés :
@@ -210,7 +243,7 @@ Travaux futurs envisagés :
   - Tailscale
   - reverse proxy exposé sur Internet
 - Validation des usages smartphone et tablette via HTTPS.
-- Vérification de compatibilité des futures fonctionnalités caméra dans un contexte sécurisé.
+- Real-device Scanner Acceptance : verifier le scanner livre en contexte HTTPS sur la matrice appareils/navigateurs.
 
 Livré :
 
@@ -344,15 +377,16 @@ Objectif :
 
 Phase 1 — Identifiants standard :
 
-- Fondations identifiants ISBN / EAN / UPC livrées dans les plugins standards pertinents ; lookup ISBN livres livré, lookup code-barres et scan restent futurs.
+- Fondations identifiants ISBN / EAN / UPC, lookup ISBN et scan camera livres ;
+  resolution produit EAN/UPC distincte et non livree.
 - Validation et stockage des identifiants.
 - Ne pas se limiter à un simple champ texte si un type dédié devient pertinent.
 
 Phase 2 — Scan mobile et tablette :
 
 - Deplacee vers l'Epic Mobile Acquisition.
-- Le scan restera separe du lookup provider : il remplit un identifiant local,
-  puis le backend decide si une capability de lookup existe.
+- Le scan livre reste separe du lookup provider : il remplit un identifiant
+  local ; une acquisition compatible se lance uniquement sur action utilisateur.
 
 Phase 3 — Lookup livres :
 
@@ -364,7 +398,8 @@ Phase 3 — Lookup livres :
   - auteur
   - éditeur
   - date de publication
-- couverture en prévisualisation distante uniquement
+- couverture distante previsualisable, picker et import confirme apres creation
+  livres ; aucune persistance par le provider
 
 Phase 4 — Architecture fournisseurs :
 
@@ -534,7 +569,7 @@ Objectif :
 - Rendre l'acquisition utilisable en contexte mobile et tablette, notamment
   avant achat ou pendant l'inventaire physique.
 
-Travaux prévus :
+Socle livre, recette physique encore ouverte :
 
 - Fondation scanner camera EAN-13 et UPC-A en contexte HTTPS livree cote
   frontend.
@@ -599,7 +634,7 @@ Contraintes :
 - Aucun secret ou token dans les logs, reponses API ou exports.
 - Les providers non configures restent masques des resolutions implicites.
 
-### Media Providers
+### Media Providers — MVP livre, enrichissements futurs
 
 Objectif :
 
@@ -608,8 +643,10 @@ Objectif :
 
 Travaux prévus :
 
-- Evaluer ScreenScraper ou sources equivalentes comme providers medias ou retro
-  complementaires.
+- MVP deja livre : picker commun, recherche explicite `mediaSearch` des sources
+  Open Library/Google Books/TMDb/IGDB, import via `MediaService` apres itemId.
+- Additional Media Providers : evaluer BnF Covers, ScreenScraper ou sources
+  equivalentes comme enrichissements medias/retro, sans bloquer le MVP.
 - Rechercher et selectionner des assets : box front, box back, cartridge, disc,
   screenshots, logos, manuels ou scans selon licences et API officielles.
 - Associer un asset distant a un item existant apres confirmation utilisateur.
@@ -656,10 +693,11 @@ La langue de l’interface et la langue des métadonnées sont deux concepts dis
 - Permettre le changement de langue dans l'interface.
 - Couvrir les libellés principaux des pages, formulaires et erreurs.
 
-#### 12.2 - Metadata language preferences
+#### 12.2 - Metadata Language / Region — preferences utilisateur futures
 
 - Permettre de choisir une langue préférée pour les métadonnées récupérées.
-- Préparer les providers qui acceptent une langue ou une région.
+- Reutiliser les options langue/region deja presentes dans les contrats et
+  cles de cache ; leur presence ne livre pas une preference utilisateur.
 - Conserver les données déjà saisies par l'utilisateur.
 
 #### 12.3 - Regional preferences

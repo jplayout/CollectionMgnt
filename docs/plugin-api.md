@@ -273,10 +273,56 @@ Champs metadata :
 
 ## Acquisition assistée
 
-Les fondations d'acquisition assistée couvrent uniquement les identifiants `isbn`
-et `barcode`. Le scan mobile/tablette, la recherche automatique externe, le
-pré-remplissage des champs et la récupération éventuelle de métadonnées ou images
-restent des fonctionnalités futures distinctes.
+Le scanner est une capacite du **type de champ**, independante du plugin :
+`isbn` et `barcode` affichent le bouton Scanner dans `DynamicForm`. Le moteur
+camera ne connait pas les collections officielles, ne lance aucun lookup et
+remplit uniquement le champ initiateur apres validation/normalisation.
+
+Le mode ISBN accepte les Bookland EAN-13 `978` / `979` valides ; ISBN-10 reste
+manuel. Le mode barcode lit EAN-13 / UPC-A, avec checksum valide par le formulaire.
+Le stockage dans `items.metadata` n'implique jamais un resolver provider :
+`type: barcode` ne signifie pas `barcodeLookup`.
+
+Exemple de champ pour une collection LEGO conceptuelle :
+
+```json
+{
+  "name": "barcode",
+  "label": "Code-barres",
+  "type": "barcode",
+  "required": false,
+  "searchable": true,
+  "filterable": true
+}
+```
+
+Un plugin declaratif charge avec ce schema reutilise le scanner sans ajout de
+code specifique. La valeur peut etre stockee, recherchee et filtree ; elle peut
+servir a comparer des doublons, sans deduplication barcode globale automatique.
+L'editeur graphique de collections personnalisees n'est pas livre.
+
+Les capabilities acquisition sont distinctes : `isbnLookup`, recherche texte
+(`movies/search`, `games/search`), `mediaSearch`, et `barcodeLookup` seulement
+si un provider fiable l'implemente. Le code courant livre Open Library/BnF/Google
+Books pour ISBN, TMDb pour films, IGDB pour jeux et la recherche media des quatre
+sources Open Library/Google Books/TMDb/IGDB. Le picker commun propose image
+provider, fichier local ou aucune image ; la persistance passe par `MediaService`
+apres creation de l'item et confirmation utilisateur.
+
+Ces capabilities sont decrites par les providers backend et selectionnees par
+le registre ; les manifests n'ajoutent pas automatiquement une UI acquisition.
+L'UI lookup/search et la validation des requetes media restent specialisees pour
+les plugins officiels. Une future generalisation ne doit pas ajouter de
+conditions `books` / `movies` / `games` au moteur scanner.
+
+Voir [ADR-0004](adr/ADR-0004-camera-separated-from-lookup.md),
+[ADR-0008](adr/ADR-0008-acquisition-search-capabilities-and-barcode-strategy.md)
+et [l'audit de cloture](assisted-acquisition.md#audit-de-cloture-scanner-acquisition-medias).
+
+English: `isbn` / `barcode` fields provide scanning independently of collection
+or lookup providers. Identifier storage never implies resolution. Custom schemas
+reuse the scanner; graphical custom collection creation and generic acquisition
+wiring remain future work.
 
 ## Securite des definitions et patterns / Definition and pattern safety
 

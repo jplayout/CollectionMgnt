@@ -142,7 +142,9 @@ L'acquisition assistee utilise aussi une couche dediee dans
   ISBN livre, la recherche texte films et la recherche texte jeux video ;
 - `provider-registry.js` inventorie et selectionne les providers disponibles ;
 - `acquisition-cache.js` gere le cache metier des lookups acquisition ;
-- `providers/*` contient les adaptateurs vers les fournisseurs externes.
+- `providers/*` contient les adaptateurs vers les fournisseurs externes ;
+- `media-search-service.js` decouvre les medias via la capability `mediaSearch`
+  du meme registre, separement du fallback metadata et sans cache SQLite media.
 
 Flux d'acquisition provider :
 
@@ -221,10 +223,47 @@ jusqu'a l'import explicite apres creation de l'item.
 Voir `docs/acquisition-providers.md` pour le contrat provider, les responsabilites
 des couches acquisition et les bonnes pratiques de tests.
 
+### Scanner, Identifiant Et Acquisition Optionnelle
+
+```text
+Camera Scanner (local, mode du type de champ)
+  -> Dynamic Field (isbn / barcode)
+  -> normalized identifier
+     |-> saisie / stockage item sans lookup
+     `-> optional Acquisition capability (action utilisateur distincte)
+           -> route JWT -> AcquisitionService -> ProviderRegistry -> Provider(s)
+           -> suggestion -> user validation -> item creation
+           -> choix media confirme -> MediaService
+
+Suggestion -> recherche media optionnelle au clic
+  -> route JWT -> MediaSearchService -> ProviderRegistry -> Provider(s)
+  -> candidats distants -> choix utilisateur -> MediaService apres itemId
+```
+
+Le cache metadata reste par provider dans `AcquisitionService`. Son fallback
+livres suit Open Library, BnF puis Google Books configure. `MediaSearchService`
+agrege au contraire les sources media actives en concurrence. Les candidats et
+la selection restent temporaires avant creation ; fichier local et « aucune
+image » sont aussi disponibles. Une URL distante n'est pas un fichier persiste.
+
+La saisie directe ou la recherche texte peut commencer sans camera. Le scanner
+ne declenche ni acquisition ni creation. Le formulaire valide et normalise le
+champ initiateur ; le mode ISBN ne retient que les Bookland EAN-13 `978` / `979`
+valides, le mode barcode accepte EAN-13 / UPC-A avec validation du formulaire.
+
+Une future collection LEGO avec `type: barcode` reutilise ce scanner sans code
+specifique. Le stockage ne fournit aucun resolver implicite : `EAN/UPC -> objet
+metier` reste le chantier **Product Barcode Resolution**. La creation graphique
+de collections et le branchement acquisition generique ne sont pas livres.
+L'UI acquisition et les requetes media actuelles ciblent explicitement les
+plugins officiels ; cette limite ne se trouve pas dans le moteur scanner.
+Voir [l'audit de cloture](assisted-acquisition.md#audit-de-cloture-scanner-acquisition-medias).
+
 ## Scanner Camera Frontend
 
-Le scanner camera est une fondation frontend non encore integree aux
-formulaires `isbn` ou `barcode`.
+Le scanner camera est integre aux champs dynamiques `isbn` et `barcode`.
+Sa disponibilite depend de `field.type`, jamais du plugin ni d'un provider.
+La decision est portee par [ADR-0004](adr/ADR-0004-camera-separated-from-lookup.md).
 
 Modules :
 
@@ -382,13 +421,16 @@ Les fondations responsive utilisent les conventions :
 
 1. Le frontend charge le schema plugin.
 2. `DynamicForm` genere les champs supportes.
-3. Pour les livres, le champ ISBN peut declencher un lookup backend et
-   pre-remplir localement le formulaire apres choix utilisateur.
+3. Tout champ `isbn` / `barcode` peut ouvrir le scanner local et recevoir la
+   valeur normalisee, sans lookup. Les flux livres/films/jeux proposent
+   separement une acquisition backend sur action utilisateur explicite.
 4. La validation frontend reste legere.
 5. Le backend revalide avec le schema avant insertion ou mise a jour.
-6. L'utilisateur est redirige vers la fiche item.
-7. Si une couverture provider a ete proposee, l'utilisateur peut confirmer son
-   import depuis la fiche item.
+6. Le picker commun propose une image distante, un fichier local ou aucune
+   image avant soumission. Apres creation, le choix est importe via
+   `MediaService` ; un echec conserve l'item et affiche un avertissement.
+7. L'utilisateur est redirige vers la fiche ; la galerie permet ensuite
+   d'ajouter ou remplacer une image.
 
 ### Medias
 
