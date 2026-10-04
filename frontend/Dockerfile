@@ -15,7 +15,7 @@ COPY VERSION /app/VERSION
 COPY backend/src/config/build-info.js /app/backend/src/config/build-info.js
 COPY backend/package.json /app/backend/package.json
 COPY frontend/index.html ./
-COPY frontend/vite.config.js ./
+COPY frontend/vite.config.mjs ./
 COPY frontend/src ./src
 
 RUN test -n "$APP_VERSION" && npm run build
