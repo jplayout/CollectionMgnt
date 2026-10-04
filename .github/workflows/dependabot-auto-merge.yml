@@ -2,14 +2,16 @@ name: Dependabot Auto Merge
 
 on:
   pull_request:
+    branches:
+      - main
     types:
       - opened
       - synchronize
       - reopened
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  pull-requests: read
 
 concurrency:
   group: dependabot-auto-merge-${{ github.event.pull_request.number }}
@@ -18,7 +20,13 @@ concurrency:
 jobs:
   dependabot:
     name: Dependabot Auto Merge
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'jplayout/CollectionMgnt'
+    if: >-
+      github.actor == 'dependabot[bot]' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.repository == 'jplayout/CollectionMgnt' &&
+      github.event.pull_request.base.repo.full_name == github.repository &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Dependabot metadata
@@ -33,27 +41,28 @@ jobs:
           UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
         run: echo "Manual review and merge required (update-type=${UPDATE_TYPE:-missing})."
 
-      - name: Approve and enable auto-merge for patch or minor updates
+      - name: Create scoped Dependabot Merger token
+        id: app-token
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.DEPENDABOT_MERGER_CLIENT_ID }}
+          private-key: ${{ secrets.DEPENDABOT_MERGER_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Enable auto-merge for patch or minor updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD: ${{ github.event.pull_request.head.sha }}
-          GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           current_head=$(gh pr view "$PR_URL" --json headRefOid --jq '.headRefOid')
           if [[ "$current_head" != "$PR_HEAD" ]]; then
             echo "PR head changed; the synchronize run will handle the new revision."
             exit 0
-          fi
-          approval=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER/reviews" --jq \
-            '[.[] | select(.user.login == "github-actions[bot]")] | last | if . == null then "" else (.state + ":" + .commit_id) end')
-          if [[ "$approval" != "APPROVED:$PR_HEAD" ]]; then
-            gh pr review --approve "$PR_URL"
-          else
-            echo "Current revision is already approved by GitHub Actions."
           fi
           auto_merge=$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest != null')
           if [[ "$auto_merge" == "true" ]]; then
