@@ -31,8 +31,9 @@ ISBN-10 n'est pas annonce comme symbologie camera et QR Code reste hors
 perimetre.
 
 Le scanner ne connait ni plugin, ni provider, ni formulaire. Il emet un resultat
-brut normalise que les lots suivants pourront brancher aux champs `isbn` ou
-`barcode`.
+brut que le formulaire dynamique branche aux champs `isbn` ou `barcode`
+pour normalisation et validation. Le mode `isbn` retient uniquement EAN-13
+Bookland `978` / `979` a checksum valide ; le mode `barcode` reste EAN-13 / UPC-A.
 
 Consequences
 
@@ -50,8 +51,8 @@ Positive
 Negative
 
 - Le premier scan sur fallback peut payer le cout de chargement du chunk ZXing.
-- La validation metier checksum et l'anti-repetition restent a traiter dans le
-  lot d'integration.
+- L'integration et la validation checksum sont livrees ; leur presence ne
+  remplace pas la recette sur appareil reel.
 - La validation Android/iPhone reelle reste necessaire avant generalisation UX.
 
 ---
@@ -82,7 +83,9 @@ The scanner processes only local `ean_13` and `upc_a` formats. ISBN-10 is not
 advertised as a camera symbology and QR Code remains out of scope.
 
 The scanner knows nothing about plugins, providers or forms. It emits a
-normalized raw result that later lots can connect to `isbn` or `barcode` fields.
+raw result connected by the dynamic form to `isbn` or `barcode` fields for
+normalization and validation. ISBN mode accepts only valid Bookland EAN-13
+`978` / `979`; barcode mode uses EAN-13 / UPC-A.
 
 Consequences
 
@@ -99,6 +102,6 @@ Positive
 Negative
 
 - The first fallback scan pays the ZXing chunk loading cost.
-- Business checksum validation and repeated-detection handling remain for the
-  integration lot.
+- Integration and checksum validation are delivered; real-device acceptance
+  is still a separate requirement.
 - Real Android/iPhone validation is still required before broad UX rollout.

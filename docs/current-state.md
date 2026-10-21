@@ -72,17 +72,19 @@ Epic 11 Acquisition assistee :
   plateforme et annee optionnelles.
 - `provider/imageImport` : import explicite d'une URL image distante apres
   creation d'item, via le pipeline `MediaService`.
+- Scanner par type de champ `isbn` / `barcode` : lecture camera locale livree,
+  sans lookup automatique ni provider requis.
+- `mediaSearch` : recherche explicite Open Library/Google Books/TMDb/IGDB,
+  picker commun et import confirme apres creation livres.
 
 ### Futures
 
-- `mobile/barcodeScan` : lecture camera locale EAN-13 et UPC-A pour remplir les
-  champs `isbn` et `barcode`, sans lookup automatique.
 - `*/barcodeLookup` : lookup backend par code-barres quand un provider officiel
   fiable existe pour le domaine concerne.
 - `providers/admin` : configuration, statut et diagnostic des providers depuis
   l'administration.
-- Capabilities medias specialisees : recherche et selection d'assets provider
-  avant import explicite via `MediaService`.
+- Capabilities medias supplementaires : BnF Covers, ScreenScraper et assets
+  riches ; la recherche media des sources actuelles est deja livree.
 
 Principes :
 
@@ -179,6 +181,7 @@ Principes :
   via une route acquisition protegee JWT
 - Providers livrés :
   - `openlibrary`, sans clé API obligatoire
+  - `bnf`, SRU public sans authentification, capability `isbnLookup` uniquement
   - `googlebooks`, actif uniquement avec `GOOGLE_BOOKS_API_KEY` configurée
   - `tmdb`, provider Movies configuré par `TMDB_API_READ_ACCESS_TOKEN`
   - `igdb`, Metadata Provider Games configuré par `IGDB_CLIENT_ID` et
@@ -229,8 +232,9 @@ Principes :
   uniquement EAN-13 et accepte seulement les ISBN-13 Bookland `978` / `979`
   avec checksum valide ; `barcode` conserve EAN-13 et UPC-A. ISBN-10 reste une
   possibilite de saisie manuelle uniquement et QR Code reste hors perimetre.
-- Le bouton `Scanner` est disponible sur `books.isbn` et sur les champs
-  `barcode` des plugins qui en declarent un. Il remplit seulement le champ,
+- Le bouton `Scanner` est disponible sur tout champ dynamique de type `isbn`
+  ou `barcode`, independamment du plugin ou de l'existence d'un resolver.
+  Il remplit seulement le champ,
   normalise la valeur et applique les validations metier existantes.
 - Aucun lookup ISBN, recherche texte ou appel provider n'est lance
   automatiquement apres un scan. L'utilisateur garde le bouton `Rechercher`
@@ -258,9 +262,33 @@ Principes :
   ouvert jusqu'au retest terrain de ce correctif sur Android, Safari macOS et
   iPadOS.
 - Aucune administration de configuration providers livrée
-- Aucun provider media specialise livré
+- Aucun provider exclusivement media livre ; `mediaSearch` est livre par
+  Open Library, Google Books, TMDb et IGDB
 - Aucun import automatique d'image livré
 - Aucun cache local/offline d'images livré
+
+### Cloture Scanner Acquisition Medias
+
+L'[audit de cloture](assisted-acquisition.md#audit-de-cloture-scanner-acquisition-medias)
+confirme le scanner generique par type de champ, l'acquisition metadata
+livres/films/jeux, le picker commun et la recherche media multi-provider.
+Le lookup reste optionnel et explicite : stocker un ISBN/EAN/UPC ne fournit pas
+une capability de resolution. La decision est precisee dans
+[ADR-0004](adr/ADR-0004-camera-separated-from-lookup.md).
+
+La recette physique reste **À valider** : les rapports historiques Android,
+Safari macOS et iPadOS ne completent pas la matrice, les essais iPhone et le
+retest Bookland 15.4. Le resolver generique EAN/UPC est **Manquant**, sans remettre
+en cause le scanner livre. BnF Covers, ScreenScraper, preferences metadata et
+administration graphique providers sont **Hors scope / futur**.
+
+Une collection LEGO conceptuelle peut declarer `type: barcode`, scanner et
+stocker la valeur, puis la rechercher/filtrer selon son schema sans provider.
+Aucun editeur utilisateur de collections ni deduplication barcode globale n'est
+livre. Le scanner est generique, mais les branchements acquisition UI et les
+requetes media restent limites aux collections officielles. IGDB expose
+`mediaSearch` malgre son libelle historique `type: metadata`.
+Voir les [lots encore ouverts](roadmap.md#lots-ouverts-apres-audit-scanner-acquisition).
 
 ### Médias
 
