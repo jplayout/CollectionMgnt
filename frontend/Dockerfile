@@ -23,7 +23,7 @@ RUN test -n "$APP_VERSION" && npm run build
 FROM nginx:1.30.5-alpine3.24
 
 # Targeted fixes newer than the base image; retain all runtime package scanning.
-RUN apk add --no-cache --upgrade libexpat pcre2
+RUN apk add --no-cache --upgrade libexpat libx11 pcre2 tiff
 
 ARG APP_VERSION
 ARG APP_REVISION=development
