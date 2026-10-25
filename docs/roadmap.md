@@ -883,6 +883,10 @@ Travaux futurs :
 - Mise à jour de `title`, `description`, `metadata` et `updated_at`
 - Conservation des métadonnées inconnues existantes
 - Retour de l'item avec `metadata` parsé, code plugin et nom d'affichage plugin
+- Correctif du contrat `description` au PATCH : absence = conservation,
+  `null` = effacement, chaîne vide ou non vide = remplacement ; sans évolution
+  vers un PATCH partiel générique ni changement des règles de métadonnées.
+  Voir le [contrat actuel](current-state.md#contrat-de-description-au-patch).
 
 #### Lot 5.8 - Livré
 
