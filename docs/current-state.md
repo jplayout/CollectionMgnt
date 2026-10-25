@@ -574,6 +574,29 @@ Voir les [lots encore ouverts](roadmap.md#lots-ouverts-apres-audit-scanner-acqui
 - `PATCH /api/items/:id`
 - `DELETE /api/items/:id`
 
+#### Contrat de `description` au PATCH
+
+Pour une requête `PATCH /api/items/:id` valide :
+
+| `description` dans le payload | Valeur persistée en SQLite |
+| --- | --- |
+| Champ absent | Description existante conservée, y compris `NULL` |
+| `null` explicite | `NULL` : effacement de la description |
+| `""` | Chaîne vide conservée |
+| Chaîne non vide | Remplacement par la chaîne fournie |
+
+La route utilise l'item déjà chargé pour préserver une description absente,
+sans requête supplémentaire. Ce contrat concerne uniquement `description` :
+le PATCH n'est pas encore une mise à jour partielle générique. `title` reste
+obligatoire et `metadata` doit toujours être fourni sous forme d'objet.
+
+Les règles de métadonnées restent inchangées : les champs déclarés par le
+plugin sont remplacés par ceux du payload, et les clés inconnues existantes
+sont conservées sauf si le payload les remplace. Ainsi, `metadata: {}` efface
+les champs déclarés facultatifs tout en conservant les clés inconnues ; la
+requête est rejetée si des champs obligatoires du plugin manquent. Un objet
+vide n'est donc pas une demande de conservation de toutes les métadonnées.
+
 ### Médias
 
 - `POST /api/media`

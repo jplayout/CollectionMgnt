@@ -176,6 +176,16 @@ Les tests d'integration sont dans :
 backend/test/integration/
 ```
 
+`item-patch.test.js` vérifie le contrat de `description` au PATCH (absence,
+`null`, chaîne vide, remplacement et conservation d'un `NULL` initial), ainsi
+que les règles existantes de titre et de métadonnées. Les tests passent par
+la vraie route avec `app.inject()` et contrôlent directement les valeurs en
+SQLite, sans réseau externe. Exécution ciblée depuis `backend/` :
+
+```bash
+node --test --test-concurrency=1 test/integration/item-patch.test.js test/integration/item-identifiers.test.js
+```
+
 ## Tests E2E Playwright
 
 Les tests E2E MVP utilisent Playwright cote frontend avec Chromium uniquement.

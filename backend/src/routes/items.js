@@ -461,7 +461,9 @@ export default async function (
                     title:
                         payload.title,
                     description:
-                        payload.description,
+                        payload.description === undefined
+                            ? existingItem.description
+                            : payload.description,
                     metadata
                 }
             );
