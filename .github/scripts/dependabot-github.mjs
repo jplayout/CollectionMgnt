@@ -2,6 +2,31 @@ import { REPOSITORY, REPOSITORY_ID, isSha, validatePullRequest,
     validateCommit, validateProtection, validateBase, selectRuns, evaluateChecks } from './dependabot-policy.mjs';
 
 const root = `repos/${REPOSITORY}`;
+const GRAPHQL_OPERATION = 'ObserveMainProtection';
+const GRAPHQL_HTTP_STATUSES = new Set([200, 400, 401, 403, 404, 422, 429, 500, 502, 503, 504]);
+const GRAPHQL_CATEGORIES = new Set(['FORBIDDEN', 'NOT_FOUND', 'RATE_LIMITED', 'INTERNAL', 'GRAPHQL_VALIDATION_FAILED']);
+const GRAPHQL_FIELDS = new Set(['repository', 'databaseId', 'ref', 'target', 'oid', 'branchProtectionRule',
+    'requiresStrictStatusChecks', 'requiredApprovingReviewCount', 'requiresCodeOwnerReviews',
+    'requireLastPushApproval', 'requiredStatusChecks', 'context', 'app']);
+
+export class GitHubQueryError extends Error {
+    constructor(status, errors = [{}]) {
+        const diagnostics = {
+            operation: GRAPHQL_OPERATION,
+            status: GRAPHQL_HTTP_STATUSES.has(status) ? status : 'UNKNOWN',
+            errors: errors.slice(0, 5).map(error => ({
+                category: GRAPHQL_CATEGORIES.has(error?.type) ? error.type : 'UNKNOWN',
+                // Only fields of our fixed query; list indices never expose values.
+                path: Array.isArray(error?.path) && error.path.length > 0 && error.path.length <= 10 &&
+                    error.path.every(field => GRAPHQL_FIELDS.has(field) || (Number.isSafeInteger(field) && field >= 0))
+                    ? error.path.map(field => typeof field === 'number' ? '[]' : field).join('.') : 'UNKNOWN'
+            }))
+        };
+        super(`GitHub query refused: ${JSON.stringify(diagnostics)}`);
+        this.diagnostics = diagnostics;
+    }
+}
+
 export class GitHubError extends Error {
     constructor(status) {
         super(status ? `GitHub request refused (HTTP ${status}).` : 'GitHub request timed out or failed.');
@@ -23,10 +48,23 @@ export function createClient(token, fetchImpl = globalThis.fetch) {
                 body: body === undefined ? undefined : JSON.stringify(body)
             });
         } catch { throw new GitHubError(); }
-        if (!response.ok) throw new GitHubError(response.status);
+        if (!response.ok) {
+            if (path === 'graphql') throw new GitHubQueryError(response.status);
+            throw new GitHubError(response.status);
+        }
         let data;
         try { data = await response.json(); } catch { throw new Error('Invalid GitHub response.'); }
-        if (data?.errors) throw new Error('GitHub query was refused.');
+        if (path === 'graphql') {
+            if (data && Object.hasOwn(data, 'errors')) {
+                if (!Array.isArray(data.errors)) throw new Error('Invalid GitHub response.');
+                if (data.errors.length > 0) throw new GitHubQueryError(response.status, data.errors);
+            }
+            if (!data?.data || typeof data.data !== 'object' || Array.isArray(data.data)) {
+                throw new Error('Invalid GitHub response.');
+            }
+        } else if (data?.errors) {
+            throw new Error('Invalid GitHub response.');
+        }
         return data;
     }
     async function list(path, key) {
@@ -71,7 +109,7 @@ export async function observe(client, number, expectedHead, expectedBase) {
     const pr = await client.request(`${root}/pulls/${number}`);
     validatePullRequest(pr, expectedHead ?? pr.head?.sha);
     if (pr.number !== number) throw new Error('Unexpected PR response.');
-    const policy = await client.request('graphql', { method: 'POST', body: { query: `query {
+    const policy = await client.request('graphql', { method: 'POST', body: { query: `query ${GRAPHQL_OPERATION} {
         repository(owner: "jplayout", name: "CollectionMgnt") {
             databaseId
             ref(qualifiedName: "refs/heads/main") {
