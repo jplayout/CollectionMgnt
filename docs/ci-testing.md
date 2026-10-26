@@ -362,37 +362,92 @@ baseline is tolerated, and no Trivy ignore or gate bypass is added.
 
 ## Dependabot automation validation / Validation automatisation Dependabot
 
-`Dependabot Auto Merge` ne remplace aucun gate CI et ne cree aucune approval.
-Les patch/minor utilisent le token de `CollectionMgnt Dependabot Merger` pour
-activer l'auto-merge ; majors et metadata inconnue restent manuels sans token.
-Les neuf Required checks restent obligatoires. Seul le ruleset `Human Review`
-peut etre bypasse par l'App, en mode `For pull requests only`.
-Voir la configuration dans [GitHub governance](github-governance.md).
+La fusion directe Dependabot est testee avec `node:test`, sans reseau ni
+credentials, dans `backend/test/integration/dependabot-auto-merge.test.js`.
+Les tests utilisent des reponses REST/GraphQL synthetiques, un transport HTTP
+injecte et une horloge virtuelle. Ils sont inclus dans `npm test` du backend ;
+aucune modification de `ci.yml` n'est necessaire pour les executer en CI.
 
-Scenarios attendus (les protections GitHub ne doivent pas etre contournees
-pour les tester) :
+```bash
+node --test backend/test/integration/dependabot-auto-merge.test.js
+```
+
+La politique pure, le transport API, l'observation et l'attente sont separes dans
+`.github/scripts/dependabot-policy.mjs`, `dependabot-github.mjs` et l'entree CLI
+`dependabot-auto-merge.mjs`. Aucun test ne cree de token App, ne contacte GitHub,
+ne change les protections et ne fusionne une vraie PR.
 
 | Scenario | Resultat attendu |
 | --- | --- |
-| Dependabot patch | Token App cree ; auto-merge demande. |
-| Dependabot minor | Token App cree ; auto-merge demande. |
-| Dependabot major | Manuel ; aucun token, approval ou auto-merge. |
-| Type inconnu ou absent | Fail closed ; aucune action privilegiee. |
-| PR humaine | Job ignore ; aucun secret App utilise. |
-| Acteur humain sur PR Dependabot | Job ignore ; aucun secret App utilise. |
-| Required checks rouges ou en attente | Fusion bloquee malgre l'auto-merge. |
-| Patch/minor Dependabot sans Code Owner review | App autorisee a bypasser uniquement `Human Review`. |
-| PR humaine sans Code Owner review | Fusion toujours bloquee. |
-| Auto-merge deja active | Aucune nouvelle demande ; reexecution idempotente. |
-| Head modifie avant la demande | Ancien run ignore ou refus par `--match-head-commit`. |
-| PR provenant d'un autre depot ou visant une autre branche | Job ignore. |
+| Patch, minor, groupe uniquement patch/minor | Un seul PUT simule avec le SHA attendu et `merge_method: merge`. |
+| Major, inconnu, groupe contenant une dependance non eligible | Zero appel de merge. |
+| Prerelease, metadata absente, ambigue ou YAML non supporte | Zero appel de merge ; traitement manuel. |
+| Auteur, identite numerique, commit, signature ou committer incorrect | Zero appel de merge. |
+| Plusieurs commits, fork, mauvaise branche source ou cible | Zero appel de merge. |
+| PR fermee, deja mergee, draft, conflit ou fusionnabilite inconnue | Zero appel de merge. |
+| Check absent ou pending | Attente bornee, puis zero appel de merge. |
+| Check failed, cancelled, skipped, neutral | Zero appel de merge. |
+| Mauvais SHA, App, suite, workflow, job ou tentative | Zero appel de merge. |
+| Ancien succes, nouveau run pending ou failed | Ancien succes insuffisant ; zero appel de merge. |
+| Nouveau run valide apres ancien echec | Dernier run selectionne ; un seul PUT simule. |
+| Reexecution complete de CI | Tous les jobs requis de la tentative courante doivent etre verts. |
+| Reexecution partielle sans tous les jobs requis | Reste bloquee ; relancer le workflow complet. |
+| Head, base, checks ou etat modifies avant merge | Zero appel de merge lors de la revalidation. |
+| Base obsolete ou mauvais parents du commit de test | Zero appel de merge. |
+| Approval historique reintroduite, autre ruleset ou derive des checks requis | Zero appel de merge. |
+| Lecture HTTP 403, 405, 409, 422 ou timeout | Zero appel de merge ; erreur sans corps API sensible. |
+| PUT HTTP 403, 405, 409, 422 ou timeout | Un seul appel HTTP simule, jamais de retry ou fallback. |
+| Reponse PUT sans confirmation de fusion | Echec explicite ; jamais declaree reussie. |
+| Candidat expire, activation absente ou mode simulation | Aucune ecriture autorisee. |
+| Activation `TRUE`, `True`, absente ou invalide | Garde du workflow fausse ; aucun token App ni merge. |
+| Dry-run explicite, absent ou invalide dans le dispatch | Aucune autorisation d'ecriture, meme avec activation `true`. |
+| Numero manuel `0131`, `131.0`, `0x83`, signe, espace ou entier non sur | Refus avant publication de l'autorisation. |
+| PR 131 automatique et entree manuelle canonique `131` | Meme numero valide et meme groupe de concurrence. |
+| Dispatch hors main ou acteur sans droit write/maintain/admin | Refus sans merge. |
+| Pagination, liste tronquee, URL externe, erreur GraphQL | Lecture complete ou refus ferme. |
 
-Les gardes et commandes peuvent etre valides localement avec des contextes
-synthetiques et un faux executable `gh`, sans secrets ni appels GitHub d'ecriture.
-Les scenarios de checks et de review necessitent une observation cote GitHub :
-un test local ne prouve pas la configuration effective des protections.
+Les tests negatifs de validation garantissent zero appel de merge. Les tests
+d'erreur **du PUT lui-meme** doivent observer exactement un appel simule pour
+prouver l'absence de retry ; ils ne representent aucune fusion reelle.
 
-Dependabot automation creates no approvals. Patch/minor updates use a scoped App
-token to request auto-merge; major and unknown types stay manual without a token.
-All required checks remain mandatory. Only the separate `Human Review` ruleset
-can be bypassed by the App for pull requests. Human PR reviews remain mandatory.
+Validation manuelle apres integration, toujours sans fusion pour les tests :
+
+1. Conserver l'activation desactivee ; migrer les deux secrets vers Actions.
+2. Executer les simulations des PR 131 et 132 sur `main`, `dry_run: true`.
+3. Verifier que les deux secrets sont accessibles sans afficher leurs valeurs,
+   que les permissions de lecture suffisent et que tous les controles passent.
+4. Si les secrets ou une garantie de securite restent incertains, ne pas activer.
+   Ne pas modifier les protections pour faire passer un test.
+
+La procedure de migration, d'activation explicite et de reevaluation manuelle
+est dans [GitHub governance](github-governance.md#secrets-et-activation--secrets-and-activation).
+Les tests locaux ne prouvent ni l'acces reel aux secrets du runner, ni les droits
+complets de l'installation App, ni le bypass effectivement applique par GitHub.
+Le serveur reste l'autorite finale pour les courses entre la derniere lecture
+et le PUT. La politique stricte peut refuser une mise a jour legitime : corriger
+la cause ou traiter manuellement, sans relacher automatiquement les gardes.
+
+Dependabot direct merge tests use `node:test`, synthetic REST/GraphQL fixtures,
+an injected HTTP transport and virtual time, with no network or credentials.
+They run through the existing backend test suite. Validation failures guarantee
+zero merge calls; eligible patch/minor updates produce exactly one mocked REST
+PUT bound to the expected head. PUT-error tests deliberately record one mocked
+request and verify no retry or fallback. No test performs a real merge.
+
+Coverage includes major/unknown/mixed groups, unsupported signed metadata,
+author and commit identity/signature, forks, PR state, missing/failed/skipped/
+neutral checks, workflow/job/App/suite/SHA provenance, duplicate executions and
+CI reruns, stale branches, head/base races, configuration drift and additional
+non-bypassable review. It also covers HTTP 403/405/409/422, timeouts, candidate
+expiry, pagination, recovery authorization and disabled/dry-run write guards.
+The actual workflow guard command and privileged-step wiring are tested across
+exact/mixed-case/missing/invalid activation values and dry-run inputs. Invalid
+manual PR representations cannot publish write authorization. Canonical dispatch
+strings and numeric automatic events share one concurrency group per PR.
+
+After integration, keep activation disabled and run dry-run dispatches for PRs
+131/132 on `main`. Verify Actions-secret availability and read-token permissions
+without printing credentials. Do not activate if any required guarantee remains
+uncertain. Local tests cannot prove runtime secret access or GitHub bypass
+semantics; server protections resolve the final race. See the governance guide
+for migration, explicit activation, recovery and stopping active runs.
