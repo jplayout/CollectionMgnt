@@ -118,7 +118,7 @@ jobs:
 
       - name: Pull base images with retry
         run: |
-          for image in node:22 nginx:1.27-alpine; do
+          for image in node:22 nginx:1.30.6-alpine3.24; do
             for attempt in 1 2 3 4 5; do
               if docker pull "${image}"; then
                 break
