@@ -2,12 +2,10 @@ import { REPOSITORY, REPOSITORY_ID, isSha, validatePullRequest,
     validateCommit, validateProtection, validateBase, selectRuns, evaluateChecks } from './dependabot-policy.mjs';
 
 const root = `repos/${REPOSITORY}`;
-const GRAPHQL_OPERATION = 'ObserveMainProtection';
+const GRAPHQL_OPERATION = 'ObserveMainReference';
 const GRAPHQL_HTTP_STATUSES = new Set([200, 400, 401, 403, 404, 422, 429, 500, 502, 503, 504]);
 const GRAPHQL_CATEGORIES = new Set(['FORBIDDEN', 'NOT_FOUND', 'RATE_LIMITED', 'INTERNAL', 'GRAPHQL_VALIDATION_FAILED']);
-const GRAPHQL_FIELDS = new Set(['repository', 'databaseId', 'ref', 'target', 'oid', 'branchProtectionRule',
-    'requiresStrictStatusChecks', 'requiredApprovingReviewCount', 'requiresCodeOwnerReviews',
-    'requireLastPushApproval', 'requiredStatusChecks', 'context', 'app']);
+const GRAPHQL_FIELDS = new Set(['repository', 'databaseId', 'ref', 'target', 'oid']);
 
 export class GitHubQueryError extends Error {
     constructor(status, errors = [{}]) {
@@ -114,10 +112,6 @@ export async function observe(client, number, expectedHead, expectedBase) {
             databaseId
             ref(qualifiedName: "refs/heads/main") {
                 target { ... on Commit { oid } }
-                branchProtectionRule {
-                    requiresStrictStatusChecks requiredApprovingReviewCount requiresCodeOwnerReviews requireLastPushApproval
-                    requiredStatusChecks { context app { databaseId } }
-                }
             }
         }
     }` } });
@@ -126,14 +120,16 @@ export async function observe(client, number, expectedHead, expectedBase) {
     if (repository?.databaseId !== REPOSITORY_ID || !isSha(base) || (expectedBase && expectedBase !== base)) {
         throw new Error('Trusted repository or main changed.');
     }
-    const [commits, rulesetIndex, comparison, mergeRef, workflows, runs] = await Promise.all([
+    const [commits, rulesetIndex, comparison, mergeRef, workflows, runs, branch] = await Promise.all([
         client.list(`${root}/pulls/${number}/commits`),
         client.list(`${root}/rulesets?includes_parents=true`),
         client.request(`${root}/compare/${base}...${pr.head.sha}`),
         client.request(`${root}/git/ref/pull/${number}/merge`),
         client.list(`${root}/actions/workflows`, 'workflows'),
-        client.list(`${root}/actions/runs?event=pull_request&head_sha=${pr.head.sha}`, 'workflow_runs')
+        client.list(`${root}/actions/runs?event=pull_request&head_sha=${pr.head.sha}`, 'workflow_runs'),
+        client.request(`${root}/branches/main`)
     ]);
+    if (branch?.commit?.sha !== base) throw new Error('Trusted main changed during inspection.');
     validateCommit(pr, commits);
     const activeRulesets = rulesetIndex.filter(rule => rule.enforcement === 'active');
     // Repository rules only; unknown inherited rules cannot silently widen bypass.
@@ -141,7 +137,7 @@ export async function observe(client, number, expectedHead, expectedBase) {
         throw new Error('Unexpected inherited ruleset.');
     }
     const rulesets = await Promise.all(activeRulesets.map(rule => client.request(`${root}/rulesets/${rule.id}`)));
-    validateProtection(repository.ref.branchProtectionRule, rulesets);
+    validateProtection(branch, rulesets);
     if (!isSha(mergeRef.object?.sha)) throw new Error('Test merge is unavailable.');
     const mergeCommit = await client.request(`${root}/git/commits/${mergeRef.object.sha}`);
     validateBase(pr, base, comparison, mergeCommit);

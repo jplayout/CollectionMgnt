@@ -107,15 +107,18 @@ export function validateCommit(pr, commits) {
     return parseDependencies(commits[0].commit.message);
 }
 
-export function validateProtection(protection, rulesets) {
-    if (protection?.requiresStrictStatusChecks !== true || protection.requiredApprovingReviewCount !== 0 ||
-        protection.requiresCodeOwnerReviews !== false || protection.requireLastPushApproval !== false) {
-        refuse('Strict checks missing or an additional non-bypassable review exists.');
-    }
-    const required = protection.requiredStatusChecks;
+export function validateProtection(branch, rulesets) {
+    // GET /branches/main exposes checks with contents:read. Never derive the
+    // local requirements from this response or fall back when it is incomplete.
+    // Classic strict/review settings remain enforced by GitHub at the merge PUT.
+    if (branch?.name !== 'main' || branch.protected !== true) refuse('Main is not protected.');
+    const required = branch.protection?.required_status_checks?.checks;
+    const contexts = branch.protection?.required_status_checks?.contexts;
     if (!Array.isArray(required) || required.length !== REQUIRED_CHECKS.length ||
-        new Set(required.map(check => check.context)).size !== REQUIRED_CHECKS.length ||
-        required.some(check => !REQUIRED_CHECKS.includes(check.context) || check.app?.databaseId !== ACTIONS_APP_ID)) {
+        new Set(required.map(check => check?.context)).size !== REQUIRED_CHECKS.length ||
+        required.some(check => !REQUIRED_CHECKS.includes(check?.context) || check?.app_id !== ACTIONS_APP_ID) ||
+        !Array.isArray(contexts) || contexts.length !== REQUIRED_CHECKS.length ||
+        new Set(contexts).size !== REQUIRED_CHECKS.length || contexts.some(context => !REQUIRED_CHECKS.includes(context))) {
         refuse('Required checks policy changed; manual review required.');
     }
     // Only the existing, separate Human Review ruleset may be bypassed. Reject
