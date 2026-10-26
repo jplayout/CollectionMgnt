@@ -405,6 +405,14 @@ ne change les protections et ne fusionne une vraie PR.
 | PR 131 automatique et entree manuelle canonique `131` | Meme numero valide et meme groupe de concurrence. |
 | Dispatch hors main ou acteur sans droit write/maintain/admin | Refus sans merge. |
 | Pagination, liste tronquee, URL externe, erreur GraphQL | Lecture complete ou refus ferme. |
+| GraphQL FORBIDDEN, NOT_FOUND, RATE_LIMITED, INTERNAL ou donnees partielles | Zero merge, y compris en revalidation ; diagnostic limite a l'operation fixe, statut HTTP, categories et chemins de champs autorises. |
+| Tableau GraphQL `errors: []` | Donnees toujours validees ; aucun contournement des controles. |
+
+Les diagnostics GraphQL n'affichent jamais les messages GitHub, corps de reponse,
+headers ou credentials. Les valeurs inconnues deviennent `UNKNOWN` ; les indices
+de liste deviennent `[]`. Le diagnostic contient au plus cinq erreurs. HTTP 403
+reste bloquant, sans lecture du corps d'erreur. Le nouveau dry-run de la PR 131
+doit etre lance apres deploiement sur `main`, en conservant l'activation desactivee.
 
 Les tests negatifs de validation garantissent zero appel de merge. Les tests
 d'erreur **du PUT lui-meme** doivent observer exactement un appel simule pour
@@ -444,6 +452,15 @@ The actual workflow guard command and privileged-step wiring are tested across
 exact/mixed-case/missing/invalid activation values and dry-run inputs. Invalid
 manual PR representations cannot publish write authorization. Canonical dispatch
 strings and numeric automatic events share one concurrency group per PR.
+
+GraphQL FORBIDDEN/NOT_FOUND/RATE_LIMITED/INTERNAL errors and untrusted partial data
+must prevent every merge, including during revalidation. Diagnostics expose only
+the fixed operation, allowlisted HTTP status, categories and field paths, never
+GitHub messages, response bodies, headers or credentials. Unknown values become
+`UNKNOWN`, list indices become `[]`, and at most five errors are reported. HTTP
+403 is rejected without reading its body. An empty `errors: []` array still
+requires all data and policy validations. After deployment on `main`, a new
+PR 131 dry run can identify the refused field while activation stays disabled.
 
 After integration, keep activation disabled and run dry-run dispatches for PRs
 131/132 on `main`. Verify Actions-secret availability and read-token permissions

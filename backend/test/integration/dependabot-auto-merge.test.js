@@ -5,7 +5,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { REPOSITORY, REPOSITORY_ID, REQUIRED_WORKFLOWS, REQUIRED_CHECKS,
     invocationGuard, parseDependencies } from '../../../.github/scripts/dependabot-policy.mjs';
-import { createClient, authorizeInvocation, observe, waitForChecks, mergeCandidate } from '../../../.github/scripts/dependabot-github.mjs';
+import { GitHubQueryError, createClient, authorizeInvocation, observe, waitForChecks, mergeCandidate } from '../../../.github/scripts/dependabot-github.mjs';
 import { main } from '../../../.github/scripts/dependabot-auto-merge.mjs';
 
 const H = 'a'.repeat(40);
@@ -72,8 +72,12 @@ function fetchFor(f) {
         }
         let result;
         const p = parsed.pathname;
-        if (p === '/graphql') result = { data: { repository: { databaseId: REPOSITORY_ID,
-            ref: { target: { oid: f.base }, branchProtectionRule: f.protection } } } };
+        if (p === '/graphql') {
+            result = { data: { repository: { databaseId: REPOSITORY_ID,
+                ref: { target: { oid: f.base }, branchProtectionRule: f.protection } } } };
+            if (Object.hasOwn(f, 'graphqlErrors')) result.errors = f.graphqlErrors;
+            if (Object.hasOwn(f, 'graphqlData')) result.data = f.graphqlData;
+        }
         else if (p === `${root}/pulls/131`) result = f.pr;
         else if (p === `${root}/pulls/131/commits`) result = f.commits;
         else if (p === `${root}/rulesets`) result = [{ id: 24453018, enforcement: 'active', source: REPOSITORY, source_type: 'Repository' }, ...(f.extraRulesets ?? [])];
@@ -380,6 +384,103 @@ test('transport paginates deterministically and refuses truncation, errors, or e
     await assert.rejects(() => truncated.list(`repos/${REPOSITORY}/actions/runs`, 'items'), /Truncated/);
     const graphql = createClient('fixture-token', async () => new Response(JSON.stringify({ errors: [{ message: 'private' }] })));
     await assert.rejects(() => graphql.request('graphql'), /refused/);
+});
+
+async function assertGraphqlRefusal(mutate, verify) {
+    for (const phase of ['prepare', 'revalidate']) {
+        const f = fixture();
+        const candidate = phase === 'revalidate' ? await candidateFor(f) : undefined;
+        f.calls = [];
+        mutate(f);
+        await assert.rejects(() => phase === 'prepare' ? attempt(f) :
+            mergeCandidate(clientFor(f), clientFor(f), candidate, { now: () => 1000 }), verify);
+        assert.equal(writes(f).length, 0, phase);
+        assert.equal(f.calls.filter(call => call.path === '/graphql').length, 1, phase);
+    }
+}
+
+for (const category of ['FORBIDDEN', 'NOT_FOUND', 'RATE_LIMITED', 'INTERNAL']) {
+    test(`GraphQL ${category} rejects even otherwise valid partial data before any merge`, async () => {
+        await assertGraphqlRefusal(f => {
+            f.graphqlErrors = [{ type: category, path: ['repository', 'ref', 'branchProtectionRule'],
+                message: 'private GitHub message', extensions: { token: 'private credential' } }];
+        }, error => {
+            assert.ok(error instanceof GitHubQueryError);
+            assert.deepEqual(error.diagnostics, { operation: 'ObserveMainProtection', status: 200,
+                errors: [{ category, path: 'repository.ref.branchProtectionRule' }] });
+            assert.equal(error.message, `GitHub query refused: ${JSON.stringify(error.diagnostics)}`);
+            assert.doesNotMatch(JSON.stringify(error), /private|credential|Authorization/);
+            return true;
+        });
+    });
+}
+
+test('GraphQL error categories and field paths are allowlisted and output is bounded', async () => {
+    await assertGraphqlRefusal(f => {
+        f.graphqlErrors = [
+            { type: 'FORBIDDEN', path: ['repository', 'ref', 'branchProtectionRule', 'requiredStatusChecks', 42, 'app', 'databaseId'] },
+            { type: 'private\n::error::injection', path: ['repository', 'private credential'] },
+            { type: { token: 'private credential' }, path: 'private credential' },
+            { type: 'INTERNAL', path: Array(11).fill('repository') },
+            null,
+            { type: 'NOT_FOUND', path: ['repository'] }
+        ];
+    }, error => {
+        assert.deepEqual(error.diagnostics.errors, [
+            { category: 'FORBIDDEN', path: 'repository.ref.branchProtectionRule.requiredStatusChecks.[].app.databaseId' },
+            { category: 'UNKNOWN', path: 'UNKNOWN' },
+            { category: 'UNKNOWN', path: 'UNKNOWN' },
+            { category: 'INTERNAL', path: 'UNKNOWN' },
+            { category: 'UNKNOWN', path: 'UNKNOWN' }
+        ]);
+        assert.doesNotMatch(error.message, /private|credential|::error::|42/);
+        return true;
+    });
+    const error = new GitHubQueryError('private status', [{ type: 'FORBIDDEN', path: [] }]);
+    assert.equal(error.diagnostics.status, 'UNKNOWN');
+    assert.equal(error.diagnostics.errors[0].path, 'UNKNOWN');
+    assert.doesNotMatch(error.message, /private/);
+});
+
+test('GraphQL HTTP 403 never reads or exposes the response body and never merges', async () => {
+    await assertGraphqlRefusal(f => {
+        f.httpStatus = 403;
+        f.failure = call => call.path === '/graphql';
+    }, error => {
+        assert.ok(error instanceof GitHubQueryError);
+        assert.deepEqual(error.diagnostics, { operation: 'ObserveMainProtection', status: 403,
+            errors: [{ category: 'UNKNOWN', path: 'UNKNOWN' }] });
+        assert.doesNotMatch(error.message, /private provider detail/);
+        return true;
+    });
+    const client = createClient('fixture-token', async () => ({ ok: false, status: 403,
+        json: () => assert.fail('An HTTP error body must not be read') }));
+    await assert.rejects(() => client.request('graphql'), GitHubQueryError);
+});
+
+for (const errors of [null, {}, 'private error']) {
+    test(`malformed GraphQL errors ${JSON.stringify(errors)}: zero merge calls`, async () => {
+        await assertGraphqlRefusal(f => { f.graphqlErrors = errors; }, /Invalid GitHub response/);
+    });
+}
+
+for (const data of [null, [], {}, { repository: null }, { repository: { databaseId: REPOSITORY_ID, ref: { target: { oid: B } } } }]) {
+    test(`incomplete GraphQL data ${JSON.stringify(data)} is refused even with empty errors`, async () => {
+        await assertGraphqlRefusal(f => { f.graphqlErrors = []; f.graphqlData = data; }, /Invalid GitHub response|Trusted repository|Strict checks/);
+    });
+}
+
+test('an empty GraphQL errors array preserves all validations and permits exactly one mocked merge', async () => {
+    const f = fixture();
+    f.graphqlErrors = [];
+    assert.equal(await attempt(f), M);
+    assert.equal(writes(f).length, 1);
+    assert.deepEqual(writes(f)[0].body, { sha: H, merge_method: 'merge' });
+    const failed = fixture();
+    failed.graphqlErrors = [];
+    failed.checks[0].conclusion = 'failure';
+    await assert.rejects(() => attempt(failed), /Required check did not succeed/);
+    assert.equal(writes(failed).length, 0);
 });
 
 test('disabled/dry-run CLI defensively refuses every non-exact activation before any App request', async t => {
