@@ -1,49 +1,85 @@
 name: Dependabot Auto Merge
 
 on:
-  pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - synchronize
-      - reopened
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Dependabot PR number to re-evaluate with the full policy
+        required: true
+        type: string
+      dry_run:
+        description: Validate only; never create an App token or merge
+        default: true
+        type: boolean
 
 permissions:
   contents: read
   pull-requests: read
+  checks: read
+  actions: read
+  statuses: read
 
 concurrency:
-  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  group: dependabot-auto-merge-${{ github.event.pull_request.number || fromJSON(inputs.pr_number) }}
   cancel-in-progress: false
 
 jobs:
   dependabot:
     name: Dependabot Auto Merge
     if: >-
-      github.actor == 'dependabot[bot]' &&
-      github.event.pull_request.user.login == 'dependabot[bot]' &&
       github.repository == 'jplayout/CollectionMgnt' &&
-      github.event.pull_request.base.repo.full_name == github.repository &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.base.ref == 'main'
+      ((github.event_name == 'pull_request_target' &&
+        github.actor == 'dependabot[bot]' &&
+        github.event.pull_request.user.login == 'dependabot[bot]' &&
+        github.event.pull_request.base.repo.full_name == github.repository &&
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        github.event.pull_request.base.ref == 'main') ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      # Explicit activation after Actions-secret migration and a successful dry run.
+      MERGE_ENABLED: ${{ vars.DEPENDABOT_DIRECT_MERGE_ENABLED }}
     steps:
-      - name: Fetch Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98
+      - name: Load controller from the trusted main revision only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          sparse-checkout: .github/scripts
 
-      - name: Keep other updates manual
-        if: steps.metadata.outputs.update-type != 'version-update:semver-patch' && steps.metadata.outputs.update-type != 'version-update:semver-minor'
+      - name: Validate canonical PR number and decide strict write authorization
+        id: guard
+        run: node .github/scripts/dependabot-auto-merge.mjs guard
+
+      - name: Check Actions secret availability without revealing values
         env:
-          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
-        run: echo "Manual review and merge required (update-type=${UPDATE_TYPE:-missing})."
+          DRY_RUN: ${{ steps.guard.outputs.dry_run }}
+          HAS_CLIENT_ID: ${{ secrets.DEPENDABOT_MERGER_CLIENT_ID != '' }}
+          HAS_PRIVATE_KEY: ${{ secrets.DEPENDABOT_MERGER_PRIVATE_KEY != '' }}
+        run: |
+          set -euo pipefail
+          if [[ "$HAS_CLIENT_ID" != 'true' || "$HAS_PRIVATE_KEY" != 'true' ]]; then
+            echo 'Required Actions secrets are unavailable; migrate them before activation.'
+            if [[ "$DRY_RUN" != 'true' ]]; then exit 1; fi
+          else
+            echo 'Both required Actions secrets are available (values are never printed).'
+          fi
 
-      - name: Create scoped Dependabot Merger token
+      - name: Validate eligibility and wait at most 45 minutes for required checks
+        id: candidate
+        env:
+          DRY_RUN: ${{ steps.guard.outputs.dry_run }}
+          READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CANDIDATE_PATH: ${{ runner.temp }}/dependabot-merge-candidate-${{ github.run_id }}-${{ github.run_attempt }}.json
+        run: node .github/scripts/dependabot-auto-merge.mjs prepare
+
+      - name: Create scoped Dependabot Merger token at the last moment
         id: app-token
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        if: fromJSON(steps.guard.outputs.allow_write || 'false') && steps.candidate.outputs.ready == 'true'
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ secrets.DEPENDABOT_MERGER_CLIENT_ID }}
@@ -51,22 +87,11 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
 
-      - name: Enable auto-merge for patch or minor updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+      - name: Revalidate and merge the exact head through REST
+        if: fromJSON(steps.guard.outputs.allow_write || 'false') && steps.candidate.outputs.ready == 'true'
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          PR_HEAD: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          current_head=$(gh pr view "$PR_URL" --json headRefOid --jq '.headRefOid')
-          if [[ "$current_head" != "$PR_HEAD" ]]; then
-            echo "PR head changed; the synchronize run will handle the new revision."
-            exit 0
-          fi
-          auto_merge=$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest != null')
-          if [[ "$auto_merge" == "true" ]]; then
-            echo "GitHub auto-merge is already enabled."
-          else
-            gh pr merge --auto --merge "$PR_URL" --match-head-commit "$PR_HEAD"
-          fi
+          DRY_RUN: ${{ steps.guard.outputs.dry_run }}
+          READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          CANDIDATE_PATH: ${{ runner.temp }}/dependabot-merge-candidate-${{ github.run_id }}-${{ github.run_attempt }}.json
+        run: node .github/scripts/dependabot-auto-merge.mjs merge
