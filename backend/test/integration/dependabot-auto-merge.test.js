@@ -24,9 +24,10 @@ function fixture() {
         base: { sha: B, ref: 'main', repo } };
     const commits = [{ sha: H, author: { ...bot }, committer: { login: 'web-flow', id: 19864447 },
         commit: { message: metadata(), verification: { verified: true, reason: 'valid' } } }];
-    const protection = { requiresStrictStatusChecks: true, requiredApprovingReviewCount: 0,
-        requiresCodeOwnerReviews: false, requireLastPushApproval: false,
-        requiredStatusChecks: REQUIRED_CHECKS.map(context => ({ context, app: { databaseId: 15368 } })) };
+    const branch = { name: 'main', commit: { sha: B }, protected: true, protection: {
+        required_status_checks: { contexts: [...REQUIRED_CHECKS],
+            checks: REQUIRED_CHECKS.map(context => ({ context, app_id: 15368 })) }
+    } };
     const ruleset = { id: 24453018, name: 'Human Review', target: 'branch', enforcement: 'active',
         conditions: { ref_name: { include: ['refs/heads/main'], exclude: [] } },
         bypass_actors: [{ actor_type: 'Integration', actor_id: 5185016, bypass_mode: 'pull_request' }],
@@ -46,7 +47,7 @@ function fixture() {
     const checks = jobs.map(job => ({ id: job.id, name: job.name, head_sha: H,
         app: { id: 15368 }, status: 'completed', conclusion: 'success',
         check_suite: { id: runs.find(run => run.id === job.run_id).check_suite_id } }));
-    return { pr, commits, protection, ruleset, workflows, runs, jobs, checks, statuses: [],
+    return { pr, commits, branch, ruleset, workflows, runs, jobs, checks, statuses: [],
         base: B, merge: { sha: M, parents: [{ sha: B }, { sha: H }] },
         comparison: { behind_by: 0, status: 'ahead', merge_base_commit: { sha: B } },
         permission: 'write', calls: [], mergeResult: { merged: true, sha: M } };
@@ -74,11 +75,12 @@ function fetchFor(f) {
         const p = parsed.pathname;
         if (p === '/graphql') {
             result = { data: { repository: { databaseId: REPOSITORY_ID,
-                ref: { target: { oid: f.base }, branchProtectionRule: f.protection } } } };
+                ref: { target: { oid: f.base } } } } };
             if (Object.hasOwn(f, 'graphqlErrors')) result.errors = f.graphqlErrors;
             if (Object.hasOwn(f, 'graphqlData')) result.data = f.graphqlData;
         }
         else if (p === `${root}/pulls/131`) result = f.pr;
+        else if (p === `${root}/branches/main`) result = f.branch;
         else if (p === `${root}/pulls/131/commits`) result = f.commits;
         else if (p === `${root}/rulesets`) result = [{ id: 24453018, enforcement: 'active', source: REPOSITORY, source_type: 'Repository' }, ...(f.extraRulesets ?? [])];
         else if (p === `${root}/rulesets/24453018`) result = f.ruleset;
@@ -133,6 +135,23 @@ for (const entries of [
     });
 }
 
+test('unavailable branchProtectionRule is never queried; the nine local checks and public branch policy still gate merge', async () => {
+    assert.deepEqual(REQUIRED_CHECKS, ['Backend', 'Frontend', 'Quality', 'Playwright E2E', 'Docker',
+        'Project Conventions', 'Analyze JavaScript (javascript-typescript)', 'Semgrep', 'Trivy']);
+    const f = fixture();
+    f.onCall = call => {
+        if (call.path === '/graphql') {
+            assert.doesNotMatch(call.body.query, /branchProtectionRule|requiredStatusChecks|requireLastPushApproval/);
+        }
+        assert.doesNotMatch(call.path, /\/branches\/main\/protection/);
+    };
+    assert.equal(await attempt(f), M);
+    assert.ok(f.calls.some(call => call.path === `${root}/branches/main`));
+    assert.ok(f.calls.some(call => call.path === `${root}/rulesets/24453018`));
+    assert.equal(writes(f).length, 1);
+    assert.deepEqual(writes(f)[0].body, { sha: H, merge_method: 'merge' });
+});
+
 const negatives = {
     'major update': f => { f.commits[0].commit.message = metadata([['example', '2.0.0', 'major']]); },
     'unknown version': f => { f.commits[0].commit.message = metadata([['example', 'unknown', 'patch']]); },
@@ -185,12 +204,18 @@ const negatives = {
     'unrelated PR run': f => { f.runs[0].pull_requests = []; },
     'only push CI exists': f => { f.runs[0].event = 'push'; },
     'legacy status impersonation': f => { f.statuses.push({ context: 'Backend', state: 'success' }); },
-    'strict disabled': f => { f.protection.requiresStrictStatusChecks = false; },
-    'non-bypassable review': f => { f.protection.requiredApprovingReviewCount = 1; },
-    'non-bypassable code owner review': f => { f.protection.requiresCodeOwnerReviews = true; },
-    'non-bypassable last push review': f => { f.protection.requireLastPushApproval = true; },
-    'new required check': f => { f.protection.requiredStatusChecks.push({ context: 'New check', app: { databaseId: 15368 } }); },
-    'required check source changed': f => { f.protection.requiredStatusChecks[0].app.databaseId = 1; },
+    'main is unprotected': f => { f.branch.protected = false; },
+    'wrong protected branch': f => { f.branch.name = 'other'; },
+    'main changed during inspection': f => { f.branch.commit.sha = H; },
+    'branch response missing': f => { f.branch = null; },
+    'required checks metadata missing': f => { delete f.branch.protection; },
+    'required check definition missing': f => { f.branch.protection.required_status_checks.checks.shift(); },
+    'new required check': f => { f.branch.protection.required_status_checks.checks.push({ context: 'New check', app_id: 15368 }); },
+    'required check source changed': f => { f.branch.protection.required_status_checks.checks[0].app_id = 1; },
+    'required check source unpinned': f => { f.branch.protection.required_status_checks.checks[0].app_id = null; },
+    'duplicate required check definition': f => { f.branch.protection.required_status_checks.checks[0] = f.branch.protection.required_status_checks.checks[1]; },
+    'required check contexts missing': f => { delete f.branch.protection.required_status_checks.contexts; },
+    'required check contexts differ': f => { f.branch.protection.required_status_checks.contexts[0] = 'New check'; },
     'Human Review bypass removed': f => { f.ruleset.bypass_actors = []; },
     'Human Review checks bypass added': f => { f.ruleset.rules.push({ type: 'required_status_checks' }); },
     'additional inherited ruleset': f => { f.extraRulesets = [{ id: 1, enforcement: 'active', source: 'other', source_type: 'Organization' }]; }
@@ -251,7 +276,7 @@ test('read-only hidden bypass list relies on server authorization without bypass
     assert.equal(await attempt(f), M);
     assert.equal(writes(f).length, 1);
     f.calls = [];
-    f.protection.requiredApprovingReviewCount = 1;
+    f.checks[0].conclusion = 'failure';
     await assert.rejects(() => attempt(f));
     assert.equal(writes(f).length, 0);
 });
@@ -270,7 +295,7 @@ test('successful full rerun uses the current attempt; old checks cannot satisfy 
 for (const [name, mutate] of [
     ['head', f => { f.pr.head.sha = 'd'.repeat(40); }],
     ['base', f => { f.base = 'd'.repeat(40); }],
-    ['review', f => { f.protection.requiredApprovingReviewCount = 1; }],
+    ['required checks policy', f => { f.branch.protection.required_status_checks.checks[0].app_id = 1; }],
     ['new CI attempt', f => { f.runs[0].run_attempt++; }],
     ['closed state', f => { f.pr.state = 'closed'; }],
     ['check result', f => { f.checks[0].conclusion = 'failure'; }]
@@ -386,7 +411,7 @@ test('transport paginates deterministically and refuses truncation, errors, or e
     await assert.rejects(() => graphql.request('graphql'), /refused/);
 });
 
-async function assertGraphqlRefusal(mutate, verify) {
+async function assertObservationRefusal(mutate, verify) {
     for (const phase of ['prepare', 'revalidate']) {
         const f = fixture();
         const candidate = phase === 'revalidate' ? await candidateFor(f) : undefined;
@@ -399,15 +424,59 @@ async function assertGraphqlRefusal(mutate, verify) {
     }
 }
 
+for (const status of [403, 404, 'timeout']) {
+    test(`public branch metadata ${status}: no permissive fallback or merge during preparation or revalidation`, async () => {
+        await assertObservationRefusal(f => {
+            f.httpStatus = status;
+            f.failure = call => call.path === `${root}/branches/main`;
+        }, /GitHub request/);
+    });
+}
+
+test('missing public check definitions cannot fall back to contexts or successful CI', async () => {
+    await assertObservationRefusal(f => {
+        delete f.branch.protection.required_status_checks.checks;
+    }, /Required checks policy changed/);
+});
+
+test('a server-only classic review requirement refuses a locally ready candidate without retry or bypass', async () => {
+    const f = fixture();
+    const candidate = await candidateFor(f);
+    f.calls = [];
+    // The token cannot read classic review settings. Model the server refusing
+    // the ordinary merge after a new review requirement, not a local default.
+    f.httpStatus = 405;
+    f.failure = call => call.method === 'PUT';
+    await assert.rejects(() => mergeCandidate(clientFor(f), clientFor(f), candidate, { now: () => 1000 }), /HTTP 405/);
+    assert.equal(writes(f).length, 1);
+    assert.deepEqual(writes(f)[0], { path: `${root}/pulls/131/merge`, method: 'PUT',
+        body: { sha: H, merge_method: 'merge' }, query: new URLSearchParams() });
+});
+
+test('main advancing after the last reads remains subject to server strict checks', async () => {
+    const f = fixture();
+    const candidate = await candidateFor(f);
+    f.calls = [];
+    f.httpStatus = 405;
+    f.failure = call => call.method === 'PUT';
+    f.onCall = call => {
+        // Last local reads saw B; only the server can observe this later race.
+        if (call.method === 'PUT') f.base = 'd'.repeat(40);
+    };
+    await assert.rejects(() => mergeCandidate(clientFor(f), clientFor(f), candidate, { now: () => 1000 }), /HTTP 405/);
+    assert.equal(writes(f).length, 1);
+    assert.deepEqual(writes(f)[0].body, { sha: H, merge_method: 'merge' });
+});
+
 for (const category of ['FORBIDDEN', 'NOT_FOUND', 'RATE_LIMITED', 'INTERNAL']) {
     test(`GraphQL ${category} rejects even otherwise valid partial data before any merge`, async () => {
-        await assertGraphqlRefusal(f => {
-            f.graphqlErrors = [{ type: category, path: ['repository', 'ref', 'branchProtectionRule'],
+        await assertObservationRefusal(f => {
+            f.graphqlErrors = [{ type: category, path: ['repository', 'ref', 'target'],
                 message: 'private GitHub message', extensions: { token: 'private credential' } }];
         }, error => {
             assert.ok(error instanceof GitHubQueryError);
-            assert.deepEqual(error.diagnostics, { operation: 'ObserveMainProtection', status: 200,
-                errors: [{ category, path: 'repository.ref.branchProtectionRule' }] });
+            assert.deepEqual(error.diagnostics, { operation: 'ObserveMainReference', status: 200,
+                errors: [{ category, path: 'repository.ref.target' }] });
             assert.equal(error.message, `GitHub query refused: ${JSON.stringify(error.diagnostics)}`);
             assert.doesNotMatch(JSON.stringify(error), /private|credential|Authorization/);
             return true;
@@ -416,9 +485,9 @@ for (const category of ['FORBIDDEN', 'NOT_FOUND', 'RATE_LIMITED', 'INTERNAL']) {
 }
 
 test('GraphQL error categories and field paths are allowlisted and output is bounded', async () => {
-    await assertGraphqlRefusal(f => {
+    await assertObservationRefusal(f => {
         f.graphqlErrors = [
-            { type: 'FORBIDDEN', path: ['repository', 'ref', 'branchProtectionRule', 'requiredStatusChecks', 42, 'app', 'databaseId'] },
+            { type: 'FORBIDDEN', path: ['repository', 'ref', 42, 'target', 'oid'] },
             { type: 'private\n::error::injection', path: ['repository', 'private credential'] },
             { type: { token: 'private credential' }, path: 'private credential' },
             { type: 'INTERNAL', path: Array(11).fill('repository') },
@@ -427,7 +496,7 @@ test('GraphQL error categories and field paths are allowlisted and output is bou
         ];
     }, error => {
         assert.deepEqual(error.diagnostics.errors, [
-            { category: 'FORBIDDEN', path: 'repository.ref.branchProtectionRule.requiredStatusChecks.[].app.databaseId' },
+            { category: 'FORBIDDEN', path: 'repository.ref.[].target.oid' },
             { category: 'UNKNOWN', path: 'UNKNOWN' },
             { category: 'UNKNOWN', path: 'UNKNOWN' },
             { category: 'INTERNAL', path: 'UNKNOWN' },
@@ -443,12 +512,12 @@ test('GraphQL error categories and field paths are allowlisted and output is bou
 });
 
 test('GraphQL HTTP 403 never reads or exposes the response body and never merges', async () => {
-    await assertGraphqlRefusal(f => {
+    await assertObservationRefusal(f => {
         f.httpStatus = 403;
         f.failure = call => call.path === '/graphql';
     }, error => {
         assert.ok(error instanceof GitHubQueryError);
-        assert.deepEqual(error.diagnostics, { operation: 'ObserveMainProtection', status: 403,
+        assert.deepEqual(error.diagnostics, { operation: 'ObserveMainReference', status: 403,
             errors: [{ category: 'UNKNOWN', path: 'UNKNOWN' }] });
         assert.doesNotMatch(error.message, /private provider detail/);
         return true;
@@ -460,13 +529,13 @@ test('GraphQL HTTP 403 never reads or exposes the response body and never merges
 
 for (const errors of [null, {}, 'private error']) {
     test(`malformed GraphQL errors ${JSON.stringify(errors)}: zero merge calls`, async () => {
-        await assertGraphqlRefusal(f => { f.graphqlErrors = errors; }, /Invalid GitHub response/);
+        await assertObservationRefusal(f => { f.graphqlErrors = errors; }, /Invalid GitHub response/);
     });
 }
 
-for (const data of [null, [], {}, { repository: null }, { repository: { databaseId: REPOSITORY_ID, ref: { target: { oid: B } } } }]) {
+for (const data of [null, [], {}, { repository: null }, { repository: { databaseId: REPOSITORY_ID, ref: { target: null } } }]) {
     test(`incomplete GraphQL data ${JSON.stringify(data)} is refused even with empty errors`, async () => {
-        await assertGraphqlRefusal(f => { f.graphqlErrors = []; f.graphqlData = data; }, /Invalid GitHub response|Trusted repository|Strict checks/);
+        await assertObservationRefusal(f => { f.graphqlErrors = []; f.graphqlData = data; }, /Invalid GitHub response|Trusted repository/);
     });
 }
 

@@ -394,7 +394,10 @@ ne change les protections et ne fusionne une vraie PR.
 | Reexecution partielle sans tous les jobs requis | Reste bloquee ; relancer le workflow complet. |
 | Head, base, checks ou etat modifies avant merge | Zero appel de merge lors de la revalidation. |
 | Base obsolete ou mauvais parents du commit de test | Zero appel de merge. |
-| Approval historique reintroduite, autre ruleset ou derive des checks requis | Zero appel de merge. |
+| Autre ruleset ou derive visible des checks requis | Zero appel de merge. |
+| `branchProtectionRule` inaccessible | Jamais demande ; identite/base GraphQL et politique des neuf checks restent obligatoires. |
+| Lecture publique de `main` refusee, incomplete ou autre SHA | Zero appel de merge, y compris en revalidation ; aucun fallback. |
+| Approval classique reintroduite ou base avancee apres la derniere lecture | Refus serveur simule : un seul PUT lie au SHA, aucun retry, bypass ou succes annonce. |
 | Lecture HTTP 403, 405, 409, 422 ou timeout | Zero appel de merge ; erreur sans corps API sensible. |
 | PUT HTTP 403, 405, 409, 422 ou timeout | Un seul appel HTTP simule, jamais de retry ou fallback. |
 | Reponse PUT sans confirmation de fusion | Echec explicite ; jamais declaree reussie. |
@@ -411,8 +414,10 @@ ne change les protections et ne fusionne une vraie PR.
 Les diagnostics GraphQL n'affichent jamais les messages GitHub, corps de reponse,
 headers ou credentials. Les valeurs inconnues deviennent `UNKNOWN` ; les indices
 de liste deviennent `[]`. Le diagnostic contient au plus cinq erreurs. HTTP 403
-reste bloquant, sans lecture du corps d'erreur. Le nouveau dry-run de la PR 131
-doit etre lance apres deploiement sur `main`, en conservant l'activation desactivee.
+reste bloquant, sans lecture du corps d'erreur. L'operation est maintenant
+`ObserveMainReference` ; GraphQL ne demande aucun champ de protection classique.
+Le nouveau dry-run de la PR 131 doit etre lance apres deploiement sur `main`,
+en conservant l'activation desactivee.
 
 Les tests negatifs de validation garantissent zero appel de merge. Les tests
 d'erreur **du PUT lui-meme** doivent observer exactement un appel simule pour
@@ -424,6 +429,8 @@ Validation manuelle apres integration, toujours sans fusion pour les tests :
 2. Executer les simulations des PR 131 et 132 sur `main`, `dry_run: true`.
 3. Verifier que les deux secrets sont accessibles sans afficher leurs valeurs,
    que les permissions de lecture suffisent et que tous les controles passent.
+   Auditer separement `strict: true`, les neuf checks avec App Actions et le
+   perimetre du bypass dans les settings ou avec un compte deja autorise.
 4. Si les secrets ou une garantie de securite restent incertains, ne pas activer.
    Ne pas modifier les protections pour faire passer un test.
 
@@ -445,8 +452,10 @@ request and verify no retry or fallback. No test performs a real merge.
 Coverage includes major/unknown/mixed groups, unsupported signed metadata,
 author and commit identity/signature, forks, PR state, missing/failed/skipped/
 neutral checks, workflow/job/App/suite/SHA provenance, duplicate executions and
-CI reruns, stale branches, head/base races, configuration drift and additional
-non-bypassable review. It also covers HTTP 403/405/409/422, timeouts, candidate
+CI reruns, stale branches, head/base races and visible configuration drift.
+Server rejection of an additional classic review or a base race is mocked at the
+ordinary PUT: one attempt, no retry or bypass, and no reported success. It also
+covers HTTP 403/405/409/422, timeouts, candidate
 expiry, pagination, recovery authorization and disabled/dry-run write guards.
 The actual workflow guard command and privileged-step wiring are tested across
 exact/mixed-case/missing/invalid activation values and dry-run inputs. Invalid
@@ -459,12 +468,17 @@ the fixed operation, allowlisted HTTP status, categories and field paths, never
 GitHub messages, response bodies, headers or credentials. Unknown values become
 `UNKNOWN`, list indices become `[]`, and at most five errors are reported. HTTP
 403 is rejected without reading its body. An empty `errors: []` array still
-requires all data and policy validations. After deployment on `main`, a new
-PR 131 dry run can identify the refused field while activation stays disabled.
+requires all data and policy validations. `ObserveMainReference` never requests
+`branchProtectionRule`; inaccessible or incomplete public branch/check metadata
+fails closed during both preparation and revalidation. The nine checks and their
+App sources are locally pinned, not inferred from the readable server settings.
 
 After integration, keep activation disabled and run dry-run dispatches for PRs
 131/132 on `main`. Verify Actions-secret availability and read-token permissions
-without printing credentials. Do not activate if any required guarantee remains
+without printing credentials. Separately audit server `strict: true`, the nine
+checks pinned to Actions and the App bypass scope with an already authorized
+account or Settings; the controller cannot read classic strict/review settings.
+Do not activate if any required guarantee remains
 uncertain. Local tests cannot prove runtime secret access or GitHub bypass
 semantics; server protections resolve the final race. See the governance guide
 for migration, explicit activation, recovery and stopping active runs.

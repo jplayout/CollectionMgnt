@@ -253,11 +253,27 @@ la meme politique sur les evenements automatiques et la recuperation manuelle.
 ### Checks et protections / Checks and protections
 
 `GITHUB_TOKEN` est limite a `contents`, `pull-requests`, `checks`, `actions` et
-`statuses` en lecture. La politique et les checks sont lus avec ce token, jamais
-avec le token App. La protection de `main` doit conserver les neuf checks listes
-plus haut, associes a GitHub Actions (`app_id: 15368`), avec `strict: true`.
-La protection historique ne doit ajouter aucune approval, Code Owner review
-ou approval du dernier push : le controleur refuserait avant tout appel de merge.
+`statuses` en lecture. Les checks et les rulesets sont lus avec ce token, jamais
+avec le token App. La liste locale `REQUIRED_WORKFLOWS` de `dependabot-policy.mjs`
+fixe les neuf checks et leurs workflows ; elle n'est jamais deduite de GitHub.
+GraphQL `ObserveMainReference` ne lit que l'identite du depot et le SHA de `main`.
+Il ne demande plus `branchProtectionRule`, refuse avec `FORBIDDEN` sans
+`Administration: read`. Aucune permission supplementaire n'est demandee.
+La [lecture REST de la branche](https://docs.github.com/en/rest/branches/branches#get-a-branch),
+accessible avec `contents: read`, doit montrer `main` protegee, le meme SHA,
+exactement les neuf contextes attendus et leurs checks avec `app_id: 15368`.
+Une lecture refusee, incomplete, un contexte ajoute, retire ou duplique, ou une
+autre source arrete le controleur ; aucun fallback aux seuls noms n'est permis.
+
+La protection de `main` doit conserver
+[`strict: true`](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging).
+Cette option et les reviews
+classiques ne sont pas exposees par la lecture de branche utilisee : le controleur
+ne leur attribue aucune valeur par defaut. GitHub les applique au PUT de merge
+[ordinaire](https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request), sans
+bypass de la protection classique. Une approval, Code Owner review
+ou approval du dernier push ajoutee a cette protection peut donc laisser la
+simulation eligible puis faire refuser le PUT. Ce refus reste bloquant, sans retry.
 Le ruleset actif `Human Review` conserve approval et Code Owner review, avec
 bypass de l'App `CollectionMgnt Dependabot Merger` pour les PR uniquement.
 Son bypass ne doit pas contenir de regle de checks. La
@@ -266,7 +282,9 @@ masque `bypass_actors` aux lecteurs sans droit d'ecriture sur le ruleset. Le con
 valide les regles visibles ; le serveur autorise le bypass de l'identite App
 reelle. Il ne demande aucun droit d'administration pour lire cette liste. Si le
 bypass est retire, GitHub refuse le PUT ; aucun fallback n'est autorise.
-Une derive de cette politique ou un ruleset actif supplementaire arrete le controleur ; aucun droit n'est ajoute.
+Une derive visible de cette politique ou un ruleset actif supplementaire arrete
+le controleur ; aucun droit n'est ajoute. Le bypass existant de `Human Review`
+n'est ni etendu aux checks ni etendu a d'autres reviews.
 
 L'attente est bornee a 45 minutes, avec une interrogation par minute. Elle
 porte seulement sur les neuf checks obligatoires, jamais sur le job de fusion.
@@ -301,6 +319,27 @@ automatique d'ecriture ni fallback auto/admin n'est effectue. Apres un timeout
 de PUT, verifier l'etat GitHub avant toute reprise : la fusion peut avoir eu lieu.
 Une PR fermee, mergee, draft, modifiee ou devenue obsolete ne produit aucune
 nouvelle demande de merge. Aucune branche n'est supprimee par le controleur.
+
+Maintenance des checks et protections :
+
+1. Desactiver la variable d'activation et annuler les runs autorises en cours
+   avant de changer un nom de job, un workflow, une source App ou les protections.
+2. Mettre a jour ensemble `REQUIRED_WORKFLOWS`, les tests et cette documentation.
+   Une derive entre liste locale et checks serveur bloque, elle n'est pas adoptee
+   automatiquement. Garder les neuf controles actuels tant que cette politique
+   n'a pas ete revisee explicitement.
+3. Auditer dans les settings ou avec un compte deja autorise la protection
+   classique : checks et sources attendus, `strict: true`, et aucun bypass App
+   de ces checks. Verifier aussi que seul le ruleset `Human Review` est bypassable
+   par l'App. Ne pas donner ces droits d'audit au token du controleur.
+4. Deployer sur `main`, puis refaire les tests et les dry-runs avant toute
+   reactivation explicite. Un dry-run eligible ne prouve pas l'autorisation du PUT.
+
+Limite importante : le controleur ne detecte pas une desactivation de `strict`
+ou tous les changements de reviews classiques. Sa derniere lecture ne verrouille
+pas la base au PUT ; la garantie de fraicheur contre cette course depend de
+`strict: true` cote serveur. Si cet invariant ou le perimetre du bypass n'est plus
+assure, laisser l'automatisation desactivee et traiter les PR manuellement.
 
 ### Secrets et activation / Secrets and activation
 
@@ -377,12 +416,34 @@ workflow runs and current attempts, expected job/check identities, App, suite,
 head/test-merge SHA and current base. Original CI run actors must be Dependabot;
 human reruns of those runs are allowed. Missing or pending checks cannot merge;
 failed, skipped, neutral, cancelled or incorrectly sourced checks are refused.
-Partial reruns missing required jobs require a full workflow rerun. Configuration
-drift, including an additional non-bypassable review, stops before the merge API.
-Only the existing `Human Review` ruleset may be bypassed; strict checks stay intact.
+Partial reruns missing required jobs require a full workflow rerun. The local
+`REQUIRED_WORKFLOWS` policy is fixed, never derived from the server. GraphQL
+`ObserveMainReference` reads only repository identity and the main SHA, without
+requesting the inaccessible `branchProtectionRule`. REST `GET /branches/main`
+requires only contents read and must show protected main, the same SHA and exactly
+the nine expected contexts and checks pinned to Actions App 15368. Missing data,
+403/404, added/removed/duplicate checks or another App fail closed without fallback.
+Visible configuration drift or another active ruleset stops before the merge API.
+Only the existing `Human Review` ruleset may be bypassed; its scope is unchanged.
 GitHub hides bypass actors from read-only callers. Public rule structure is
 validated locally, while the merge server authorizes the actual App bypass.
 No administration permission is requested; a removed bypass fails at the PUT.
+
+Classic strict and review settings are not exposed by this branch read. They are
+never assumed or defaulted: GitHub enforces them at the ordinary REST merge PUT.
+An additional classic approval/code-owner/last-push requirement can therefore
+leave a dry run eligible but reject the PUT; there is no retry or bypass fallback.
+Before changing workflows, job names, App sources or protections, disable
+activation and cancel authorized runs. Update the local policy, tests and docs
+together; server drift is refused rather than adopted automatically. Audit classic
+checks/sources and `strict: true` with an already authorized account or Settings,
+and verify that the App can bypass only `Human Review`, never the checks. Keep
+the current nine checks unless the policy is explicitly revised. Deploy on main
+and rerun tests/dry runs before any explicit reactivation. Do not grant audit
+permissions to the controller. It cannot detect `strict` being disabled or all
+classic review changes. Freshness across the final base race depends on server
+strict checks; if that invariant or the bypass scope is uncertain, stay disabled
+and handle PRs manually. A successful dry run does not prove merge authorization.
 
 The App token is created only after eligibility, scoped to this repository with
 contents/pull requests write permissions and revoked after the job. Final checks
