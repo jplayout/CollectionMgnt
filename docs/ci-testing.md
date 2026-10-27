@@ -2,6 +2,45 @@
 
 Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
+## Proxies de confiance / Trusted proxies
+
+Avec Node 22, lancer `cd backend`, `npm ci`, puis `npm test` et
+`npm run check:syntax`. `trusted-proxies.test.js` couvre les configurations,
+CVE-2026-92395 sur le paquet résolu, les vraies routes login/audit/cleanup,
+le spoofing, les chaînes mixtes, IPv4/IPv6, 429/Retry-After, JWT et permissions.
+Sur les quatre routes limitées, les IP invalides conservent les en-têtes de
+sécurité et ne provoquent aucun appel à `LocalStore.incr`, vérifié par espion.
+
+Le test réseau séparé `npm run test:proxy-network` utilise le nginx du Dockerfile
+frontend, déjà présent localement, et sa configuration du dépôt. Il ne télécharge
+aucune image et ne dépend d'aucun service externe. Il nécessite Linux et
+Podman (défaut) ou `CONTAINER_ENGINE=docker`, avec accès au moteur et au réseau
+hôte. Des IP loopback distinctes représentent les clients ; le backend est volontairement
+accessible directement pour vérifier le refus du spoofing. Les ports restent
+loopback et les données temporaires ; le conteneur est supprimé après le test.
+Il vérifie aussi la normalisation host/proto et le parcours login/JWT.
+De véritables lignes HTTP XFF répétées, avec préfixes falsifiés/malformés tournants,
+vérifient le quota via nginx et en accès direct. Node reçoit bien deux lignes XFF
+en accès direct ; nginx les rassemble en ajoutant son correspondant réel.
+Ce test ne prouve pas le fonctionnement d'un DSM physique ni d'un NAT spécifique.
+
+With Node 22, run `cd backend`, `npm ci`, `npm test`, and `npm run check:syntax`.
+The proxy regression file covers configuration, the resolved CVE fix, actual
+login/media routes, spoofing, mixed chains, IPv4/IPv6, quotas, JWT and permissions.
+Spies verify that invalid IPs on all four limited routes keep security headers
+and never call `LocalStore.incr`.
+Run `npm run test:proxy-network` separately on Linux with local Podman or
+`CONTAINER_ENGINE=docker` and the frontend Dockerfile's nginx image already
+available. It never pulls images or contacts external services. An ephemeral
+host-network container uses repository nginx configuration, loopback-only ports,
+temporary data and distinct client addresses, checking isolation, forwarding header
+normalization, login/JWT and a deliberately reachable direct backend. It cleans
+up its container afterwards. Real repeated XFF header lines with rotating forged
+and malformed prefixes exercise quotas through nginx and directly. Node receives
+two separate XFF lines directly; nginx combines them and appends its actual peer.
+Physical DSM and engine-specific NAT need deployment
+validation; see the [FR/EN guide](deployment/trusted-proxies.md).
+
 Ce document decrit les validations automatisees disponibles pour les
 contributeurs. Le projet privilegie une base simple et rapide plutot qu'une
 couverture exhaustive.

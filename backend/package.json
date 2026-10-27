@@ -4,7 +4,8 @@
  "scripts": {
   "check:syntax": "node scripts/check-syntax.js",
   "dev": "node src/server.js",
-  "test": "node --test --test-concurrency=1 test/integration/*.test.js"
+  "test": "node --test --test-concurrency=1 test/integration/*.test.js",
+  "test:proxy-network": "node --test test/network/proxy-nginx.test.js"
  },
  "dependencies": {
   "@fastify/cors": "^11",

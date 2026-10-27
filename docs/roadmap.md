@@ -236,7 +236,11 @@ Travaux futurs envisagés :
   - Nginx
 - Documentation reverse proxy hors DSM.
 - Validation du fonctionnement derrière un reverse proxy TLS.
-- Vérification correcte des en-têtes proxy.
+- Étendre la validation des en-têtes proxy aux scénarios TLS externes. Le lot 2
+  ajoute l'identification IP par `TRUSTED_PROXIES`, le refus des CIDR mapped et
+  un test réseau nginx ; les topologies DSM/NAT réelles restent à valider.
+  See the [FR/EN trusted proxy guide](deployment/trusted-proxies.md): IP trust is
+  implemented; physical DSM, NAT and external TLS deployment validation remains.
 - Recommandations TLS modernes.
 - Documentation des scénarios d’accès distant :
   - VPN
