@@ -2,6 +2,18 @@
 
 Statut : développement. Version produit canonique : [VERSION](../VERSION).
 
+## Rate limiting derrière proxy / Rate limiting behind proxies
+
+`TRUSTED_PROXIES` permet une liste explicite d'IP/CIDR, désactivée par défaut.
+Fastify résout le client sans clé personnalisée ; quotas et persistance restent
+inchangés. proxy-addr 5.1.2 corrige CVE-2026-92395 et les CIDR mapped sont refusés.
+nginx normalise aussi X-Forwarded-Host. Voir le [guide FR/EN](deployment/trusted-proxies.md).
+
+`TRUSTED_PROXIES` enables an explicit IP/CIDR allowlist, disabled by default.
+Native Fastify resolution preserves quotas and storage. proxy-addr 5.1.2 fixes
+CVE-2026-92395; mapped CIDRs are rejected. nginx also normalizes X-Forwarded-Host.
+See the [FR/EN deployment guide](deployment/trusted-proxies.md).
+
 ## Gouvernance de version
 
 La version produit est lue depuis [VERSION](../VERSION) par l’API, les

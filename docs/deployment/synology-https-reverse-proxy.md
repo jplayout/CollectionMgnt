@@ -20,6 +20,14 @@ Ce lot ne met pas en place de fonctionnalité caméra. Il prépare seulement le 
 
 ## Architecture recommandée
 
+Pour isoler les quotas derrière DSM et nginx, suivre le
+[guide FR/EN des proxies de confiance](trusted-proxies.md). `TRUSTED_PROXIES`
+reste vide par défaut ; aucune adresse DSM, bridge ou passerelle n'est présumée sûre.
+
+To isolate quotas behind DSM and nginx, follow the
+[FR/EN trusted proxy guide](trusted-proxies.md). `TRUSTED_PROXIES` defaults to
+empty; no DSM, bridge or gateway address is implicitly trusted.
+
 L'approche recommandée consiste à faire pointer le reverse proxy DSM vers le frontend uniquement.
 
 ```text

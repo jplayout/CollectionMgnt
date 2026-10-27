@@ -410,6 +410,15 @@ Les fondations responsive utilisent les conventions :
 
 `POST /api/auth/login` est limite a 5 tentatives par fenetre de 5 minutes.
 
+L'identité de quota utilise l'IP résolue nativement par Fastify. La confiance
+proxy est désactivée par défaut ; `TRUSTED_PROXIES` autorise explicitement des
+IP/CIDR, sans changer les quotas ni la normalisation IPv4/IPv6 du plugin.
+Voir le [contrat et les frontières de confiance FR/EN](deployment/trusted-proxies.md).
+
+Quota identity uses Fastify's native resolved IP. Proxy trust defaults to off;
+`TRUSTED_PROXIES` explicitly allows IPs/CIDRs without changing quotas or native
+IP key normalization. See the [FR/EN trust contract](deployment/trusted-proxies.md).
+
 ### Navigation Collections
 
 1. `/collections` charge les plugins via l'API plugins.

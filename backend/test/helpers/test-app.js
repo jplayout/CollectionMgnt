@@ -12,7 +12,8 @@ import Database from 'better-sqlite3';
 
 import {
     buildApp,
-    registerSecurityHeaders
+    registerSecurityHeaders,
+    registerClientIpValidation
 } from '../../src/app.js';
 import { registerJwt } from '../../src/auth/jwt.js';
 import { hashPassword } from '../../src/auth/password-service.js';
@@ -44,7 +45,7 @@ const DEFAULT_TEST_ADMIN = {
 const TEST_JWT_SECRET =
     'test-secret-with-minimum-length-32';
 
-export async function createTestApp() {
+export async function createTestApp({ trustedProxies = '', configureApp = () => {} } = {}) {
 
     const testRoot =
         await fs.mkdtemp(
@@ -92,11 +93,15 @@ export async function createTestApp() {
         );
 
     const app =
-        buildApp();
+        buildApp({ trustedProxies });
+
+    await configureApp(app);
 
     await registerSecurityHeaders(
         app
     );
+
+    registerClientIpValidation(app);
 
     await registerJwt(
         app

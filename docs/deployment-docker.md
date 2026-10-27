@@ -91,6 +91,13 @@ mkdir -p backend/data
 
 ## Variables
 
+`TRUSTED_PROXIES` est optionnelle, vide par défaut et réservée au backend.
+Lire le [guide FR/EN des proxies de confiance](deployment/trusted-proxies.md)
+pour Docker, Podman, accès direct et proxy externe avant de renseigner une IP/CIDR.
+
+`TRUSTED_PROXIES` is optional, empty by default and backend-only. Read the
+[FR/EN trusted proxy guide](deployment/trusted-proxies.md) before enabling it.
+
 - `FRONTEND_PORT` : port public du frontend, défaut 8080
 - `BACKEND_PORT` : port public optionnel du backend, défaut 3000
 - `JWT_SECRET` : secret JWT requis

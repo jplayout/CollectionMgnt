@@ -16,6 +16,7 @@ services:
     restart: unless-stopped
     environment:
       PORT: 3000
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
       # Required. Keep this value stable and use at least 32 characters.
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}

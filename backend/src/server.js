@@ -1,6 +1,7 @@
 import {
     buildApp,
-    registerSecurityHeaders
+    registerSecurityHeaders,
+    registerClientIpValidation
 } from './app.js';
 
 import { initializeDatabase }
@@ -33,14 +34,16 @@ try {
             process.env.PORT ?? 3000
         );
 
+    const app = buildApp();
+
     const db =
         await initializeDatabase();
-
-    const app = buildApp();
 
     await registerSecurityHeaders(
         app
     );
+
+    registerClientIpValidation(app);
 
     await registerJwt(
         app
