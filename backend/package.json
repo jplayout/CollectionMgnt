@@ -10,15 +10,15 @@
  "dependencies": {
   "@fastify/cors": "^11",
   "@fastify/helmet": "^13.2.0",
-  "@fastify/jwt": "^10.2.6",
-  "@fastify/multipart": "^10.1.6",
-  "@fastify/rate-limit": "^11.2.1",
+  "@fastify/jwt": "^10.2.7",
+  "@fastify/multipart": "^10.1.8",
+  "@fastify/rate-limit": "^11.2.2",
   "archiver": "^8.0.0",
   "bcrypt": "^6.0.0",
-  "better-sqlite3": "^13.0.3",
-  "fast-xml-parser": "5.11.2",
-  "fastify": "^5.12.7",
-  "re2js": "2.9.1",
+  "better-sqlite3": "^13.1.1",
+  "fast-xml-parser": "5.12.1",
+  "fastify": "^5.12.8",
+  "re2js": "2.10.0",
   "sharp": "^0.35.5"
  }
 }
